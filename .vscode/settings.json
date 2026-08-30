@@ -24,6 +24,8 @@
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
+  "ruff.interpreter": ["${workspaceFolder}/backend/.venv"],
   "oxc.disableNestedConfig": true,
   "oxc.fmt.disableNestedConfig": true,
   "editor.formatOnSave": true,

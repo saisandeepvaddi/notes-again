@@ -1,4 +1,5 @@
 import datetime
+from typing import Literal
 
 from peewee import (
     CharField,
@@ -27,3 +28,10 @@ class Note(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     deleted_at = DateTimeField(default=None)
+
+
+type DBModel = Literal["user", "note"]
+
+
+def get_models_dict() -> dict[DBModel, type[BaseModel]]:
+    return {"user": User, "note": Note}

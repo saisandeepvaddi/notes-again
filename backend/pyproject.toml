@@ -2,12 +2,10 @@
 name = "backend"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = [
-    "fastapi[standard]>=0.141.1",
-    "peewee>=4.4.0",
-]
+dependencies = ["fastapi[standard]>=0.141.1", "peewee>=4.4.0"]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.16.5",
-]
+dev = ["ruff>=0.16.5"]
+
+[tool.fastapi]
+entrypoint = "main:app"

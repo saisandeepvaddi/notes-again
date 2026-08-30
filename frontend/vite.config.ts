@@ -8,7 +8,7 @@ import viteReact from "@vitejs/plugin-react";
 
 const config = defineConfig({
   staged: {
-    "*": "vp check --fix",
+    "*.{js,ts,tsx,vue,svelte}": "vp check --fix",
   },
   fmt: {},
   lint: {

@@ -21,6 +21,9 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
   "oxc.disableNestedConfig": true,
   "oxc.fmt.disableNestedConfig": true,
   "editor.formatOnSave": true,

@@ -1,17 +1,19 @@
 from contextlib import asynccontextmanager
 
-from db.setup import close_db, setup_db
 from fastapi import FastAPI
+
+from db.setup import setup_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    setup_db()
+    db = setup_db()
     yield
-    close_db()
+    if db:
+        db.close()
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")

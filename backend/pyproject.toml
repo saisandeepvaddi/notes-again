@@ -9,3 +9,6 @@ dev = ["ruff>=0.16.5"]
 
 [tool.fastapi]
 entrypoint = "main:app"
+
+[tool.ruff.lint]
+ignore = ["BLE001"]

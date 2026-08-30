@@ -2,19 +2,19 @@ import datetime
 
 from peewee import (
     CharField,
+    DatabaseProxy,
     DateTimeField,
     ForeignKeyField,
     Model,
-    SqliteDatabase,
     TextField,
 )
 
-db = SqliteDatabase(":memory:")
+db_proxy = DatabaseProxy()
 
 
 class BaseModel(Model):
     class Meta:
-        database = db
+        database = db_proxy
 
 
 class User(BaseModel):

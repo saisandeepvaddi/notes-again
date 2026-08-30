@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from backend.db.models import get_models_dict
 from db.setup import setup_db
 
+from .notes.router import router as notes_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +18,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(notes_router)
 
 
 @app.get("/")

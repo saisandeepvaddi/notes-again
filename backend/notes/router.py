@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-@router.get("/list", tags=["notes"])
+@router.get("/list")
 async def get_notes():
     return []

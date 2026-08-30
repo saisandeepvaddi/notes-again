@@ -7,9 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
 
 const config = defineConfig({
-  staged: {
-    "*.{js,ts,tsx,vue,svelte}": "vp check --fix",
-  },
+  // staged: {
+  //   "*.{js,ts,tsx,vue,svelte}": "vp check --fix",
+  // },
   fmt: {},
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],

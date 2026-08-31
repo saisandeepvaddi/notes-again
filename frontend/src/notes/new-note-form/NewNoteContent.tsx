@@ -1,4 +1,14 @@
-import { headingsPlugin, MDXEditor } from "@mdxeditor/editor";
+import {
+  BoldItalicUnderlineToggles,
+  headingsPlugin,
+  listsPlugin,
+  markdownShortcutPlugin,
+  MDXEditor,
+  quotePlugin,
+  thematicBreakPlugin,
+  toolbarPlugin,
+  UndoRedo,
+} from "@mdxeditor/editor";
 
 import "@mdxeditor/editor/style.css";
 import { newNoteFormOptions, withForm } from "./new-note-form-utils";
@@ -12,9 +22,24 @@ export const NewNoteContent = withForm({
         children={(field) => {
           return (
             <MDXEditor
-              className="border"
-              markdown={field.state.value}
-              plugins={[headingsPlugin()]}
+              // className="border min-w-1/2 min-h-1/2"
+              markdown={"# Hello World"}
+              plugins={[
+                toolbarPlugin({
+                  toolbarClassName: "my-classname",
+                  toolbarContents: () => (
+                    <>
+                      <UndoRedo />
+                      <BoldItalicUnderlineToggles />
+                    </>
+                  ),
+                }),
+                headingsPlugin(),
+                listsPlugin(),
+                quotePlugin(),
+                thematicBreakPlugin(),
+                markdownShortcutPlugin(),
+              ]}
               onChange={(value) => field.handleChange(value)}
             />
           );

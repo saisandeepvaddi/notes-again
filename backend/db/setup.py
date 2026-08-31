@@ -51,6 +51,12 @@ def setup_db() -> SqliteDatabase | None:
         db.create_tables([User, Note], safe=True)
         log.info(f"DB initialized at {db_path}")
 
+        default_user, created = User.get_or_create(username="default")
+        if created:
+            log.info(f"Default user '{default_user.username}' created")
+        else:
+            log.warning(f"Default user {default_user.username} already exists")
+
         return db
     except Exception as e:
         log.error(f"Error setting up db: {e}")

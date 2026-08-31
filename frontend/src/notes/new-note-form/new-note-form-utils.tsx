@@ -3,13 +3,14 @@ import { z } from "zod";
 export const { fieldContext, useFieldContext, formContext, useFormContext } =
   createFormHookContexts();
 
+import { Button } from "@/components/ui/button";
 import { createFormHook } from "@tanstack/react-form";
 
 function SubmitButton({ label }: { label: string }) {
   const form = useFormContext();
   return (
     <form.Subscribe selector={(state) => state.isSubmitting}>
-      {(isSubmitting) => <button disabled={isSubmitting}>{label}</button>}
+      {(isSubmitting) => <Button disabled={isSubmitting}>{label}</Button>}
     </form.Subscribe>
   );
 }

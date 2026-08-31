@@ -2,6 +2,7 @@ import {
   codeBlockPlugin,
   codeMirrorPlugin,
   headingsPlugin,
+  linkDialogPlugin,
   linkPlugin,
   listsPlugin,
   markdownShortcutPlugin,
@@ -32,6 +33,7 @@ export const NewNoteContent = withForm({
                   thematicBreakPlugin(),
                   markdownShortcutPlugin(),
                   linkPlugin(),
+                  linkDialogPlugin(),
                   codeBlockPlugin({ defaultCodeBlockLanguage: "python" }),
                   codeMirrorPlugin({
                     codeBlockLanguages: {

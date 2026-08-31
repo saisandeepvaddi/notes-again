@@ -11,6 +11,7 @@ from peewee import (
 )
 
 db_proxy = DatabaseProxy()
+DBModel = Literal["users", "notes"]
 
 
 class BaseModel(Model):
@@ -21,6 +22,9 @@ class BaseModel(Model):
 class User(BaseModel):
     username = CharField(unique=True)
 
+    class Meta(BaseModel):  # type: ignore
+        table_name = "users"
+
 
 class Note(BaseModel):
     user = ForeignKeyField(User, backref="username")
@@ -29,9 +33,9 @@ class Note(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     deleted_at = DateTimeField(default=None)
 
-
-type DBModel = Literal["user", "note"]
+    class Meta(BaseModel):  # type: ignore
+        table_name = "notes"
 
 
 def get_models_dict() -> dict[DBModel, type[BaseModel]]:
-    return {"user": User, "note": Note}
+    return {"users": User, "notes": Note}

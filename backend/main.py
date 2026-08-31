@@ -4,8 +4,7 @@ from fastapi import FastAPI
 
 from backend.db.models import get_models_dict
 from db.setup import setup_db
-
-from .notes.router import router as notes_router
+from notes.router import router as notes_router
 
 
 @asynccontextmanager

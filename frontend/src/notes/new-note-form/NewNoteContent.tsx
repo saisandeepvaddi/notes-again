@@ -1,16 +1,16 @@
 import {
-  BoldItalicUnderlineToggles,
+  codeBlockPlugin,
+  codeMirrorPlugin,
   headingsPlugin,
+  linkPlugin,
   listsPlugin,
   markdownShortcutPlugin,
   MDXEditor,
   quotePlugin,
   thematicBreakPlugin,
-  toolbarPlugin,
-  UndoRedo,
 } from "@mdxeditor/editor";
-
 import "@mdxeditor/editor/style.css";
+
 import { newNoteFormOptions, withForm } from "./new-note-form-utils";
 
 export const NewNoteContent = withForm({
@@ -21,27 +21,30 @@ export const NewNoteContent = withForm({
         name="content"
         children={(field) => {
           return (
-            <MDXEditor
-              // className="border min-w-1/2 min-h-1/2"
-              markdown={"# Hello World"}
-              plugins={[
-                toolbarPlugin({
-                  toolbarClassName: "my-classname",
-                  toolbarContents: () => (
-                    <>
-                      <UndoRedo />
-                      <BoldItalicUnderlineToggles />
-                    </>
-                  ),
-                }),
-                headingsPlugin(),
-                listsPlugin(),
-                quotePlugin(),
-                thematicBreakPlugin(),
-                markdownShortcutPlugin(),
-              ]}
-              onChange={(value) => field.handleChange(value)}
-            />
+            <div className="border min-w-1/2 min-h-1/2">
+              <MDXEditor
+                contentEditableClassName="prose max-w-full font-sans"
+                markdown={"# Hello World"}
+                plugins={[
+                  headingsPlugin(),
+                  listsPlugin(),
+                  quotePlugin(),
+                  thematicBreakPlugin(),
+                  markdownShortcutPlugin(),
+                  linkPlugin(),
+                  codeBlockPlugin({ defaultCodeBlockLanguage: "python" }),
+                  codeMirrorPlugin({
+                    codeBlockLanguages: {
+                      js: "JavaScript",
+                      css: "CSS",
+                      txt: "text",
+                      tsx: "TypeScript",
+                    },
+                  }),
+                ]}
+                onChange={(value) => field.handleChange(value)}
+              />
+            </div>
           );
         }}
       />

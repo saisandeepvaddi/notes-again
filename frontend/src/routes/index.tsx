@@ -1,12 +1,17 @@
-import { Button } from "@/components/ui/button";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { PlusIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
   return (
     <div className="p-8">
-      <Button>New Note</Button>
+      <Link
+        to="/notes/new"
+        className="p-1 px-2 rounded-sm bg-black text-white dark:bg-white dark:text-black cursor-pointer flex items-center"
+      >
+        <PlusIcon /> New Note
+      </Link>
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { createFormHookContexts, formOptions } from "@tanstack/react-form";
-import { z } from "zod";
 export const { fieldContext, useFieldContext, formContext, useFormContext } =
   createFormHookContexts();
 
 import { Button } from "@/components/ui/button";
 import { createFormHook } from "@tanstack/react-form";
+import { type Note, NoteSchema } from "./types";
 
 function SubmitButton({ label }: { label: string }) {
   const form = useFormContext();
@@ -15,13 +15,6 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-const noteSchema = z.object({
-  name: z.string(),
-  content: z.string(),
-});
-
-type Note = z.infer<typeof noteSchema>;
-
 const defaultNote: Note = {
   name: "",
   content: "",
@@ -30,7 +23,7 @@ const defaultNote: Note = {
 export const newNoteFormOptions = formOptions({
   defaultValues: defaultNote,
   validators: {
-    onChange: noteSchema,
+    onChange: NoteSchema,
   },
 });
 

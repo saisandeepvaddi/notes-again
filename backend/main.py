@@ -1,10 +1,13 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
+from api import router as api_router
 from backend.db.models import get_models_dict
 from db.setup import setup_db
-from notes.router import router as notes_router
 
 
 @asynccontextmanager
@@ -17,9 +20,25 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(notes_router)
+app.include_router(router=api_router, tags=["api"])
+
+ui_build_path = Path.cwd() / "frontend" / "dist"
+
+app.mount("/static", StaticFiles(directory=ui_build_path), name="static")
+
+
+async def get_index_response(request: Request) -> Response:
+    index_path = ui_build_path / "index.html"
+    return FileResponse(index_path, status_code=200, media_type="text/html")
 
 
 @app.get("/")
-def read_root():
-    return {"version": "1.0.0"}
+async def read_index(request: Request) -> Response:
+    return await get_index_response(request=request)
+
+
+@app.get("/{full_path:path}")
+async def catch_all(request: Request, full_path: str) -> Response:
+    if full_path.startswith(("api/", "static/")):
+        return JSONResponse(status_code=404, content={"message": "Not found"})
+    return await get_index_response(request=request)

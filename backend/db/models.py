@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Literal
 
 from peewee import (
@@ -14,38 +14,38 @@ from peewee import (
 db_proxy = DatabaseProxy()
 
 
-class BaseModel(Model):
+class DBBaseModel(Model):
     class Meta:
         database = db_proxy
 
 
-class User(BaseModel):
+class User(DBBaseModel):
     username = CharField(unique=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.now, index=True)
     deleted_at = DateTimeField(null=True)
 
-    class Meta(BaseModel):  # type: ignore
+    class Meta(DBBaseModel):  # type: ignore
         table_name = "users"
 
 
-class Note(BaseModel):
+class Note(DBBaseModel):
     user = ForeignKeyField(User, backref="users", on_delete="CASCADE")
     content = TextField()
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.now, index=True)
     deleted_at = DateTimeField(null=True)
 
-    class Meta(BaseModel):  # type: ignore
+    class Meta(DBBaseModel):  # type: ignore
         table_name = "notes"
 
 
-class Reminder(BaseModel):
+class Reminder(DBBaseModel):
     note = ForeignKeyField(Note, backref="notes", on_delete="CASCADE")
     remind_at = DateTimeField(index=True)
     is_active = BooleanField(default=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.now, index=True)
     deleted_at = DateTimeField(null=True)
 
     class Meta:  # type: ignore
@@ -56,5 +56,5 @@ class Reminder(BaseModel):
 DBModel = Literal["users", "notes", "reminders"]
 
 
-def get_models_dict() -> dict[DBModel, type[BaseModel]]:
+def get_models_dict() -> dict[DBModel, type[DBBaseModel]]:
     return {"users": User, "notes": Note}

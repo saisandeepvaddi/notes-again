@@ -2,10 +2,13 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Annotated
 
-from peewee import SqliteDatabase
+from fastapi import Depends
+from sqlalchemy import Engine
+from sqlmodel import Session, SQLModel, create_engine, select
 
-from .models import Note, User, db_proxy
+from backend.db.models import User
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -34,30 +37,38 @@ def get_sqlite_db_file_path() -> Path:
     return db_path
 
 
-def setup_db() -> SqliteDatabase | None:
+def get_session(engine: Engine):
+    with Session(engine) as session:
+        yield session
+
+
+def create_db_and_tables(engine: Engine) -> None:
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        default_user = session.exec(
+            select(User).where(User.username == "default")
+        ).first()
+        if not default_user:
+            default_user = User(username="default")
+            session.add(default_user)
+            session.commit()
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+
+def setup_db() -> Engine | None:
     try:
         db_path = get_sqlite_db_file_path()
-        db = SqliteDatabase(
-            str(db_path),
-            pragmas={
-                "journal_mode": "wal",
-                "cache_size": -1 * 64000,  # 64MB cache
-                "foreign_keys": 1,  # Enforce foreign keys
-                "ignore_check_constraints": 0,
-            },
-        )
-        db_proxy.initialize(db)
-        db.connect()
-        db.create_tables([User, Note], safe=True)
-        log.info(f"DB initialized at {db_path}")
 
-        default_user, created = User.get_or_create(username="default")
-        if created:
-            log.info(f"Default user '{default_user.username}' created")
-        else:
-            log.warning(f"Default user {default_user.username} already exists")
+        connect_args = {"check_same_thread": False}
+        sqlite_path = f"sqlite:///{db_path}"
+        log.info(f"Database {sqlite_path=}")
+        engine = create_engine(url=sqlite_path, connect_args=connect_args)
+        create_db_and_tables(engine=engine)
+        log.info("DB setup completed")
+        return engine
 
-        return db
     except Exception as e:
         log.error(f"Error setting up db: {e}")
-        return None
+        return

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,17 +7,19 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from api import router as api_router
-from backend.db.models import get_models_dict
 from db.setup import setup_db
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db = setup_db()
-    app.state.models = get_models_dict()
+    engine = setup_db()
     yield
-    if db:
-        db.close()
+    if engine:
+        engine.dispose()
+        log.info("DB Engine disposed")
 
 
 app = FastAPI(lifespan=lifespan)

@@ -1,60 +1,40 @@
-from datetime import datetime
-from typing import Literal
+import datetime
 
-from peewee import (
-    BooleanField,
-    CharField,
-    DatabaseProxy,
-    DateTimeField,
-    ForeignKeyField,
-    Model,
-    TextField,
-)
-
-db_proxy = DatabaseProxy()
+from sqlmodel import Field, Relationship, SQLModel
 
 
-class DBBaseModel(Model):
-    class Meta:
-        database = db_proxy
+class User(SQLModel, table=True):
+    __tablename__ = "users"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    username: str = Field(default=None, unique=True)
+    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    deleted_at: datetime.datetime | None = Field(default=None)
+
+    notes: list["Note"] = Relationship(back_populates="user", cascade_delete=True)
 
 
-class User(DBBaseModel):
-    username = CharField(unique=True)
-    created_at = DateTimeField(default=datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.now, index=True)
-    deleted_at = DateTimeField(null=True)
+class Note(SQLModel, table=True):
+    __tablename__ = "notes"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    content: str = Field(index=True)
+    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    deleted_at: datetime.datetime | None = Field(default=None)
 
-    class Meta(DBBaseModel):  # type: ignore
-        table_name = "users"
-
-
-class Note(DBBaseModel):
-    user = ForeignKeyField(User, backref="users", on_delete="CASCADE")
-    content = TextField()
-    created_at = DateTimeField(default=datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.now, index=True)
-    deleted_at = DateTimeField(null=True)
-
-    class Meta(DBBaseModel):  # type: ignore
-        table_name = "notes"
+    user_id: int | None = Field(default=None, foreign_key="users.id")
+    user: User | None = Relationship(back_populates="notes")
+    reminders: list["Reminder"] = Relationship(
+        back_populates="note", cascade_delete=True
+    )
 
 
-class Reminder(DBBaseModel):
-    note = ForeignKeyField(Note, backref="notes", on_delete="CASCADE")
-    remind_at = DateTimeField(index=True)
-    is_active = BooleanField(default=True)
-    created_at = DateTimeField(default=datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.now, index=True)
-    deleted_at = DateTimeField(null=True)
+class Reminder(SQLModel, table=True):
+    __tablename__ = "reminders"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    deleted_at: datetime.datetime | None = Field(default=None)
 
-    class Meta:  # type: ignore
-        table_name = "reminders"
-        indexes = (("note", "remind_at"), True)
-
-
-DBModel = Literal["users", "notes", "reminders"]
-
-
-def get_models_dict() -> dict[DBModel, type[DBBaseModel]]:
-    return {"users": User, "notes": Note}
+    note_id: int | None = Field(default=None, foreign_key="notes.id")
+    note: Note | None = Relationship(back_populates="reminders")

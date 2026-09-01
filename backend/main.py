@@ -36,6 +36,7 @@ app.mount("/static", StaticFiles(directory=ui_build_path), name="static")
 
 async def get_index_response(request: Request) -> Response:
     index_path = ui_build_path / "index.html"
+    print(index_path)
     return FileResponse(index_path, status_code=200, media_type="text/html")
 
 

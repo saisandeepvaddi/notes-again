@@ -2,17 +2,14 @@
   "name": "note-and-learn",
   "private": true,
   "type": "module",
-  "imports": {
-    "#/*": "./src/*"
-  },
   "scripts": {
-    "dev": "vp dev --host",
-    "generate-routes": "tsr generate",
-    "build": "vp build",
-    "preview": "vp preview",
-    "prepare": "vp config",
-    "lint": "vp lint --fix",
-    "check": "vp check --fix"
+    "dev": "vite dev",
+    "build": "vite build && tsc --noEmit",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:fix": "oxfmt --fix"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -24,8 +21,10 @@
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-form-devtools": "^0.2.34",
     "@tanstack/react-form-start": "^1.33.5",
+    "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
+    "@tanstack/react-router-ssr-query": "^1.167.2",
     "@tanstack/react-start": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -46,15 +45,8 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "oxfmt": "^0.66.0",
     "typescript": "^6.0.2",
-    "vite": "catalog:",
-    "vite-plus": "catalog:"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "11.24.0",
-      "onFail": "download"
-    }
+    "vite": "^8.2.2"
   }
 }

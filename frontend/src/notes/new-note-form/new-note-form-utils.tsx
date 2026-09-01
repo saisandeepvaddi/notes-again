@@ -13,7 +13,7 @@ function SubmitButton({ label, ...props }: { label: string } & ComponentProps<ty
   return (
     <form.Subscribe selector={(state) => state.isSubmitting}>
       {(isSubmitting) => (
-        <Button disabled={isSubmitting} {...props}>
+        <Button type="submit" disabled={isSubmitting} {...props}>
           {label}
         </Button>
       )}

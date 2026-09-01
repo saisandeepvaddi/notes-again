@@ -1,5 +1,10 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Scripts,
+  createRootRouteWithContext,
+  type NotFoundRouteProps,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import Layout from "@/components/layout/Layout";
@@ -30,6 +35,9 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: (props: NotFoundRouteProps) => {
+    return <>Not Found {props.routeId}</>;
+  },
 });
 
 function RootDocument() {

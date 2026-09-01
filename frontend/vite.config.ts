@@ -1,10 +1,10 @@
 import { devtools } from "@tanstack/devtools-vite";
-import { defineConfig, lazyPlugins } from "vite-plus";
 
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 import tailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 const config = defineConfig(({ mode }) => {
   // staged: {
@@ -12,14 +12,14 @@ const config = defineConfig(({ mode }) => {
   // },
   return {
     base: mode === "development" ? "/" : "/static",
-    fmt: {},
-    lint: {
-      jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
-      rules: { "vite-plus/prefer-vite-plus-imports": "error" },
-      options: { typeAware: true, typeCheck: true },
-    },
+    // fmt: {},
+    // lint: {
+    //   jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
+    //   rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+    //   options: { typeAware: true, typeCheck: true },
+    // },
     resolve: { tsconfigPaths: true },
-    plugins: lazyPlugins(() => [devtools(), tailwindcss(), tanstackStart(), viteReact()]),
+    plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
   };
 });
 

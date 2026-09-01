@@ -1,13 +1,16 @@
 import logging
+import socket
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import Session
 
 from api import router as api_router
-from db.setup import get_session, setup_db
+from db.setup import setup_db
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -19,7 +22,8 @@ async def lifespan(app: FastAPI):
     if not engine:
         log.error("error setting up db. stopping")
         return
-    app.state.session = get_session(engine=engine)
+    with Session(engine) as session:
+        app.state.session = session
     yield
     if engine:
         engine.dispose()
@@ -27,6 +31,23 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    f"http://{socket.gethostbyname(socket.gethostname())}:5173",
+    f"https://{socket.gethostbyname(socket.gethostname())}:5173",
+    "http://localhost:5173",
+    "https://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.include_router(router=api_router, tags=["api"])
 
 ui_build_path = Path.cwd() / "frontend" / "dist"

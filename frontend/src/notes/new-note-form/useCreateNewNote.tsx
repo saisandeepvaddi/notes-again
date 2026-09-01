@@ -16,6 +16,9 @@ export function useCreateNewNote() {
         fetch(url, {
           method: "POST",
           body: JSON.stringify(newNote),
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
 
       const res = await (await fetcher()).json();

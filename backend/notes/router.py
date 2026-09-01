@@ -19,7 +19,6 @@ class NewNoteBody(BaseModel):
     name: str
     content: str
     reminder_dates: list[datetime.datetime] = [datetime.datetime.now(datetime.UTC)]
-    username: str
 
 
 @router.post("/create")

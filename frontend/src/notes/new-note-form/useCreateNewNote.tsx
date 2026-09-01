@@ -11,8 +11,9 @@ export function useCreateNewNote() {
   return useMutation({
     mutationKey: ["create-new-note"],
     mutationFn: async (newNote: NewNoteBody) => {
+      const url = `${getURL()}/notes/create`;
       const fetcher = () =>
-        fetch(`${getURL()}/notes/create`, {
+        fetch(url, {
           method: "POST",
           body: JSON.stringify(newNote),
         });

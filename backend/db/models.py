@@ -17,12 +17,14 @@ class User(SQLModel, table=True):
 class Note(SQLModel, table=True):
     __tablename__ = "notes"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
     content: str = Field(index=True)
     created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
     updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
     deleted_at: datetime.datetime | None = Field(default=None)
 
-    user_id: int | None = Field(default=None, foreign_key="users.id")
+    # 1 is default_user's user_id
+    user_id: int | None = Field(default=1, foreign_key="users.id")
     user: User | None = Relationship(back_populates="notes")
     reminders: list["Reminder"] = Relationship(
         back_populates="note", cascade_delete=True
@@ -32,6 +34,7 @@ class Note(SQLModel, table=True):
 class Reminder(SQLModel, table=True):
     __tablename__ = "reminders"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    remind_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
     created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
     updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
     deleted_at: datetime.datetime | None = Field(default=None)

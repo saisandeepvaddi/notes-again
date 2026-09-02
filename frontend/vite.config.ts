@@ -19,7 +19,19 @@ const config = defineConfig(({ mode }) => {
     //   options: { typeAware: true, typeCheck: true },
     // },
     resolve: { tsconfigPaths: true },
-    plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+    plugins: [
+      devtools({
+        consolePiping: {
+          enabled: false,
+        },
+        enhancedLogs: {
+          enabled: false,
+        },
+      }),
+      tailwindcss(),
+      tanstackStart(),
+      viteReact(),
+    ],
   };
 });
 

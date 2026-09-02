@@ -2,11 +2,11 @@ import datetime
 from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
-from backend.db.models import Note, Reminder
+from backend.db.models import Note, Reminder, utcnow
 from backend.db.setup import SessionDep
 
 from .schema import NoteResponse
@@ -27,7 +27,7 @@ def get_notes(session: SessionDep):
 class NewNoteBody(BaseModel):
     name: str
     content: str
-    reminder_dates: list[datetime.datetime] = [datetime.datetime.now(datetime.UTC)]
+    reminder_dates: list[datetime.datetime] = Field(default_factory=lambda: [utcnow()])
 
 
 @router.post("/create", response_model=NoteResponse)
@@ -40,7 +40,7 @@ def create_note(body: NewNoteBody, session: SessionDep):
     )
     session.add(note)
     session.commit()
-    session.refresh(note, attribute_names=["reminders"])
+    session.refresh(note)
     return note
 
 

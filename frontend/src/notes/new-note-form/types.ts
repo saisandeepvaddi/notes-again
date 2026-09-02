@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 const DatesBaseSchema = z.object({
-  created_at: z.date(),
-  updated_at: z.date(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
 export const ReminderBaseSchema = z.object({
-  remind_at: z.date(),
+  remind_at: z.coerce.date(),
 });
 
 export const ReminderItemSchema = z.object({
@@ -22,9 +22,16 @@ export const NoteBaseSchema = z.object({
 
 export const NoteItemSchema = NoteBaseSchema.extend({
   id: z.number(),
-  created_at: z.date(),
-  updated_at: z.date(),
-  reminders: z.array(ReminderItemSchema).default([]),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
+  reminders: z
+    .array(
+      z.object({
+        id: z.number(),
+        remind_at: z.coerce.date(),
+      }),
+    )
+    .default([]),
 });
 
 export type NoteItem = z.infer<typeof NoteItemSchema>;

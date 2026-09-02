@@ -3,12 +3,16 @@ import datetime
 from sqlmodel import Field, Relationship, SQLModel
 
 
+def utcnow() -> datetime.datetime:
+    return datetime.datetime.now(datetime.UTC)
+
+
 class User(SQLModel, table=True):
     __tablename__ = "users"  # type: ignore
     id: int = Field(default=None, primary_key=True)
     username: str = Field(default=None, unique=True)
-    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
-    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
     notes: list["Note"] = Relationship(back_populates="user", cascade_delete=True)
@@ -19,8 +23,8 @@ class Note(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str = Field(index=True)
     content: str = Field(index=True)
-    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
-    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
     # 1 is default_user's user_id
@@ -35,9 +39,9 @@ class Note(SQLModel, table=True):
 class Reminder(SQLModel, table=True):
     __tablename__ = "reminders"  # type: ignore
     id: int = Field(default=None, primary_key=True)
-    remind_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
-    created_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
-    updated_at: datetime.datetime = Field(default=datetime.datetime.now(datetime.UTC))
+    remind_at: datetime.datetime = Field(default_factory=utcnow)
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
     note_id: int | None = Field(default=None, foreign_key="notes.id")

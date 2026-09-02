@@ -1,11 +1,6 @@
 import { getURL } from "@/utils/fetchers";
 import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
-import { NoteBaseSchema, type NewNoteBody } from "./types";
-
-const CreateNotesResponseSchema = NoteBaseSchema.extend({
-  id: z.string(),
-});
+import { NoteItemSchema, type NewNoteBody } from "./types";
 
 export function useCreateNewNote() {
   return useMutation({
@@ -22,7 +17,8 @@ export function useCreateNewNote() {
         });
 
       const res = await (await fetcher()).json();
-      return CreateNotesResponseSchema.parse(res);
+      console.log("res:", res);
+      return NoteItemSchema.parse(res);
     },
     onSettled: (_data, _error, _variables, _onMutateResult, context) =>
       context.client.invalidateQueries({

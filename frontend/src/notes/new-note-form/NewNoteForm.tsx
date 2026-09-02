@@ -1,11 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { getDefaultReminderDates } from "@/utils/dates";
+import { useNavigate } from "@tanstack/react-router";
 import NewNoteContent from "./NewNoteContent";
 import { newNoteFormOptions, useAppForm } from "./new-note-form-utils";
 import { useCreateNewNote } from "./useCreateNewNote";
 
 function NewNoteForm() {
   const { mutateAsync, isPending } = useCreateNewNote();
+  const navigate = useNavigate();
   const form = useAppForm({
     ...newNoteFormOptions,
     onSubmit: async ({ value }) => {
@@ -14,6 +16,10 @@ function NewNoteForm() {
         name: value.name,
         content: value.content,
         reminder_dates: getDefaultReminderDates(),
+      });
+      navigate({
+        to: "/",
+        replace: true,
       });
     },
   });
@@ -29,6 +35,7 @@ function NewNoteForm() {
         children={(field) => {
           return (
             <Input
+              autoComplete="off"
               placeholder="Name"
               value={field.state.value}
               onBlur={field.handleBlur}

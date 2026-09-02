@@ -1,3 +1,4 @@
+import NotesList from "@/notes/notes-list/NotesList";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 
@@ -12,6 +13,7 @@ function Home() {
       >
         <PlusIcon /> New Note
       </Link>
+      <NotesList />
     </div>
   );
 }

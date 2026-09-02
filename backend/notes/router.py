@@ -3,16 +3,17 @@ from typing import cast
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from backend.db.models import Note, Reminder
+from backend.db.setup import SessionDep
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
 @router.get("/list")
-async def get_notes():
-    return []
+def get_notes(session: SessionDep) -> list[Note]:
+    return list(session.exec(select(Note)))
 
 
 class NewNoteBody(BaseModel):
@@ -22,7 +23,7 @@ class NewNoteBody(BaseModel):
 
 
 @router.post("/create")
-async def create_note(body: NewNoteBody, request: Request) -> None:
+async def create_note(body: NewNoteBody, request: Request) -> Note:
     session = cast(Session, request.app.state.session)
     note = Note(
         name=body.name,
@@ -32,3 +33,4 @@ async def create_note(body: NewNoteBody, request: Request) -> None:
     )
     session.add(note)
     session.commit()
+    return note

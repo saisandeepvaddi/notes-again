@@ -5,6 +5,10 @@ export const NoteSchema = z.object({
   content: z.string(),
 });
 
+export const NoteItemSchema = NoteSchema.extend({
+  id: z.number(),
+});
+export type NoteItemSchema = z.infer<typeof NoteItemSchema>;
 export type Note = z.infer<typeof NoteSchema>;
 
 export const NewNoteBodySchema = NoteSchema.extend({

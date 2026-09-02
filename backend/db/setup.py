@@ -2,9 +2,9 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlalchemy import Engine
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -37,9 +37,8 @@ def get_sqlite_db_file_path() -> Path:
     return db_path
 
 
-def get_session(engine: Engine):
-    with Session(engine) as session:
-        yield session
+def get_session(request: Request):
+    return cast(Session, request.app.state.session)
 
 
 def create_db_and_tables(engine: Engine) -> None:

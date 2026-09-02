@@ -25,7 +25,7 @@ export const NewNoteContent = withForm({
             <div className="border min-w-1/2 min-h-1/2">
               <MDXEditor
                 contentEditableClassName="prose max-w-full font-sans"
-                markdown={"# Hello World"}
+                markdown={field.state.value}
                 plugins={[
                   headingsPlugin(),
                   listsPlugin(),

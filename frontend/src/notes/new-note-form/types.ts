@@ -9,7 +9,9 @@ export const ReminderBaseSchema = z.object({
   remind_at: z.date(),
 });
 
-export const ReminderItemSchema = ReminderBaseSchema.extend(DatesBaseSchema).extend({
+export const ReminderItemSchema = z.object({
+  ...ReminderBaseSchema.shape,
+  ...DatesBaseSchema.shape,
   id: z.number(),
 });
 

@@ -1,11 +1,29 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Trash2Icon } from "lucide-react";
+import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem } from "./new-note-form/types";
+import { NoteContent } from "./NoteContent";
 
 interface NoteCardProps {
   note: NoteItem;
 }
 
-export function NoteCard({props}: NoteCardProps) {
+export function NoteCard({ note }: NoteCardProps) {
+  const { mutateAsync: deleteNote } = useDeleteNote({
+    noteId: note.id,
+  });
   return (
-  
+    <Card>
+      <CardHeader className="flex items-center justify-between">
+        <h2>{note.name}</h2>
+        <Button size="icon-sm" onClick={() => deleteNote()} variant={"destructive"}>
+          <Trash2Icon />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <NoteContent markdown={note.content} />
+      </CardContent>
+    </Card>
   );
 }

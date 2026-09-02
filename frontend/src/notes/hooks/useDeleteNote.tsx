@@ -1,0 +1,22 @@
+import { deleteFetcher } from "@/utils/fetchers";
+import { useMutation } from "@tanstack/react-query";
+
+interface useDeleteNoteProps {
+  noteId: number;
+}
+
+export function useDeleteNote({ noteId }: useDeleteNoteProps) {
+  return useMutation({
+    mutationKey: ["note-delete", noteId],
+    mutationFn: async () => {
+      console.log(`/notes/${noteId}`);
+      const fetcher = deleteFetcher(`/notes/${noteId}`);
+      return await fetcher();
+    },
+    onSettled(_data, _error, _vars, _result, context) {
+      context.client.invalidateQueries({
+        queryKey: ["notes"],
+      });
+    },
+  });
+}

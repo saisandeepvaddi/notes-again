@@ -1,14 +1,12 @@
+import { NoteCard } from "../NoteCard";
 import { useNotes } from "./useNotes";
 
 function NotesList() {
   const { data: notes } = useNotes();
-  console.log("notes:", notes);
   return (
     <div>
       {notes.map((note) => (
-        <div key={note.id}>
-          <h2>{note.name}</h2>
-        </div>
+        <NoteCard key={note.id} note={note} />
       ))}
     </div>
   );

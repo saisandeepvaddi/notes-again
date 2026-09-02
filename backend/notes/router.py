@@ -1,10 +1,10 @@
 import datetime
 from typing import Any, cast
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import selectinload
-from sqlmodel import select
+from sqlmodel import col, select
 
 from backend.db.models import Note, Reminder
 from backend.db.setup import SessionDep
@@ -17,7 +17,9 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 @router.get("/list", response_model=list[NoteResponse])
 def get_notes(session: SessionDep):
     notes = session.exec(
-        select(Note).options(selectinload(cast(Any, Note.reminders)))
+        select(Note)
+        .where(col(Note.deleted_at).is_(None))
+        .options(selectinload(cast(Any, Note.reminders)))
     ).all()
     return notes
 
@@ -29,7 +31,7 @@ class NewNoteBody(BaseModel):
 
 
 @router.post("/create", response_model=NoteResponse)
-async def create_note(body: NewNoteBody, session: SessionDep):
+def create_note(body: NewNoteBody, session: SessionDep):
     note = Note(
         name=body.name,
         content=body.content,
@@ -40,3 +42,12 @@ async def create_note(body: NewNoteBody, session: SessionDep):
     session.commit()
     session.refresh(note, attribute_names=["reminders"])
     return note
+
+
+@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_note(note_id: int, session: SessionDep):
+    note = session.exec(select(Note).where(Note.id == note_id)).one()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    note.deleted_at = datetime.datetime.now(datetime.UTC)
+    session.commit()

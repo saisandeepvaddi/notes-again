@@ -32,28 +32,26 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
   return await response.json();
 };
 
-export const postFetcher =
-  async (url: string, options?: FetcherOptions) => async (body: string) => {
-    const response = await fetch(`${getURL()}${url}`, {
-      method: "POST",
-      headers: getHeaders(options?.headers),
-      body,
-    });
-    if (!response.ok) {
-      throw new Error(`Error with ${url} with code: ${response.status}`);
-    }
-    return await response.json();
-  };
+export const postFetcher = (url: string, options?: FetcherOptions) => async (body: string) => {
+  const response = await fetch(`${getURL()}${url}`, {
+    method: "POST",
+    headers: getHeaders(options?.headers),
+    body,
+  });
+  if (!response.ok) {
+    throw new Error(`Error with ${url} with code: ${response.status}`);
+  }
+  return await response.json();
+};
 
-export const deleteFetcher =
-  async (url: string, options?: FetcherOptions) => async (body: string) => {
-    const response = await fetch(`${getURL()}${url}`, {
-      method: "DELETE",
-      headers: getHeaders(options?.headers),
-      body,
-    });
-    if (!response.ok) {
-      throw new Error(`Error with ${url} with code: ${response.status}`);
-    }
-    return await response.json();
-  };
+export const deleteFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
+  const response = await fetch(`${getURL()}${url}`, {
+    method: "DELETE",
+    headers: getHeaders(options?.headers),
+    body,
+  });
+  if (!response.ok) {
+    throw new Error(`Error with ${url} with code: ${response.status}`);
+  }
+  return await response.json();
+};

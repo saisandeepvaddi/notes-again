@@ -7,7 +7,6 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlmodel import Session
 
 from api import router as api_router
 from db.setup import setup_db
@@ -21,13 +20,11 @@ async def lifespan(app: FastAPI):
     engine = setup_db()
     if not engine:
         log.error("error setting up db. stopping")
-        return
-    with Session(engine) as session:
-        app.state.session = session
+        raise RuntimeError("DB setup failed")
+    app.state.engine = engine
     yield
-    if engine:
-        engine.dispose()
-        log.info("DB Engine disposed")
+    engine.dispose()
+    log.info("DB Engine disposed")
 
 
 app = FastAPI(lifespan=lifespan)

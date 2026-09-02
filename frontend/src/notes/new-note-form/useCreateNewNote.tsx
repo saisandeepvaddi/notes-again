@@ -1,9 +1,9 @@
 import { getURL } from "@/utils/fetchers";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
-import { NoteSchema, type NewNoteBody } from "./types";
+import { NoteBaseSchema, type NewNoteBody } from "./types";
 
-const CreateNotesResponseSchema = NoteSchema.extend({
+const CreateNotesResponseSchema = NoteBaseSchema.extend({
   id: z.string(),
 });
 

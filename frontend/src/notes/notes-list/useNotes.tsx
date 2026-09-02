@@ -1,8 +1,8 @@
 import { getFetcher } from "@/utils/fetchers";
 import { useSuspenseQuery, type UseSuspenseQueryOptions } from "@tanstack/react-query";
-import type { NoteItemSchema } from "../new-note-form/types";
+import type { NoteItem } from "../new-note-form/types";
 
-const getUseNotesOptions = (): UseSuspenseQueryOptions<NoteItemSchema[]> => {
+const getUseNotesOptions = (): UseSuspenseQueryOptions<NoteItem[]> => {
   return {
     queryKey: ["notes"],
     queryFn: getFetcher("/notes/list"),
@@ -10,5 +10,5 @@ const getUseNotesOptions = (): UseSuspenseQueryOptions<NoteItemSchema[]> => {
 };
 
 export function useNotes() {
-  return useSuspenseQuery<NoteItemSchema[]>(getUseNotesOptions());
+  return useSuspenseQuery<NoteItem[]>(getUseNotesOptions());
 }

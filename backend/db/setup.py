@@ -37,10 +37,6 @@ def get_sqlite_db_file_path() -> Path:
     return db_path
 
 
-def get_session(request: Request):
-    return cast(Session, request.app.state.session)
-
-
 def create_db_and_tables(engine: Engine) -> None:
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
@@ -51,6 +47,12 @@ def create_db_and_tables(engine: Engine) -> None:
             default_user = User(username="default")
             session.add(default_user)
             session.commit()
+
+
+def get_session(request: Request):
+    engine = cast(Engine, request.app.state.engine)
+    with Session(engine) as session:
+        yield session
 
 
 SessionDep = Annotated[Session, Depends(get_session)]

@@ -27,7 +27,8 @@ class Note(SQLModel, table=True):
     user_id: int | None = Field(default=1, foreign_key="users.id")
     user: User | None = Relationship(back_populates="notes")
     reminders: list["Reminder"] = Relationship(
-        back_populates="note", cascade_delete=True
+        back_populates="note",
+        cascade_delete=True,
     )
 
 

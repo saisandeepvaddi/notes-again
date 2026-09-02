@@ -29,7 +29,7 @@ export function NoteContent({ markdown }: NoteContentProps) {
         const html = await md.renderAsync(markdown);
         setContent(html);
       } catch (e) {
-        console.error("Error parsing markdown. Check if valid content.");
+        console.error("Error parsing markdown. Check if valid content.", e);
       }
     })();
   }, [markdown]);

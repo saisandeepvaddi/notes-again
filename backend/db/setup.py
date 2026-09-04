@@ -8,7 +8,7 @@ from fastapi import Depends, Request
 from sqlalchemy import Engine
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from backend.db.models import User
+from db.models import User
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

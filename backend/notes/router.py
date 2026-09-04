@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
-from backend.db.models import Note, Reminder, utcnow
-from backend.db.setup import SessionDep
+from db.models import Note, Reminder, utcnow
+from db.setup import SessionDep
 
 from .schema import NoteResponse
 

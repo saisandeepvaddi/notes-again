@@ -29,6 +29,7 @@ function NewNoteForm() {
         e.preventDefault();
         form.handleSubmit();
       }}
+      className="flex flex-col gap-4"
     >
       <form.AppField
         name="name"
@@ -46,7 +47,9 @@ function NewNoteForm() {
       />
       <NewNoteContent form={form} />
       <form.AppForm>
-        <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />
+        <span>
+          <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />
+        </span>
       </form.AppForm>
     </form>
   );

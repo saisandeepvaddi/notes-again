@@ -6,9 +6,5 @@ export const Route = createFileRoute("/notes/new")({
 });
 
 function NewNoteComponent() {
-  return (
-    <div>
-      <NewNoteForm />
-    </div>
-  );
+  return <NewNoteForm />;
 }

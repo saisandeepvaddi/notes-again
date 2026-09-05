@@ -152,16 +152,106 @@ body {
 
 .mdxeditor-contenteditable-wrapper {
   .prose {
-    h1 {
-      @apply text-2xl;
+    min-width: 0;
+
+    & code {
+      @apply text-secondary-text bg-neutral-bgSubtle px-1;
+
+
+      &:before,
+      &:after {
+        content: none;
+        @apply text-accent-text;
+      }
     }
 
-    h2 {
-      @apply text-xl;
+    & a {
+      @apply text-accent-text;
+      text-decoration: none;
     }
 
-    a {
-      @apply underline;
+    & code[data-lexical-text] {
+      @apply font-mono;
+      font-size: inherit;
+      font-weight: inherit;
+
+      &:before,
+      &:after {
+        content: none;
+      }
+    }
+
+    /* reset the prose borders */
+    & [data-lexical-decorator]>table {
+      table-layout: fixed;
+
+      & td {
+        vertical-align: middle;
+      }
+
+      &>thead,
+      &>tfoot,
+      &>tbody>tr {
+        border: 0;
+      }
+
+      & [data-tool-cell] {
+        padding: 1px;
+        border: 0;
+        line-height: 1rem;
+        vertical-align: middle;
+      }
+
+      &>thead [data-tool-cell]:first-child {
+        vertical-align: middle;
+      }
+    }
+
+    & pre[class*="language-"] {
+      overflow-x: auto;
+    }
+
+    & pre[class*="language-"],
+    & code[class*="language-"] {
+      @apply font-mono;
+      font-size: inherit;
+    }
+
+    & pre[class*="language-"]>code {
+      @apply text-sm;
+      display: block;
+    }
+
+    .cm-content {
+      @apply font-mono;
+      @apply text-xs;
+    }
+
+    & [data-editor-type=frontmatter] {
+      & table {
+        margin: 0;
+        font-size: inherit;
+        width: auto;
+
+        & thead,
+        & tbody,
+        & tfoot,
+        & tr {
+          border: 0;
+        }
+      }
+    }
+
+    & li[role=checkbox] {
+      text-indent: 1.2rem;
+    }
+
+    & li[role=checkbox]::before {
+      transform: translate(6px, 6px);
+    }
+
+    & li[role=checkbox]::after {
+      transform: translate(6px, 6px) rotate(45deg);
     }
   }
 }

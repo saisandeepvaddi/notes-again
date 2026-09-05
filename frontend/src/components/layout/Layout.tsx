@@ -7,7 +7,7 @@ function Layout() {
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
-        <main>
+        <main className="w-full h-full p-4">
           <Outlet />
         </main>
       </SidebarProvider>

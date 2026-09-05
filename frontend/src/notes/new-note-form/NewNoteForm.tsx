@@ -36,7 +36,7 @@ function NewNoteForm() {
         children={(field) => {
           return (
             <Input
-              autoComplete="off"
+              autoComplete="new-password"
               placeholder="Name"
               value={field.state.value}
               onBlur={field.handleBlur}

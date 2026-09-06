@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
+from backend.notes.utils import to_utc
 from db.models import Note, Reminder, utcnow
 from db.setup import SessionDep
 
@@ -36,8 +37,7 @@ def create_note(body: NewNoteBody, session: SessionDep):
         name=body.name,
         content=body.content,
         reminders=[
-            Reminder(remind_at=reminder.astimezone(datetime.UTC))
-            for reminder in body.reminder_dates
+            Reminder(remind_at=to_utc(reminder)) for reminder in body.reminder_dates
         ],
         user_id=1,
     )

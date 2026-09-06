@@ -4,23 +4,15 @@ from typing import Annotated
 from pydantic import PlainSerializer
 from sqlmodel import SQLModel
 
+from backend.notes.utils import to_utc_iso
 
-def _to_utc_iso(dt: datetime.datetime) -> str:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.UTC)
-    else:
-        dt = dt.astimezone(datetime.UTC)
-    return dt.isoformat()
-
-
-UTCDateTime = Annotated[
-    datetime.datetime, PlainSerializer(_to_utc_iso, return_type=str)
-]
+UTCDateTime = Annotated[datetime.datetime, PlainSerializer(to_utc_iso, return_type=str)]
 
 
 class ReminderResponse(SQLModel):
     id: int
     remind_at: UTCDateTime
+    reviewed_at: UTCDateTime | None = None
 
 
 class NoteResponse(SQLModel):

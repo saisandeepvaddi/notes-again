@@ -43,6 +43,7 @@ class Reminder(SQLModel, table=True):
     created_at: datetime.datetime = Field(default_factory=utcnow)
     updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
+    reviewed_at: datetime.datetime | None = Field(default=None)
 
     note_id: int | None = Field(default=None, foreign_key="notes.id")
     note: Note | None = Relationship(back_populates="reminders")

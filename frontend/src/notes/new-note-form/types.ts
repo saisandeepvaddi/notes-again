@@ -20,6 +20,13 @@ export const NoteBaseSchema = z.object({
   content: z.string(),
 });
 
+export const NoteReminderSchema = z.object({
+  id: z.number(),
+  remind_at: z.coerce.date(),
+});
+
+export type NoteReminder = z.infer<typeof NoteReminderSchema>;
+
 export const NoteItemSchema = NoteBaseSchema.extend({
   id: z.number(),
   created_at: z.coerce.date(),
@@ -27,8 +34,7 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   reminders: z
     .array(
       z.object({
-        id: z.number(),
-        remind_at: z.coerce.date(),
+        NoteReminderSchema,
       }),
     )
     .default([]),

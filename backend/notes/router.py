@@ -35,7 +35,10 @@ def create_note(body: NewNoteBody, session: SessionDep):
     note = Note(
         name=body.name,
         content=body.content,
-        reminders=[Reminder(remind_at=reminder) for reminder in body.reminder_dates],
+        reminders=[
+            Reminder(remind_at=reminder.astimezone(datetime.UTC))
+            for reminder in body.reminder_dates
+        ],
         user_id=1,
     )
     session.add(note)

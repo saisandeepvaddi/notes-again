@@ -5,11 +5,12 @@ import { PlusIcon } from "lucide-react";
 export function NewNoteButton() {
   return (
     <Button
+      nativeButton={false}
       render={
         <Link to="/notes/new">
           <PlusIcon /> New Note
         </Link>
       }
-    ></Button>
+    />
   );
 }

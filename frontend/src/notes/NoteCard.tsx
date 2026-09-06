@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { formatRelative } from "date-fns";
 import { Trash2Icon } from "lucide-react";
 import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem } from "./new-note-form/types";
@@ -26,15 +25,7 @@ export function NoteCard({ note }: NoteCardProps) {
         <NoteContent markdown={note.content} />
       </CardContent>
       <CardFooter>
-        <div className="flex gap-2">
-          {note.reminders.map((reminder) => {
-            return (
-              <div key={reminder.id} className="truncate">
-                {formatRelative(reminder.remind_at, new Date())}
-              </div>
-            );
-          })}
-        </div>
+        <div className="flex gap-2"></div>
       </CardFooter>
     </Card>
   );

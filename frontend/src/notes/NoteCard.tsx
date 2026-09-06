@@ -4,6 +4,7 @@ import { Trash2Icon } from "lucide-react";
 import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
+import { NoteReminderList } from "./NoteReminderList";
 
 interface NoteCardProps {
   note: NoteItem;
@@ -25,7 +26,9 @@ export function NoteCard({ note }: NoteCardProps) {
         <NoteContent markdown={note.content} />
       </CardContent>
       <CardFooter>
-        <div className="flex gap-2"></div>
+        <div className="flex gap-2">
+          <NoteReminderList reminders={note.reminders} />
+        </div>
       </CardFooter>
     </Card>
   );

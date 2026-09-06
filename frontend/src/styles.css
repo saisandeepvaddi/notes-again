@@ -155,18 +155,18 @@ body {
     min-width: 0;
 
     & code {
-      @apply text-secondary-text bg-neutral-bgSubtle px-1;
+      @apply text-secondary px-1;
 
 
       &:before,
       &:after {
         content: none;
-        @apply text-accent-text;
+        @apply text-accent;
       }
     }
 
     & a {
-      @apply text-accent-text;
+      @apply text-shadow-emerald-400;
       text-decoration: none;
     }
 

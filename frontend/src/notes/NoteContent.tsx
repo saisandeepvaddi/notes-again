@@ -35,7 +35,7 @@ export function NoteContent({ markdown }: NoteContentProps) {
   }, [markdown]);
   return (
     <div
-      className="prose min-w-50 [&_h2]:font-semibold"
+      className="prose min-w-50 [&_h2]:font-semibold [&_a]:underline [&_a]:text-blue-600"
       dangerouslySetInnerHTML={{ __html: content }}
     />
   );

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { titleCase } from "@/utils/general";
 import { formatRelative } from "date-fns";
 import { useState } from "react";
 import { useUpdateReminder } from "./hooks/useUpdateReminder";
@@ -48,12 +49,13 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
       <AlertDialogTrigger
         render={
           <Button
+            size={"sm"}
             variant="outline"
             onClick={() => setOpen(true)}
-            className={"bg-green-300 outline-green-300 border-green-400"}
+            className={"bg-green-300/20 outline-green-300/20 border-green-400"}
           >
             <CheckIcon />
-            {formatRelative(reminder.remind_at, new Date())}
+            {titleCase(formatRelative(reminder.remind_at, new Date()))}
           </Button>
         }
       />

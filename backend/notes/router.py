@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
@@ -49,8 +49,29 @@ def create_note(body: NewNoteBody, session: SessionDep):
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_note(note_id: int, session: SessionDep):
-    note = session.exec(select(Note).where(Note.id == note_id)).one()
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
-    note.deleted_at = datetime.datetime.now(datetime.UTC)
+    note.deleted_at = utcnow()
     session.commit()
+
+
+class PatchReminderBody(BaseModel):
+    action: Literal["review", "undo_review"]
+
+
+@router.patch("/reminders/{reminder_id}/now", response_model=NoteResponse)
+def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: SessionDep):
+    # stmt = select(Note).where(Note.id == note_id)
+    # note = session.exec(stmt).one_or_none()
+    # if note is None or note.deleted_at is not None:
+    #         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    statement = select(Reminder).where(Reminder.id == reminder_id)
+    reminder = session.exec(statement=statement).one_or_none()
+    if reminder is None or reminder.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Reminder not found")
+    reminder.reviewed_at = utcnow() if body.action == "review" else None
+    session.commit()
+    session.refresh(reminder)
+    session.refresh(reminder.note)
+    return reminder.note

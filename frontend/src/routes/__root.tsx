@@ -1,11 +1,9 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
   type NotFoundRouteProps,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/toast";
@@ -49,7 +47,7 @@ function RootDocument() {
       </head>
       <body>
         <Layout />
-        <TanStackDevtools
+        {/* <TanStackDevtools
           config={{
             position: "bottom-right",
           }}
@@ -59,7 +57,7 @@ function RootDocument() {
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
-        />
+        /> */}
         <Scripts />
         <Toaster />
       </body>

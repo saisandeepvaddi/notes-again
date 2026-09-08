@@ -32,7 +32,7 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
   return await response.json();
 };
 
-export const postFetcher = (url: string, options?: FetcherOptions) => async (body: string) => {
+export const postFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "POST",
     headers: getHeaders(options?.headers),
@@ -44,7 +44,7 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
   return await response.json();
 };
 
-export const patchFetcher = (url: string, options?: FetcherOptions) => async (body: string) => {
+export const patchFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "PATCH",
     headers: getHeaders(options?.headers),

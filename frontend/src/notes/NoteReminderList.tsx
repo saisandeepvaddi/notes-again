@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatDistanceToNowStrict, formatRelative, isToday } from "date-fns";
 import { MarkableReminder } from "./MarkableReminder";
 import type { NoteReminder } from "./new-note-form/types";
+import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
   reminders: NoteReminder[];
@@ -18,7 +19,11 @@ export function NoteReminderList({ reminders }: NoteReminderListProps) {
   return (
     <div className="flex items-center gap-2">
       {todaysReminder ? (
-        <MarkableReminder reminder={todaysReminder} />
+        todaysReminder.reviewed_at ? (
+          <UndoMarkableReminder reminder={todaysReminder} />
+        ) : (
+          <MarkableReminder reminder={todaysReminder} />
+        )
       ) : (
         <Badge
           variant={"secondary"}

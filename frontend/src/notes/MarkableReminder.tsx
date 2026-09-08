@@ -17,22 +17,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { formatRelative } from "date-fns";
-import { useUpdateNote } from "./hooks/useUpdateNote";
+import { useState } from "react";
+import { useUpdateReminder } from "./hooks/useUpdateReminder";
 
 interface MarkableReminderProps {
-  noteId: number;
   reminder: NoteReminder;
 }
 
-export function MarkableReminder({ noteId, reminder }: MarkableReminderProps) {
-  const { mutateAsync: updateNote, isPending } = useUpdateNote({ noteId });
+export function MarkableReminder({ reminder }: MarkableReminderProps) {
+  const { mutateAsync: updateNote, isPending } = useUpdateReminder({ reminderId: reminder.id });
+  const [open, setOpen] = useState(false);
   const reviewNote = async () => {
     try {
       await updateNote({
-        reviewed_at: new Date(),
+        action: "review",
       });
+      setOpen(false);
     } catch (error) {
       console.error("error:", error);
+      setOpen(false);
       toast.add({
         type: "error",
         priority: "high",
@@ -41,9 +44,13 @@ export function MarkableReminder({ noteId, reminder }: MarkableReminderProps) {
     }
   };
   return (
-    <AlertDialog>
+    <AlertDialog open={open}>
       <AlertDialogTrigger
-        render={<Button variant="outline">{formatRelative(reminder.remind_at, new Date())}</Button>}
+        render={
+          <Button variant="outline" onClick={() => setOpen(true)}>
+            {formatRelative(reminder.remind_at, new Date())}
+          </Button>
+        }
       />
 
       <AlertDialogContent size="sm">
@@ -55,7 +62,9 @@ export function MarkableReminder({ noteId, reminder }: MarkableReminderProps) {
           <AlertDialogDescription>Did you review this note item today?</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Not Yet</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setOpen(false)} disabled={isPending}>
+            Not Yet
+          </AlertDialogCancel>
           <AlertDialogAction onClick={reviewNote} disabled={isPending}>
             Yes, Reviewed
           </AlertDialogAction>

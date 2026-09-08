@@ -157,7 +157,6 @@ body {
     & code {
       @apply text-secondary px-1;
 
-
       &:before,
       &:after {
         content: none;
@@ -182,16 +181,16 @@ body {
     }
 
     /* reset the prose borders */
-    & [data-lexical-decorator]>table {
+    & [data-lexical-decorator] > table {
       table-layout: fixed;
 
       & td {
         vertical-align: middle;
       }
 
-      &>thead,
-      &>tfoot,
-      &>tbody>tr {
+      & > thead,
+      & > tfoot,
+      & > tbody > tr {
         border: 0;
       }
 
@@ -202,7 +201,7 @@ body {
         vertical-align: middle;
       }
 
-      &>thead [data-tool-cell]:first-child {
+      & > thead [data-tool-cell]:first-child {
         vertical-align: middle;
       }
     }
@@ -217,7 +216,7 @@ body {
       font-size: inherit;
     }
 
-    & pre[class*="language-"]>code {
+    & pre[class*="language-"] > code {
       @apply text-sm;
       display: block;
     }
@@ -227,7 +226,7 @@ body {
       @apply text-xs;
     }
 
-    & [data-editor-type=frontmatter] {
+    & [data-editor-type="frontmatter"] {
       & table {
         margin: 0;
         font-size: inherit;
@@ -242,15 +241,15 @@ body {
       }
     }
 
-    & li[role=checkbox] {
+    & li[role="checkbox"] {
       text-indent: 1.2rem;
     }
 
-    & li[role=checkbox]::before {
+    & li[role="checkbox"]::before {
       transform: translate(6px, 6px);
     }
 
-    & li[role=checkbox]::after {
+    & li[role="checkbox"]::after {
       transform: translate(6px, 6px) rotate(45deg);
     }
   }

@@ -44,6 +44,18 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
   return await response.json();
 };
 
+export const patchFetcher = (url: string, options?: FetcherOptions) => async (body: string) => {
+  const response = await fetch(`${getURL()}${url}`, {
+    method: "PATCH",
+    headers: getHeaders(options?.headers),
+    body,
+  });
+  if (!response.ok) {
+    throw new Error(`Error with ${url} with code: ${response.status}`);
+  }
+  return await response.json();
+};
+
 export const deleteFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "DELETE",

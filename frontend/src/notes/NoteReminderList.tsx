@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDistanceToNowStrict, formatRelative, isToday } from "date-fns";
+import { MarkableReminder } from "./MarkableReminder";
 import type { NoteReminder } from "./new-note-form/types";
 
 interface NoteReminderListProps {
@@ -13,22 +14,23 @@ export function NoteReminderList({ reminders }: NoteReminderListProps) {
   if (count === 0) {
     return <>No Reminders</>;
   }
-  const first = reminders[0];
-  const isFirstReminderToday = isToday(first.remind_at);
+  const todaysReminder = reminders.find((reminder) => isToday(reminder.remind_at)) ?? reminders[0];
   return (
     <div className="flex items-center gap-2">
-      <Badge
-        variant={"secondary"}
-        className={
-          reminders[0].reviewed_at ? "text-green-600" : isFirstReminderToday ? "text-blue-600" : ""
-        }
-      >
-        {formatRelative(reminders[0].remind_at, new Date())}
-      </Badge>
+      {todaysReminder ? (
+        <MarkableReminder reminder={todaysReminder} />
+      ) : (
+        <Badge
+          variant={"secondary"}
+          className={reminders[0].reviewed_at ? "text-green-700" : "text-blue-600"}
+        >
+          {formatRelative(reminders[0].remind_at, new Date())}
+        </Badge>
+      )}
       <Popover>
         <PopoverTrigger
           render={
-            <Button size="xs" variant={"outline"}>
+            <Button size="sm" variant={"outline"}>
               + {reminders.length} more
             </Button>
           }

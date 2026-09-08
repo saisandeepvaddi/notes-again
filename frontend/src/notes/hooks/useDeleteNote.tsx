@@ -9,7 +9,6 @@ export function useDeleteNote({ noteId }: useDeleteNoteProps) {
   return useMutation({
     mutationKey: ["note-delete", noteId],
     mutationFn: async () => {
-      console.log(`/notes/${noteId}`);
       const fetcher = deleteFetcher(`/notes/${noteId}`);
       return await fetcher();
     },

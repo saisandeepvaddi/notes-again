@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import Layout from "@/components/layout/Layout";
+import { Toaster } from "@/components/ui/toast";
 import type { QueryClient } from "@tanstack/react-query";
 import appCss from "../styles.css?url";
 
@@ -60,6 +61,7 @@ function RootDocument() {
           ]}
         />
         <Scripts />
+        <Toaster />
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
 import { useAttachTag } from "./hooks/useAttachTag";
 import { useDeleteNote } from "./hooks/useDeleteNote";
@@ -32,7 +32,15 @@ export function NoteCard({ note }: NoteCardProps) {
   return (
     <Card className="h-fit">
       <CardHeader className="flex items-center justify-between gap-2">
-        <h2 className="truncate font-semibold text-sm">{note.name}</h2>
+        <h2 className="truncate font-semibold text-sm">
+          <Link
+            to="/notes/$noteId"
+            params={{ noteId: String(note.id) }}
+            className="hover:underline"
+          >
+            {note.name}
+          </Link>
+        </h2>
         <Button
           size="icon-xs"
           onClick={() => deleteNote()}
@@ -43,10 +51,14 @@ export function NoteCard({ note }: NoteCardProps) {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="relative max-h-28 overflow-hidden">
+        <Link
+          to="/notes/$noteId"
+          params={{ noteId: String(note.id) }}
+          className="relative block max-h-28 overflow-hidden"
+        >
           <NoteContent markdown={note.content} className="text-xs" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
-        </div>
+        </Link>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2">
         <NoteReminderList reminders={note.reminders} />

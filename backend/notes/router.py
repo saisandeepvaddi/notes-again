@@ -96,6 +96,14 @@ def get_due_notes(session: SessionDep):
     return notes
 
 
+@router.get("/{note_id}", response_model=NoteResponse)
+def get_note(note_id: int, session: SessionDep):
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    return note
+
+
 class NewNoteBody(BaseModel):
     name: str
     content: str
@@ -124,6 +132,25 @@ def create_note(body: NewNoteBody, session: SessionDep):
         tags=tags,
         user_id=1,
     )
+    session.add(note)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
+class UpdateNoteBody(BaseModel):
+    name: str
+    content: str
+
+
+@router.patch("/{note_id}", response_model=NoteResponse)
+def update_note(note_id: int, body: UpdateNoteBody, session: SessionDep):
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    note.name = body.name
+    note.content = body.content
+    note.updated_at = utcnow()
     session.add(note)
     session.commit()
     session.refresh(note)

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as TrashRouteImport } from './routes/trash'
 import { Route as NotesIndexRouteImport } from './routes/notes/index'
+import { Route as NotesNoteIdRouteImport } from './routes/notes/$noteId'
 import { Route as NotesNewRouteImport } from './routes/notes/new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const NotesIndexRoute = NotesIndexRouteImport.update({
   path: '/notes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotesNoteIdRoute = NotesNoteIdRouteImport.update({
+  id: '/notes/$noteId',
+  path: '/notes/$noteId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotesNewRoute = NotesNewRouteImport.update({
   id: '/notes/new',
   path: '/notes/new',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
   '/trash': typeof TrashRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
   '/notes/': typeof NotesIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
   '/trash': typeof TrashRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
   '/notes': typeof NotesIndexRoute
 }
@@ -60,21 +68,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
   '/trash': typeof TrashRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
   '/notes/': typeof NotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/review' | '/trash' | '/notes/new' | '/notes/'
+  fullPaths:
+    '/' | '/review' | '/trash' | '/notes/$noteId' | '/notes/new' | '/notes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/review' | '/trash' | '/notes/new' | '/notes'
-  id: '__root__' | '/' | '/review' | '/trash' | '/notes/new' | '/notes/'
+  to: '/' | '/review' | '/trash' | '/notes/$noteId' | '/notes/new' | '/notes'
+  id:
+    | '__root__'
+    | '/'
+    | '/review'
+    | '/trash'
+    | '/notes/$noteId'
+    | '/notes/new'
+    | '/notes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ReviewRoute: typeof ReviewRoute
   TrashRoute: typeof TrashRoute
+  NotesNoteIdRoute: typeof NotesNoteIdRoute
   NotesNewRoute: typeof NotesNewRoute
   NotesIndexRoute: typeof NotesIndexRoute
 }
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes/$noteId': {
+      id: '/notes/$noteId'
+      path: '/notes/$noteId'
+      fullPath: '/notes/$noteId'
+      preLoaderRoute: typeof NotesNoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notes/new': {
       id: '/notes/new'
       path: '/notes/new'
@@ -123,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ReviewRoute: ReviewRoute,
   TrashRoute: TrashRoute,
+  NotesNoteIdRoute: NotesNoteIdRoute,
   NotesNewRoute: NotesNewRoute,
   NotesIndexRoute: NotesIndexRoute,
 }

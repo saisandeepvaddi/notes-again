@@ -69,7 +69,7 @@ export function ReviewCalendar() {
       // up click handling) when it considers days "interactive," which
       // requires a mode or onDayClick prop here at the DayPicker level.
       onDayClick={(date) => navigate({ to: "/notes", search: (prev) => ({ ...prev, date }) })}
-      className="w-full [--cell-size:--spacing(11)]"
+      className="w-full max-w-4xl [--cell-size:--spacing(16)]"
       classNames={{ root: "w-full", month: "w-full", month_grid: "w-full" }}
       components={{
         DayButton: (props) => <DayButtonWithInfo {...props} calendarData={calendarData} />,

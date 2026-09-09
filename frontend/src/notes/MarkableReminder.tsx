@@ -1,6 +1,6 @@
 import type { NoteReminder } from "./new-note-form/types";
 
-import { CheckIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { formatRelative } from "date-fns";
+import { differenceInCalendarDays, formatRelative } from "date-fns";
 import { useState } from "react";
 import { RatingButtons } from "./RatingButtons";
 
@@ -24,29 +24,51 @@ interface MarkableReminderProps {
 
 export function MarkableReminder({ reminder }: MarkableReminderProps) {
   const [open, setOpen] = useState(false);
+  const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));
+  const isOverdue = daysOverdue > 0;
+
   return (
     <AlertDialog open={open}>
       <AlertDialogTrigger
         render={
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            {formatRelative(reminder.remind_at, new Date())}
+          <Button
+            size="sm"
+            variant={isOverdue ? "destructive" : "outline"}
+            onClick={() => setOpen(true)}
+          >
+            {isOverdue ? (
+              <>
+                <AlertTriangleIcon />
+                {daysOverdue} day{daysOverdue === 1 ? "" : "s"} overdue
+              </>
+            ) : (
+              formatRelative(reminder.remind_at, new Date())
+            )}
           </Button>
         }
       />
 
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogMedia>
-            <CheckIcon />
+          <AlertDialogMedia className={isOverdue ? "bg-destructive/10 text-destructive" : ""}>
+            {isOverdue ? <AlertTriangleIcon /> : <CheckIcon />}
           </AlertDialogMedia>
-          <AlertDialogTitle>How did it go?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isOverdue
+              ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`
+              : "How did it go?"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Rate how well you recalled this note. It'll come back sooner or later depending on your
             answer.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <RatingButtons reminderId={reminder.id} onRated={() => setOpen(false)} />
+        <RatingButtons
+          reminderId={reminder.id}
+          onRated={() => setOpen(false)}
+          className="grid grid-cols-2 gap-2"
+        />
+        <AlertDialogFooter className="grid-cols-1">
           <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>

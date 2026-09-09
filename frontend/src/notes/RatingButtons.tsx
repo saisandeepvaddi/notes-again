@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import type { Rating } from "./new-note-form/types";
 import { useUpdateReminder } from "./hooks/useUpdateReminder";
 
 interface RatingButtonsProps {
   reminderId: number;
   onRated?: () => void;
+  className?: string;
 }
 
 const RATINGS: {
@@ -19,7 +21,7 @@ const RATINGS: {
   { value: "easy", label: "Easy", variant: "secondary" },
 ];
 
-export function RatingButtons({ reminderId, onRated }: RatingButtonsProps) {
+export function RatingButtons({ reminderId, onRated, className }: RatingButtonsProps) {
   const { mutateAsync, isPending } = useUpdateReminder({ reminderId });
 
   const rate = async (rating: Rating) => {
@@ -37,7 +39,7 @@ export function RatingButtons({ reminderId, onRated }: RatingButtonsProps) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className={cn("flex gap-2", className)}>
       {RATINGS.map((rating) => (
         <Button
           key={rating.value}

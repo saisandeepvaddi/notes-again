@@ -41,7 +41,7 @@ export function NoteReminderList({ reminders }: NoteReminderListProps) {
           }
         />
         <PopoverContent>
-          <ul className="list-disc flex flex-col gap-2">
+          <ul className="list-none flex flex-col gap-2">
             {reminders.slice(1).map((reminder) => {
               return (
                 <li key={reminder.id} className="text-zinc-700">

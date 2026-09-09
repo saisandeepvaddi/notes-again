@@ -4,7 +4,7 @@ from typing import Any, Literal, cast
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlmodel import col, func, select
 
 from backend.notes.utils import to_utc
 from db.models import Note, Reminder, utcnow
@@ -16,12 +16,35 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 
 
 @router.get("/list", response_model=list[NoteResponse])
-def get_notes(session: SessionDep):
-    notes = session.exec(
+def get_notes(session: SessionDep, date: str | None = None):
+    if date:
+        statement = (
+            select(Reminder)
+            .join(Note, col(Reminder.note_id) == col(Note.id))
+            .where(
+                func.date(Reminder.remind_at)
+                == to_utc(datetime.datetime.fromisoformat(date)).date(),
+                col(Note.deleted_at).is_(None),
+                col(Reminder.deleted_at).is_(None),
+            )
+        )
+        reminders = session.exec(statement).all()
+        seen = set()
+        notes: list[Note] = []
+        for reminder in reminders:
+            if reminder.note is not None and reminder.note.id not in seen:
+                notes.append(reminder.note)
+                seen.add(reminder.note.id)
+        return notes
+
+    statement = (
         select(Note)
-        .where(col(Note.deleted_at).is_(None))
+        .where(
+            col(Note.deleted_at).is_(None),
+        )
         .options(selectinload(cast(Any, Note.reminders)))
-    ).all()
+    )
+    notes = list(session.exec(statement=statement).all())
     return notes
 
 
@@ -62,10 +85,6 @@ class PatchReminderBody(BaseModel):
 
 @router.patch("/reminders/{reminder_id}/now", response_model=NoteResponse)
 def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: SessionDep):
-    # stmt = select(Note).where(Note.id == note_id)
-    # note = session.exec(stmt).one_or_none()
-    # if note is None or note.deleted_at is not None:
-    #         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
     statement = select(Reminder).where(Reminder.id == reminder_id)
     reminder = session.exec(statement=statement).one_or_none()
     if reminder is None or reminder.deleted_at is not None:

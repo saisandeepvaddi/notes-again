@@ -2,11 +2,24 @@ import { getFetcher } from "@/utils/fetchers";
 import { useSuspenseQuery, type UseSuspenseQueryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { NoteItemSchema, type NoteItem } from "../new-note-form/types";
-const getUseNotesOptions = (): UseSuspenseQueryOptions<NoteItem[]> => {
+
+export interface GetUseNotesOptionsArgs {
+  date?: Date;
+}
+
+const getUseNotesOptions = (
+  options?: GetUseNotesOptionsArgs,
+): UseSuspenseQueryOptions<NoteItem[]> => {
+  const { date } = options ?? { date: undefined };
+  const dateValue = date
+    ? [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+        .map((part) => part.toString().padStart(2, "0"))
+        .join("-")
+    : undefined;
   return {
-    queryKey: ["notes"],
+    queryKey: ["notes", dateValue],
     queryFn: () =>
-      getFetcher("/notes/list")()
+      getFetcher(dateValue ? `/notes/list?date=${encodeURIComponent(dateValue)}` : `/notes/list`)()
         .then((notes) => {
           return z.array(NoteItemSchema).parse(notes);
         })
@@ -17,6 +30,6 @@ const getUseNotesOptions = (): UseSuspenseQueryOptions<NoteItem[]> => {
   };
 };
 
-export function useNotes() {
-  return useSuspenseQuery<NoteItem[]>(getUseNotesOptions());
+export function useNotes(options?: GetUseNotesOptionsArgs) {
+  return useSuspenseQuery<NoteItem[]>(getUseNotesOptions(options));
 }

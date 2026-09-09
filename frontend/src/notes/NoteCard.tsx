@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
 import { useAttachTag } from "./hooks/useAttachTag";
 import { useDeleteNote } from "./hooks/useDeleteNote";
@@ -14,6 +15,7 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note }: NoteCardProps) {
+  const navigate = useNavigate();
   const { mutateAsync: deleteNote } = useDeleteNote({
     noteId: note.id,
   });
@@ -26,6 +28,7 @@ export function NoteCard({ note }: NoteCardProps) {
       attachTag(tag.id);
     }
   };
+  const goToTag = (tag: Tag) => navigate({ to: "/notes", search: { tagId: tag.id } });
   return (
     <Card className="h-fit">
       <CardHeader className="flex items-center justify-between gap-2">
@@ -47,7 +50,7 @@ export function NoteCard({ note }: NoteCardProps) {
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2">
         <NoteReminderList reminders={note.reminders} />
-        <TagPicker selectedTags={note.tags} onToggle={toggleTag} />
+        <TagPicker selectedTags={note.tags} onToggle={toggleTag} onTagClick={goToTag} />
       </CardFooter>
     </Card>
   );

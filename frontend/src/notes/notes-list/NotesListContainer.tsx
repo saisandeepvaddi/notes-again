@@ -2,12 +2,16 @@ import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import NotesList from "./NotesList";
 
-export function NotesListContainer() {
+interface NotesListContainerProps {
+  tagId?: number;
+}
+
+export function NotesListContainer({ tagId }: NotesListContainerProps) {
   return (
     <Suspense fallback={<>Loading...</>}>
       <div className="py-2 w-full h-full">
         <ClientOnly>
-          <NotesList />
+          <NotesList tagId={tagId} />
         </ClientOnly>
       </div>
     </Suspense>

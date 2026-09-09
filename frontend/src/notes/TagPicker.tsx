@@ -18,10 +18,16 @@ import type { Tag } from "./new-note-form/types";
 interface TagPickerProps {
   selectedTags: Tag[];
   onToggle: (tag: Tag) => void;
+  onTagClick?: (tag: Tag) => void;
   triggerLabel?: string;
 }
 
-export function TagPicker({ selectedTags, onToggle, triggerLabel = "Tag" }: TagPickerProps) {
+export function TagPicker({
+  selectedTags,
+  onToggle,
+  onTagClick,
+  triggerLabel = "Tag",
+}: TagPickerProps) {
   const { data: tags = [] } = useTags();
   const { mutateAsync: createTag, isPending: isCreating } = useCreateTag();
   const [open, setOpen] = useState(false);
@@ -42,7 +48,13 @@ export function TagPicker({ selectedTags, onToggle, triggerLabel = "Tag" }: TagP
     <div className="flex flex-wrap items-center gap-2">
       {selectedTags.map((tag) => (
         <Badge key={tag.id} variant="secondary" className="gap-1">
-          {tag.name}
+          {onTagClick ? (
+            <button type="button" onClick={() => onTagClick(tag)} className="hover:underline">
+              {tag.name}
+            </button>
+          ) : (
+            tag.name
+          )}
           <button
             type="button"
             onClick={() => onToggle(tag)}

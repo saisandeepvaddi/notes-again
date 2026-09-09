@@ -4,7 +4,6 @@ import { CheckIcon } from "lucide-react";
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,34 +14,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
 import { formatRelative } from "date-fns";
 import { useState } from "react";
-import { useUpdateReminder } from "./hooks/useUpdateReminder";
+import { RatingButtons } from "./RatingButtons";
 
 interface MarkableReminderProps {
   reminder: NoteReminder;
 }
 
 export function MarkableReminder({ reminder }: MarkableReminderProps) {
-  const { mutateAsync: updateNote, isPending } = useUpdateReminder({ reminderId: reminder.id });
   const [open, setOpen] = useState(false);
-  const reviewNote = async () => {
-    try {
-      await updateNote({
-        action: "review",
-      });
-      setOpen(false);
-    } catch (error) {
-      console.error("error:", error);
-      setOpen(false);
-      toast.add({
-        type: "error",
-        priority: "high",
-        description: "Failed to update",
-      });
-    }
-  };
   return (
     <AlertDialog open={open}>
       <AlertDialogTrigger
@@ -58,16 +39,15 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
           <AlertDialogMedia>
             <CheckIcon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Did you review it?</AlertDialogTitle>
-          <AlertDialogDescription>Did you review this note item today?</AlertDialogDescription>
+          <AlertDialogTitle>How did it go?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Rate how well you recalled this note. It'll come back sooner or later depending on your
+            answer.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setOpen(false)} disabled={isPending}>
-            Not Yet
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={reviewNote} disabled={isPending}>
-            Yes, Reviewed
-          </AlertDialogAction>
+          <RatingButtons reminderId={reminder.id} onRated={() => setOpen(false)} />
+          <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

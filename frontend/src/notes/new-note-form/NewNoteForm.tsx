@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
-import { getDefaultReminderDates } from "@/utils/dates";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { TagPicker } from "../TagPicker";
+import type { Tag } from "./types";
 import NewNoteContent from "./NewNoteContent";
 import { newNoteFormOptions, useAppForm } from "./new-note-form-utils";
 import { useCreateNewNote } from "./useCreateNewNote";
@@ -8,14 +10,22 @@ import { useCreateNewNote } from "./useCreateNewNote";
 function NewNoteForm() {
   const { mutateAsync, isPending } = useCreateNewNote();
   const navigate = useNavigate();
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const toggleTag = (tag: Tag) => {
+    setSelectedTags((current) =>
+      current.some((selected) => selected.id === tag.id)
+        ? current.filter((selected) => selected.id !== tag.id)
+        : [...current, tag],
+    );
+  };
   const form = useAppForm({
     ...newNoteFormOptions,
     onSubmit: async ({ value }) => {
-      console.log("value:", value);
       await mutateAsync({
         name: value.name,
         content: value.content,
-        reminder_dates: getDefaultReminderDates(),
+        first_reminder_at: new Date(),
+        tag_ids: selectedTags.map((tag) => tag.id),
       });
       navigate({
         to: "/",
@@ -46,6 +56,7 @@ function NewNoteForm() {
         }}
       />
       <NewNoteContent form={form} />
+      <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
       <form.AppForm>
         <span>
           <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />

@@ -3,10 +3,9 @@ export const { fieldContext, useFieldContext, formContext, useFormContext } =
   createFormHookContexts();
 
 import { Button } from "@/components/ui/button";
-import { getDefaultReminderDates } from "@/utils/dates";
 import { createFormHook } from "@tanstack/react-form";
 import type { ComponentProps } from "react";
-import { NewNoteBodySchema, type NewNoteBody } from "./types";
+import { NoteBaseSchema, type NoteBase } from "./types";
 
 function SubmitButton({ label, ...props }: { label: string } & ComponentProps<typeof Button>) {
   const form = useFormContext();
@@ -21,16 +20,15 @@ function SubmitButton({ label, ...props }: { label: string } & ComponentProps<ty
   );
 }
 
-const defaultNote: NewNoteBody = {
+const defaultNote: NoteBase = {
   name: "",
   content: "",
-  reminder_dates: getDefaultReminderDates(),
 };
 
 export const newNoteFormOptions = formOptions({
   defaultValues: defaultNote,
   validators: {
-    onChange: NewNoteBodySchema,
+    onChange: NoteBaseSchema,
   },
 });
 

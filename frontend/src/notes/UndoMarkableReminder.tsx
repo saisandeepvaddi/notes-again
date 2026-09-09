@@ -55,7 +55,10 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
             className={"bg-green-300/20 outline-green-300/20 border-green-400"}
           >
             <CheckIcon />
-            {titleCase(formatRelative(reminder.remind_at, new Date()))}
+            {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}
+            {reminder.reviewed_at
+              ? ` · ${titleCase(formatRelative(reminder.reviewed_at, new Date()))}`
+              : ""}
           </Button>
         }
       />

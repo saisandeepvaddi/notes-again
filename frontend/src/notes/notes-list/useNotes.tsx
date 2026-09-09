@@ -11,15 +11,23 @@ const getUseNotesOptions = (
   options?: GetUseNotesOptionsArgs,
 ): UseSuspenseQueryOptions<NoteItem[]> => {
   const { date } = options ?? { date: undefined };
-  const dateValue = date
-    ? [date.getFullYear(), date.getMonth() + 1, date.getDate()]
-        .map((part) => part.toString().padStart(2, "0"))
-        .join("-")
+  const dateRange = date
+    ? {
+        start: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+        end: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
+      }
+    : undefined;
+  const queryKey = dateRange
+    ? [dateRange.start.toISOString(), dateRange.end.toISOString()]
     : undefined;
   return {
-    queryKey: ["notes", dateValue],
+    queryKey: ["notes", queryKey],
     queryFn: () =>
-      getFetcher(dateValue ? `/notes/list?date=${encodeURIComponent(dateValue)}` : `/notes/list`)()
+      getFetcher(
+        dateRange
+          ? `/notes/list?start=${encodeURIComponent(dateRange.start.toISOString())}&end=${encodeURIComponent(dateRange.end.toISOString())}`
+          : `/notes/list`,
+      )()
         .then((notes) => {
           return z.array(NoteItemSchema).parse(notes);
         })

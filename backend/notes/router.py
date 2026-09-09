@@ -4,7 +4,7 @@ from typing import Any, Literal, cast
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, func, select
+from sqlmodel import col, select
 
 from backend.notes.utils import to_utc
 from db.models import Note, Reminder, utcnow
@@ -16,14 +16,20 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 
 
 @router.get("/list", response_model=list[NoteResponse])
-def get_notes(session: SessionDep, date: str | None = None):
-    if date:
+def get_notes(
+    session: SessionDep,
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
+):
+    if start is not None and end is not None:
+        start_utc = to_utc(start).replace(tzinfo=None)
+        end_utc = to_utc(end).replace(tzinfo=None)
         statement = (
             select(Reminder)
             .join(Note, col(Reminder.note_id) == col(Note.id))
             .where(
-                func.date(Reminder.remind_at)
-                == to_utc(datetime.datetime.fromisoformat(date)).date(),
+                col(Reminder.remind_at) >= start_utc,
+                col(Reminder.remind_at) < end_utc,
                 col(Note.deleted_at).is_(None),
                 col(Reminder.deleted_at).is_(None),
             )

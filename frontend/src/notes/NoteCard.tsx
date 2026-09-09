@@ -27,20 +27,26 @@ export function NoteCard({ note }: NoteCardProps) {
     }
   };
   return (
-    <Card>
-      <CardHeader className="flex items-center justify-between font-semibold text-xl">
-        <h2>{note.name}</h2>
-        <Button size="icon-sm" onClick={() => deleteNote()} variant={"destructive"}>
+    <Card className="h-fit">
+      <CardHeader className="flex items-center justify-between gap-2">
+        <h2 className="truncate font-semibold text-sm">{note.name}</h2>
+        <Button
+          size="icon-xs"
+          onClick={() => deleteNote()}
+          variant="ghost"
+          className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/card:opacity-100"
+        >
           <Trash2Icon />
         </Button>
       </CardHeader>
       <CardContent>
-        <NoteContent markdown={note.content} />
+        <div className="relative max-h-28 overflow-hidden">
+          <NoteContent markdown={note.content} className="text-xs" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2">
-        <div className="flex gap-2">
-          <NoteReminderList reminders={note.reminders} />
-        </div>
+        <NoteReminderList reminders={note.reminders} />
         <TagPicker selectedTags={note.tags} onToggle={toggleTag} />
       </CardFooter>
     </Card>

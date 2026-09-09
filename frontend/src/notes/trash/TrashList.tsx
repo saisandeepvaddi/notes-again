@@ -1,3 +1,4 @@
+import { NoteGrid } from "../NoteGrid";
 import { TrashedNoteCard } from "./TrashedNoteCard";
 import { useTrashedNotes } from "./useTrashedNotes";
 
@@ -9,10 +10,10 @@ export function TrashList() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 w-full">
+    <NoteGrid>
       {notes.map((note) => (
         <TrashedNoteCard key={note.id} note={note} />
       ))}
-    </div>
+    </NoteGrid>
   );
 }

@@ -28,7 +28,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
     <AlertDialog open={open}>
       <AlertDialogTrigger
         render={
-          <Button variant="outline" onClick={() => setOpen(true)}>
+          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
             {formatRelative(reminder.remind_at, new Date())}
           </Button>
         }

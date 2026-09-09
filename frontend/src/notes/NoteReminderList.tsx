@@ -25,7 +25,7 @@ export function NoteReminderList({ reminders }: NoteReminderListProps) {
   const canUndoLastReview = lastReview?.reviewed_at != null && isToday(lastReview.reviewed_at);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1.5">
       {canUndoLastReview && <UndoMarkableReminder reminder={lastReview} />}
       {pending &&
         (isFuture(pending.remind_at) ? (

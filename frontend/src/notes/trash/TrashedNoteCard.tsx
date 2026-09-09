@@ -54,12 +54,15 @@ export function TrashedNoteCard({ note }: TrashedNoteCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex items-center justify-between font-semibold text-xl">
-        <h2>{note.name}</h2>
+    <Card className="h-fit">
+      <CardHeader>
+        <h2 className="truncate font-semibold text-sm">{note.name}</h2>
       </CardHeader>
       <CardContent>
-        <NoteContent markdown={note.content} />
+        <div className="relative max-h-28 overflow-hidden">
+          <NoteContent markdown={note.content} className="text-xs" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
+        </div>
       </CardContent>
       <CardFooter className="flex gap-2">
         <Button size="sm" variant="outline" onClick={restore} disabled={isRestoring}>

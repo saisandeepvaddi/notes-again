@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import Shiki from "@shikijs/markdown-exit";
 import { createMarkdownExit } from "markdown-exit";
 import { useEffect, useState } from "react";
@@ -15,9 +16,10 @@ md.use(
 
 interface NoteContentProps {
   markdown: string;
+  className?: string;
 }
 
-export function NoteContent({ markdown }: NoteContentProps) {
+export function NoteContent({ markdown, className }: NoteContentProps) {
   const [content, setContent] = useState<string>("");
   useEffect(() => {
     if (markdown.length === 0) {
@@ -35,7 +37,10 @@ export function NoteContent({ markdown }: NoteContentProps) {
   }, [markdown]);
   return (
     <div
-      className="prose min-w-50 [&_h2]:font-semibold [&_a]:underline [&_a]:text-blue-600"
+      className={cn(
+        "prose w-full max-w-none [&_h2]:font-semibold [&_a]:text-blue-600 [&_a]:underline",
+        className,
+      )}
       dangerouslySetInnerHTML={{ __html: content }}
     />
   );

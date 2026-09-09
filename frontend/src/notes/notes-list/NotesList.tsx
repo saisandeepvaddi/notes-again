@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { isNone } from "@/utils/general";
+import { format, isToday } from "date-fns";
 import { useState } from "react";
 import { NoteCard } from "../NoteCard";
 import { NoteGrid } from "../NoteGrid";
@@ -8,10 +9,11 @@ import { useNotes } from "./useNotes";
 
 interface NotesListProps {
   tagId?: number;
+  initialDate?: Date;
 }
 
-function NotesList({ tagId }: NotesListProps) {
-  const [noteDate, setNoteDate] = useState<Date | undefined>(undefined);
+function NotesList({ tagId, initialDate }: NotesListProps) {
+  const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
   const { data: notes } = useNotes({
     date: noteDate,
     tagId,
@@ -26,7 +28,7 @@ function NotesList({ tagId }: NotesListProps) {
           </Button>
         ) : (
           <Button size="sm" variant="outline" onClick={() => setNoteDate(undefined)}>
-            Show All
+            Show All (currently: {isToday(noteDate) ? "today" : format(noteDate, "MMM d")})
           </Button>
         )}
       </div>

@@ -30,6 +30,11 @@ class Tag(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     created_at: datetime.datetime = Field(default_factory=utcnow)
 
+    # difficulty tags (Easy/Medium/Hard) are seeded built-ins, sticky on every
+    # note, and set a note's starting SM-2 ease factor when applied
+    is_difficulty: bool = Field(default=False)
+    default_ease_factor: float | None = Field(default=None)
+
     notes: list["Note"] = Relationship(back_populates="tags", link_model=NoteTag)
 
 

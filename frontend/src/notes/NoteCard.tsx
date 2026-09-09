@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
+import { DifficultySelector } from "./DifficultySelector";
+import { getDifficulty } from "./difficulty";
 import { useAttachTag } from "./hooks/useAttachTag";
 import { useDeleteNote } from "./hooks/useDeleteNote";
 import { useDetachTag } from "./hooks/useDetachTag";
@@ -21,6 +23,7 @@ export function NoteCard({ note }: NoteCardProps) {
   });
   const { mutateAsync: attachTag } = useAttachTag({ noteId: note.id });
   const { mutateAsync: detachTag } = useDetachTag({ noteId: note.id });
+  const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
       detachTag(tag.id);
@@ -62,7 +65,10 @@ export function NoteCard({ note }: NoteCardProps) {
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2">
         <NoteReminderList reminders={note.reminders} />
-        <TagPicker selectedTags={note.tags} onToggle={toggleTag} onTagClick={goToTag} />
+        <div className="flex flex-wrap items-center gap-2">
+          <DifficultySelector noteId={note.id} difficulty={getDifficulty(note.tags)} />
+          <TagPicker selectedTags={regularTags} onToggle={toggleTag} onTagClick={goToTag} />
+        </div>
       </CardFooter>
     </Card>
   );

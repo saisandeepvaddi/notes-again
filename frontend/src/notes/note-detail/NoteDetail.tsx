@@ -4,6 +4,8 @@ import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
+import { DifficultySelector } from "../DifficultySelector";
+import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
@@ -30,6 +32,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
+  const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
 
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
@@ -109,7 +112,10 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
 
       <div className="flex flex-col gap-2">
         <NoteReminderList reminders={note.reminders} />
-        <TagPicker selectedTags={note.tags} onToggle={toggleTag} />
+        <div className="flex flex-wrap items-center gap-2">
+          <DifficultySelector noteId={note.id} difficulty={getDifficulty(note.tags)} />
+          <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
+        </div>
       </div>
 
       {isEditing ? (

@@ -1,8 +1,11 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "../difficulty";
 import { TagPicker } from "../TagPicker";
-import type { Tag } from "./types";
+import type { Difficulty, Tag } from "./types";
 import NewNoteContent from "./NewNoteContent";
 import { newNoteFormOptions, useAppForm } from "./new-note-form-utils";
 import { useCreateNewNote } from "./useCreateNewNote";
@@ -11,6 +14,7 @@ function NewNoteForm() {
   const { mutateAsync, isPending } = useCreateNewNote();
   const navigate = useNavigate();
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const toggleTag = (tag: Tag) => {
     setSelectedTags((current) =>
       current.some((selected) => selected.id === tag.id)
@@ -26,6 +30,7 @@ function NewNoteForm() {
         content: value.content,
         first_reminder_at: new Date(),
         tag_ids: selectedTags.map((tag) => tag.id),
+        difficulty,
       });
       navigate({
         to: "/",
@@ -56,6 +61,21 @@ function NewNoteForm() {
         }}
       />
       <NewNoteContent form={form} />
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Difficulty</span>
+        {DIFFICULTY_OPTIONS.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setDifficulty(option.value)}
+            className={cn(difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value])}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
       <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
       <form.AppForm>
         <span>

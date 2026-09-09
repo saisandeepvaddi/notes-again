@@ -4,16 +4,25 @@ from typing import Any, Literal, cast
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlmodel import Session, col, select
 
 from backend.notes.srs import Rating, compute_next_review
 from backend.notes.utils import to_utc
+from backend.tags.difficulty import DIFFICULTY_TAGS, Difficulty
 from db.models import Note, NoteTag, Reminder, Tag, utcnow
 from db.setup import SessionDep
 
 from .schema import NoteResponse
 
 router = APIRouter(prefix="/notes", tags=["notes"])
+
+
+def get_difficulty_tag(session: Session, difficulty: Difficulty) -> Tag:
+    name = DIFFICULTY_TAGS[difficulty].name
+    tag = session.exec(select(Tag).where(Tag.name == name)).one_or_none()
+    if tag is None:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Difficulty tag missing")
+    return tag
 
 
 @router.get("/list", response_model=list[NoteResponse])
@@ -109,6 +118,7 @@ class NewNoteBody(BaseModel):
     content: str
     first_reminder_at: datetime.datetime = Field(default_factory=utcnow)
     tag_ids: list[int] = Field(default_factory=list)
+    difficulty: Difficulty = "medium"
 
 
 @router.post("/create", response_model=NoteResponse)
@@ -116,16 +126,22 @@ def create_note(body: NewNoteBody, session: SessionDep):
     tags: list[Tag] = []
     if body.tag_ids:
         tags = list(session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all())
+    # difficulty is sticky and applied separately, never via arbitrary tag_ids
+    tags = [tag for tag in tags if not tag.is_difficulty]
+
+    difficulty_tag = get_difficulty_tag(session, body.difficulty)
+    ease_factor = difficulty_tag.default_ease_factor or 2.5
+    tags.append(difficulty_tag)
 
     note = Note(
         name=body.name,
         content=body.content,
-        ease_factor=2.5,
+        ease_factor=ease_factor,
         interval_days=0,
         reminders=[
             Reminder(
                 remind_at=to_utc(body.first_reminder_at),
-                ease_factor=2.5,
+                ease_factor=ease_factor,
                 interval_days=0,
             )
         ],
@@ -194,6 +210,11 @@ def attach_tag(note_id: int, tag_id: int, session: SessionDep):
     tag = session.exec(select(Tag).where(Tag.id == tag_id)).one_or_none()
     if tag is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tag not found")
+    if tag.is_difficulty:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Use PATCH /notes/{note_id}/difficulty to change a note's difficulty",
+        )
     if tag not in note.tags:
         note.tags.append(tag)
         session.add(note)
@@ -207,7 +228,29 @@ def detach_tag(note_id: int, tag_id: int, session: SessionDep):
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    target = next((tag for tag in note.tags if tag.id == tag_id), None)
+    if target is not None and target.is_difficulty:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Difficulty tags can't be removed directly")
     note.tags = [tag for tag in note.tags if tag.id != tag_id]
+    session.add(note)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
+class SetDifficultyBody(BaseModel):
+    difficulty: Difficulty
+
+
+@router.patch("/{note_id}/difficulty", response_model=NoteResponse)
+def set_note_difficulty(note_id: int, body: SetDifficultyBody, session: SessionDep):
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+
+    new_tag = get_difficulty_tag(session, body.difficulty)
+    note.tags = [tag for tag in note.tags if not tag.is_difficulty] + [new_tag]
+    note.ease_factor = new_tag.default_ease_factor or note.ease_factor
     session.add(note)
     session.commit()
     session.refresh(note)

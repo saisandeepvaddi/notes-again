@@ -3,9 +3,13 @@ import { z } from "zod";
 export const RatingSchema = z.enum(["again", "hard", "good", "easy"]);
 export type Rating = z.infer<typeof RatingSchema>;
 
+export const DifficultySchema = z.enum(["easy", "medium", "hard"]);
+export type Difficulty = z.infer<typeof DifficultySchema>;
+
 export const TagSchema = z.object({
   id: z.number(),
   name: z.string(),
+  is_difficulty: z.boolean(),
 });
 
 export type Tag = z.infer<typeof TagSchema>;
@@ -44,6 +48,7 @@ export type NoteBase = z.infer<typeof NoteBaseSchema>;
 export const NewNoteBodySchema = NoteBaseSchema.extend({
   first_reminder_at: z.date(),
   tag_ids: z.array(z.number()).default([]),
+  difficulty: DifficultySchema.default("medium"),
 });
 
 export type NewNoteBody = z.infer<typeof NewNoteBodySchema>;

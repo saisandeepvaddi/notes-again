@@ -2,13 +2,15 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 from fastapi import Depends, Request
 from sqlalchemy import Engine, func, inspect, text
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
-from db.models import Reminder, User
+from backend.tags.difficulty import DIFFICULTY_TAGS
+from db.models import Note, Reminder, Tag, User
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -56,6 +58,10 @@ def add_missing_columns(engine: Engine) -> None:
             ("ease_factor", "REAL"),
             ("interval_days", "INTEGER"),
         ],
+        "tags": [
+            ("is_difficulty", "BOOLEAN NOT NULL DEFAULT 0"),
+            ("default_ease_factor", "REAL"),
+        ],
     }
     with engine.begin() as conn:
         for table, columns in migrations.items():
@@ -101,10 +107,54 @@ def collapse_legacy_pending_reminders(engine: Engine) -> None:
         session.commit()
 
 
+def seed_difficulty_tags(engine: Engine) -> None:
+    """Ensures the built-in Easy/Medium/Hard difficulty tags exist."""
+    with Session(engine) as session:
+        for defaults in DIFFICULTY_TAGS.values():
+            tag = session.exec(select(Tag).where(Tag.name == defaults.name)).one_or_none()
+            if tag is None:
+                session.add(
+                    Tag(
+                        name=defaults.name,
+                        is_difficulty=True,
+                        default_ease_factor=defaults.default_ease_factor,
+                    )
+                )
+            elif not tag.is_difficulty:
+                tag.is_difficulty = True
+                tag.default_ease_factor = defaults.default_ease_factor
+                session.add(tag)
+        session.commit()
+
+
+def backfill_note_difficulty(engine: Engine) -> None:
+    """Every note needs exactly one difficulty tag; defaults existing notes to Medium."""
+    with Session(engine) as session:
+        medium = session.exec(
+            select(Tag).where(Tag.name == DIFFICULTY_TAGS["medium"].name)
+        ).one()
+        difficulty_tag_ids = {
+            tag.id
+            for tag in session.exec(select(Tag).where(col(Tag.is_difficulty).is_(True))).all()
+        }
+        notes = session.exec(
+            select(Note)
+            .where(col(Note.deleted_at).is_(None))
+            .options(selectinload(cast(Any, Note.tags)))
+        ).all()
+        for note in notes:
+            if not any(tag.id in difficulty_tag_ids for tag in note.tags):
+                note.tags.append(medium)
+                session.add(note)
+        session.commit()
+
+
 def create_db_and_tables(engine: Engine) -> None:
     add_missing_columns(engine)
     SQLModel.metadata.create_all(engine)
     collapse_legacy_pending_reminders(engine)
+    seed_difficulty_tags(engine)
+    backfill_note_difficulty(engine)
     with Session(engine) as session:
         default_user = session.exec(
             select(User).where(User.username == "default")

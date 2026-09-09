@@ -28,7 +28,9 @@ export function TagPicker({
   onTagClick,
   triggerLabel = "Tag",
 }: TagPickerProps) {
-  const { data: tags = [] } = useTags();
+  const { data: allTags = [] } = useTags();
+  // difficulty tags (Easy/Medium/Hard) are sticky and managed via DifficultySelector, not here
+  const tags = allTags.filter((tag) => !tag.is_difficulty);
   const { mutateAsync: createTag, isPending: isCreating } = useCreateTag();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");

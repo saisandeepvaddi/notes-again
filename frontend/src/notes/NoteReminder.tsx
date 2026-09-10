@@ -6,5 +6,5 @@ interface NoteReminderProps {
 }
 
 export function NoteReminder({ remindAt }: NoteReminderProps) {
-  return <Badge variant={"secondary"}>{formatDistanceToNowStrict(remindAt)}</Badge>;
+  return <Badge variant={"secondary"}>Next review in {formatDistanceToNowStrict(remindAt)}</Badge>;
 }

@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { differenceInCalendarDays, formatRelative } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import { useState } from "react";
 import { RatingButtons } from "./RatingButtons";
 
@@ -42,7 +42,10 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
                 {daysOverdue} day{daysOverdue === 1 ? "" : "s"} overdue
               </>
             ) : (
-              formatRelative(reminder.remind_at, new Date())
+              <>
+                <CheckIcon />
+                Review now
+              </>
             )}
           </Button>
         }

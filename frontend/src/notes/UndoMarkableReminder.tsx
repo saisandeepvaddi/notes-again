@@ -55,7 +55,7 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
             className={"bg-green-300/20 outline-green-300/20 border-green-400"}
           >
             <CheckIcon />
-            {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}
+            Rated {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}
             {reminder.reviewed_at
               ? ` · ${titleCase(formatRelative(reminder.reviewed_at, new Date()))}`
               : ""}
@@ -70,7 +70,8 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
           </AlertDialogMedia>
           <AlertDialogTitle>Undo Review?</AlertDialogTitle>
           <AlertDialogDescription>
-            You marked it as reviewed. Do you want to undo it?
+            You rated this note "{reminder.rating ? titleCase(reminder.rating) : "Reviewed"}", which
+            set its next review date. Undo to make it due again and clear that rating.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

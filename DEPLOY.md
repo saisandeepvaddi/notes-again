@@ -50,9 +50,36 @@ docker run --rm -v note-and-learn_db:/data -v "$HOME/Library/Application Support
 
 ## Auth
 
-There is **none** — `user_id` is hardcoded to 1. Before exposing this
-publicly, gate it: Cloudflare Access in front of the tunnel is the
-zero-code option (allow only your Google login).
+Google login via **Cloudflare Access**, verified again by the app.
+
+1. **Google OAuth client** — Google Cloud Console → *APIs & Services* →
+   *Credentials* → OAuth client ID (Web application). Authorized redirect URI:
+   `https://<your-team>.cloudflareaccess.com/cdn-cgi/access/callback`.
+2. **Zero Trust → Settings → Authentication → Login methods** — add Google with
+   that client ID + secret.
+3. **Zero Trust → Access → Applications → Add → Self-hosted**:
+   - Application domain = your tunnel hostname (e.g. `notes.example.com`).
+   - Identity providers: Google.
+   - Policy: **Allow**, Include → *Emails* → your address.
+4. Open the application's config and copy the **Application Audience (AUD) tag**;
+   note your team domain `https://<your-team>.cloudflareaccess.com`. Put both in
+   `.env`:
+
+   ```sh
+   CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
+   CF_ACCESS_AUD=<aud-tag>
+   ```
+
+The app rejects any `/api` request without a valid Access token (401), so a
+direct hit on the container is blocked even if the port leaks. `docker-compose.yml`
+also binds the published port to `127.0.0.1` — point `cloudflared` at
+`http://localhost:8000`.
+
+For local dev there is no Cloudflare in front: set `AUTH_DISABLED=1` (the
+`Backend` VS Code debug config already does). Never set it in the container.
+
+Data is still single-user (`user_id` hardcoded to 1) — Access just controls who
+gets in.
 
 ## Restoring a backup manually
 

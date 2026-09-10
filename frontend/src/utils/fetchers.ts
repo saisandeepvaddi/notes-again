@@ -12,12 +12,24 @@ export const getURL = () => {
   return `${PROTOCOL}://${SERVER_IP}:${SERVER_PORT}/api`;
 };
 
-// TODO: Implement auth headers
 export const getHeaders = (customHeaders?: Record<string, string>) =>
   new Headers({
     "Content-Type": "application/json",
     ...customHeaders,
   });
+
+// Auth is handled at the edge by Cloudflare Access (same-origin cookie). If a
+// request comes back 401 the Access session has expired — a full navigation lets
+// Cloudflare bounce the user back through Google.
+const handleResponse = async (response: Response, url: string) => {
+  if (response.status === 401 && !isDevEnv()) {
+    window.location.reload();
+  }
+  if (!response.ok) {
+    throw new Error(`Error with ${url} with code: ${response.status}`);
+  }
+  return await response.json();
+};
 
 interface FetcherOptions {
   headers?: Record<string, string>;
@@ -26,10 +38,7 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
   const response = await fetch(`${getURL()}${url}`, {
     headers: getHeaders(options?.headers),
   });
-  if (!response.ok) {
-    throw new Error(`Error with ${url} with code: ${response.status}`);
-  }
-  return await response.json();
+  return handleResponse(response, url);
 };
 
 export const postFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
@@ -38,10 +47,7 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
     headers: getHeaders(options?.headers),
     body,
   });
-  if (!response.ok) {
-    throw new Error(`Error with ${url} with code: ${response.status}`);
-  }
-  return await response.json();
+  return handleResponse(response, url);
 };
 
 export const patchFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
@@ -50,10 +56,7 @@ export const patchFetcher = (url: string, options?: FetcherOptions) => async (bo
     headers: getHeaders(options?.headers),
     body,
   });
-  if (!response.ok) {
-    throw new Error(`Error with ${url} with code: ${response.status}`);
-  }
-  return await response.json();
+  return handleResponse(response, url);
 };
 
 export const deleteFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
@@ -62,8 +65,5 @@ export const deleteFetcher = (url: string, options?: FetcherOptions) => async (b
     headers: getHeaders(options?.headers),
     body,
   });
-  if (!response.ok) {
-    throw new Error(`Error with ${url} with code: ${response.status}`);
-  }
-  return await response.json();
+  return handleResponse(response, url);
 };

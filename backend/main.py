@@ -48,6 +48,11 @@ if cors_origins or cors_origin_regex:
 
 app.include_router(router=api_router, tags=["api"])
 
+
+@app.get("/healthz")
+async def healthz() -> dict:
+    return {"status": "ok"}
+
 # The built SPA (frontend/dist/client after `pnpm build`): an index.html shell
 # plus /assets/*. Absent in pure API-dev mode, where Vite serves the frontend.
 default_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist" / "client"

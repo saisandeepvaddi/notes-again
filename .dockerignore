@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/__pycache__
+*.pyc
+frontend/dist
+frontend/.tanstack
+frontend/.vite-hooks
+frontend/.output
+.tanstack
+.git
+.github
+.vscode
+.env
+*.md

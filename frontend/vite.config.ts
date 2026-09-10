@@ -6,19 +6,10 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const config = defineConfig(({ mode }) => {
-  // staged: {
-  //   "*.{js,ts,tsx,vue,svelte}": "vp check --fix",
-  // },
+const config = defineConfig(() => {
   return {
-    base: mode === "development" ? "/" : "/static",
-    // fmt: {},
-    // lint: {
-    //   jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
-    //   rules: { "vite-plus/prefer-vite-plus-imports": "error" },
-    //   options: { typeAware: true, typeCheck: true },
-    // },
     resolve: { tsconfigPaths: true },
+    server: { host: true },
     plugins: [
       devtools({
         consolePiping: {
@@ -29,7 +20,11 @@ const config = defineConfig(({ mode }) => {
         },
       }),
       tailwindcss(),
-      tanstackStart(),
+      tanstackStart({
+        // Build a client-only SPA: a prerendered index.html shell plus client
+        // assets, served by the FastAPI backend. No Node server in production.
+        spa: { enabled: true, prerender: { outputPath: "/index" } },
+      }),
       react({
         compiler: true,
       }),

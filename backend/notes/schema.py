@@ -4,8 +4,8 @@ from typing import Annotated
 from pydantic import PlainSerializer
 from sqlmodel import SQLModel
 
-from backend.notes.utils import to_utc_iso
-from backend.tags.schema import TagResponse
+from notes.utils import to_utc_iso
+from tags.schema import TagResponse
 
 UTCDateTime = Annotated[datetime.datetime, PlainSerializer(to_utc_iso, return_type=str)]
 

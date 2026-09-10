@@ -9,8 +9,8 @@ from sqlalchemy import Engine, func, inspect, text
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
-from backend.tags.difficulty import DIFFICULTY_TAGS
 from db.models import Note, Reminder, Tag, User
+from tags.difficulty import DIFFICULTY_TAGS
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -33,10 +33,18 @@ def get_app_dir(app_name: str) -> Path:
 
 
 def get_sqlite_db_file_path() -> Path:
+    # In a container (or anywhere with a mounted volume) set DB_PATH to point
+    # at the volume, e.g. /data/note-and-learn.db. Falls back to the local
+    # platform app-data dir for development.
+    env_path = os.environ.get("DB_PATH")
+    if env_path:
+        db_path = Path(env_path)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return db_path
+
     project_dir = get_app_dir(PROJECT_NAME)
     project_dir.mkdir(parents=True, exist_ok=True)
-    db_path = project_dir / f"{PROJECT_NAME}.db"
-    return db_path
+    return project_dir / f"{PROJECT_NAME}.db"
 
 
 def add_missing_columns(engine: Engine) -> None:

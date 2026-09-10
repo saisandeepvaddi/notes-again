@@ -7,11 +7,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
-from backend.notes.srs import compute_next_interval
-from backend.notes.utils import to_utc
-from backend.tags.difficulty import DIFFICULTY_TAGS, Difficulty
 from db.models import Note, NoteTag, Reminder, Tag, utcnow
 from db.setup import SessionDep
+from notes.srs import compute_next_interval
+from notes.utils import to_utc
+from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
 from .schema import NoteResponse
 

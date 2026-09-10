@@ -9,7 +9,10 @@
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["--app-dir", "backend", "main:app", "--reload"],
+      "args": ["--app-dir", "backend", "main:app", "--reload", "--host", "0.0.0.0"],
+      "env": {
+        "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,http://192.168.1.11:5173"
+      },
       "jinja": false
     }
   ]

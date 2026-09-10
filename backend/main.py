@@ -33,10 +33,14 @@ app = FastAPI(lifespan=lifespan)
 # For local dev the Vite server is a separate origin — set CORS_ORIGINS
 # (comma-separated), e.g. "http://localhost:5173,http://192.168.1.11:5173".
 cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
-if cors_origins:
+# In dev the frontend can be reached over the LAN (phone, other machines) on an
+# IP that isn't known ahead of time, so allow any private-network origin too.
+cors_origin_regex = os.environ.get("CORS_ORIGIN_REGEX") or None
+if cors_origins or cors_origin_regex:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
+        allow_origin_regex=cors_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

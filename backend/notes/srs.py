@@ -1,36 +1,12 @@
-from typing import Literal
+def compute_next_interval(interval_days: int, ease_factor: float) -> int:
+    """SM-2 bootstrap interval growth (1 day -> 6 days -> previous * ease_factor).
 
-Rating = Literal["again", "hard", "good", "easy"]
-
-MIN_EASE = 1.3
-
-
-def compute_next_review(
-    ease_factor: float, interval_days: int, rating: Rating
-) -> tuple[float, int]:
-    """SM-2-lite: Anki-style fixed ease deltas with SM-2 bootstrap intervals
-    (1 day -> 6 days -> previous_interval * ease_factor)."""
-    if rating == "again":
-        return max(MIN_EASE, ease_factor - 0.20), 1
-
-    if rating == "hard":
-        new_interval = max(1, round(interval_days * 1.2)) if interval_days > 0 else 1
-        return max(MIN_EASE, ease_factor - 0.15), new_interval
-
-    if rating == "good":
-        if interval_days <= 0:
-            new_interval = 1
-        elif interval_days == 1:
-            new_interval = 6
-        else:
-            new_interval = max(1, round(interval_days * ease_factor))
-        return ease_factor, new_interval
-
-    # easy
+    Ease factor is fixed per difficulty tag (Easy/Medium/Hard), chosen by the
+    user at review time, rather than nudged per review by a separate rating
+    scale — the difficulty tag is the only "how hard is this" signal.
+    """
     if interval_days <= 0:
-        base = 1
-    elif interval_days == 1:
-        base = 6
-    else:
-        base = round(interval_days * ease_factor)
-    return ease_factor + 0.15, round(base * 1.3)
+        return 1
+    if interval_days == 1:
+        return 6
+    return max(1, round(interval_days * ease_factor))

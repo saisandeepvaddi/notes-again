@@ -33,6 +33,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+  const difficulty = getDifficulty(note.tags);
 
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
@@ -111,9 +112,9 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        <NoteReminderList reminders={note.reminders} />
+        <NoteReminderList reminders={note.reminders} difficulty={difficulty} />
         <div className="flex flex-wrap items-center gap-2">
-          <DifficultySelector noteId={note.id} difficulty={getDifficulty(note.tags)} />
+          <DifficultySelector noteId={note.id} difficulty={difficulty} />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
         </div>
       </div>

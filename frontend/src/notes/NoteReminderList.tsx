@@ -5,14 +5,15 @@ import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isFuture, isToday } from "date-fns";
 import { MarkableReminder } from "./MarkableReminder";
 import { NoteReminder } from "./NoteReminder";
-import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
+import type { Difficulty, NoteReminder as NoteReminderType } from "./new-note-form/types";
 import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
   reminders: NoteReminderType[];
+  difficulty: Difficulty;
 }
 
-export function NoteReminderList({ reminders }: NoteReminderListProps) {
+export function NoteReminderList({ reminders, difficulty }: NoteReminderListProps) {
   if (reminders.length === 0) {
     return <>No Reminders</>;
   }
@@ -31,7 +32,7 @@ export function NoteReminderList({ reminders }: NoteReminderListProps) {
         (isFuture(pending.remind_at) ? (
           <NoteReminder remindAt={pending.remind_at} />
         ) : (
-          <MarkableReminder reminder={pending} />
+          <MarkableReminder reminder={pending} currentDifficulty={difficulty} />
         ))}
       {reviewed.length > 0 && (
         <Popover>

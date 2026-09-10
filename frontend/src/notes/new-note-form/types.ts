@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-export const RatingSchema = z.enum(["again", "hard", "good", "easy"]);
-export type Rating = z.infer<typeof RatingSchema>;
-
 export const DifficultySchema = z.enum(["easy", "medium", "hard"]);
 export type Difficulty = z.infer<typeof DifficultySchema>;
 
@@ -27,7 +24,10 @@ export const NoteReminderSchema = z.object({
   id: z.number(),
   remind_at: z.coerce.date(),
   reviewed_at: z.coerce.date().optional().nullable().default(null),
-  rating: RatingSchema.optional().nullable().default(null),
+  // A free string, not DifficultySchema: reviews made before this app only
+  // had Easy/Medium/Hard may still carry old rating vocabulary ("again",
+  // "good") in history, and that's fine to just display as-is.
+  rating: z.string().optional().nullable().default(null),
 });
 
 export type NoteReminder = z.infer<typeof NoteReminderSchema>;

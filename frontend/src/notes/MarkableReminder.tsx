@@ -1,4 +1,4 @@
-import type { NoteReminder } from "./new-note-form/types";
+import type { Difficulty, NoteReminder } from "./new-note-form/types";
 
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 
@@ -20,9 +20,10 @@ import { RatingButtons } from "./RatingButtons";
 
 interface MarkableReminderProps {
   reminder: NoteReminder;
+  currentDifficulty?: Difficulty;
 }
 
-export function MarkableReminder({ reminder }: MarkableReminderProps) {
+export function MarkableReminder({ reminder, currentDifficulty }: MarkableReminderProps) {
   const [open, setOpen] = useState(false);
   const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));
   const isOverdue = daysOverdue > 0;
@@ -59,17 +60,18 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
           <AlertDialogTitle>
             {isOverdue
               ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`
-              : "How did it go?"}
+              : "How difficult was this?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Rate how well you recalled this note. It'll come back sooner or later depending on your
-            answer.
+            Pick a difficulty to mark it reviewed. This also sets the note's difficulty tag and
+            schedules the next review — easier means longer until it comes back.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <RatingButtons
           reminderId={reminder.id}
+          currentDifficulty={currentDifficulty}
           onRated={() => setOpen(false)}
-          className="grid grid-cols-2 gap-2"
+          className="grid grid-cols-3 gap-2"
         />
         <AlertDialogFooter className="grid-cols-1">
           <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>

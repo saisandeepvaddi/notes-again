@@ -1,32 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import type { Rating } from "./new-note-form/types";
+import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "./difficulty";
 import { useUpdateReminder } from "./hooks/useUpdateReminder";
+import type { Difficulty } from "./new-note-form/types";
 
 interface RatingButtonsProps {
   reminderId: number;
+  currentDifficulty?: Difficulty;
   onRated?: () => void;
   className?: string;
 }
 
-const RATINGS: {
-  value: Rating;
-  label: string;
-  variant: React.ComponentProps<typeof Button>["variant"];
-}[] = [
-  { value: "again", label: "Again", variant: "destructive" },
-  { value: "hard", label: "Hard", variant: "outline" },
-  { value: "good", label: "Good", variant: "default" },
-  { value: "easy", label: "Easy", variant: "secondary" },
-];
-
-export function RatingButtons({ reminderId, onRated, className }: RatingButtonsProps) {
+export function RatingButtons({
+  reminderId,
+  currentDifficulty,
+  onRated,
+  className,
+}: RatingButtonsProps) {
   const { mutateAsync, isPending } = useUpdateReminder({ reminderId });
 
-  const rate = async (rating: Rating) => {
+  const rate = async (difficulty: Difficulty) => {
     try {
-      await mutateAsync({ action: "review", rating });
+      await mutateAsync({ action: "review", rating: difficulty });
       onRated?.();
     } catch (error) {
       console.error("error:", error);
@@ -40,15 +36,18 @@ export function RatingButtons({ reminderId, onRated, className }: RatingButtonsP
 
   return (
     <div className={cn("flex gap-2", className)}>
-      {RATINGS.map((rating) => (
+      {DIFFICULTY_OPTIONS.map((option) => (
         <Button
-          key={rating.value}
+          key={option.value}
           size="sm"
-          variant={rating.variant}
+          variant="outline"
           disabled={isPending}
-          onClick={() => rate(rating.value)}
+          onClick={() => rate(option.value)}
+          className={cn(
+            currentDifficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
+          )}
         >
-          {rating.label}
+          {option.label}
         </Button>
       ))}
     </div>

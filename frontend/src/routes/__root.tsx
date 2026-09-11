@@ -7,6 +7,7 @@ import {
 
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/toast";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { QueryClient } from "@tanstack/react-query";
 import appCss from "../styles.css?url";
 
@@ -44,6 +45,8 @@ function RootDocument() {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Sets the .dark class before first paint so there's no flash of the wrong theme. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         <Layout />

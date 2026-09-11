@@ -13,9 +13,9 @@ export function useDeleteNote({ noteId }: useDeleteNoteProps) {
       return await fetcher();
     },
     onSettled(_data, _error, _vars, _result, context) {
-      context.client.invalidateQueries({
-        queryKey: ["notes"],
-      });
+      context.client.invalidateQueries({ queryKey: ["notes"] });
+      context.client.invalidateQueries({ queryKey: ["due-notes"] });
+      context.client.invalidateQueries({ queryKey: ["trashed-notes"] });
     },
   });
 }

@@ -1,9 +1,9 @@
 import logging
-import socket
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,42 +29,44 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-origins = [
-    f"http://{socket.gethostbyname(socket.gethostname())}:5173",
-    f"https://{socket.gethostbyname(socket.gethostname())}:5173",
-    "http://localhost:5173",
-    "https://localhost:5173",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+# In production the SPA is served same-origin by this app, so no CORS is needed.
+# For local dev the Vite server is a separate origin — set CORS_ORIGINS
+# (comma-separated), e.g. "http://localhost:5173,http://192.168.1.11:5173".
+cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+# In dev the frontend can be reached over the LAN (phone, other machines) on an
+# IP that isn't known ahead of time, so allow any private-network origin too.
+cors_origin_regex = os.environ.get("CORS_ORIGIN_REGEX") or None
+if cors_origins or cors_origin_regex:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_origin_regex=cors_origin_regex,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(router=api_router, tags=["api"])
 
-ui_build_path = Path.cwd() / "frontend" / "dist"
 
-app.mount("/static", StaticFiles(directory=ui_build_path), name="static")
+@app.get("/healthz")
+async def healthz() -> dict:
+    return {"status": "ok"}
 
+# The built SPA (frontend/dist/client after `pnpm build`): an index.html shell
+# plus /assets/*. Absent in pure API-dev mode, where Vite serves the frontend.
+default_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist" / "client"
+frontend_dist = Path(os.environ.get("FRONTEND_DIST", default_dist))
+index_file = frontend_dist / "index.html"
 
-async def get_index_response(request: Request) -> Response:
-    index_path = ui_build_path / "index.html"
-    print(index_path)
-    return FileResponse(index_path, status_code=200, media_type="text/html")
-
-
-@app.get("/")
-async def read_index(request: Request) -> Response:
-    return await get_index_response(request=request)
+if (frontend_dist / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
 
 
 @app.get("/{full_path:path}")
-async def catch_all(request: Request, full_path: str) -> Response:
-    if full_path.startswith(("api/", "static/")):
+async def spa(full_path: str) -> Response:
+    if full_path.startswith("api/"):
         return JSONResponse(status_code=404, content={"message": "Not found"})
-    return await get_index_response(request=request)
+    if index_file.is_file():
+        return FileResponse(index_file, media_type="text/html")
+    return JSONResponse(status_code=404, content={"message": "Frontend not built"})

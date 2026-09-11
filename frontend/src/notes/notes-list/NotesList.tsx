@@ -1,24 +1,46 @@
 import { Button } from "@/components/ui/button";
 import { isNone } from "@/utils/general";
+import { format, isToday } from "date-fns";
 import { useState } from "react";
 import { NoteCard } from "../NoteCard";
+import { NoteGrid } from "../NoteGrid";
+import { TagFilterBar } from "../TagFilterBar";
 import { useNotes } from "./useNotes";
 
-function NotesList() {
-  const [noteDate, setNoteDate] = useState<Date | undefined>(undefined);
+interface NotesListProps {
+  tagId?: number;
+  initialDate?: Date;
+}
+
+function NotesList({ tagId, initialDate }: NotesListProps) {
+  const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
   const { data: notes } = useNotes({
     date: noteDate,
+    tagId,
   });
   return (
-    <div className="flex flex-wrap gap-2 w-full">
-      {isNone(noteDate) ? (
-        <Button onClick={() => setNoteDate(new Date())}>Show only today</Button>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <TagFilterBar activeTagId={tagId} />
+        {isNone(noteDate) ? (
+          <Button size="sm" variant="outline" onClick={() => setNoteDate(new Date())}>
+            Show only today
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" onClick={() => setNoteDate(undefined)}>
+            Show All (currently: {isToday(noteDate) ? "today" : format(noteDate, "MMM d")})
+          </Button>
+        )}
+      </div>
+      {notes.length === 0 ? (
+        <p className="text-muted-foreground">No notes yet.</p>
       ) : (
-        <Button onClick={() => setNoteDate(undefined)}>Show All</Button>
+        <NoteGrid>
+          {notes.map((note) => (
+            <NoteCard key={note.id} note={note} />
+          ))}
+        </NoteGrid>
       )}
-      {notes.map((note) => (
-        <NoteCard key={note.id} note={note} />
-      ))}
     </div>
   );
 }

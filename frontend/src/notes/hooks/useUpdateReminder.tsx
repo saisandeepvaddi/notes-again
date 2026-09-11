@@ -1,31 +1,23 @@
 import { patchFetcher } from "@/utils/fetchers";
 import { useMutation } from "@tanstack/react-query";
+import type { Difficulty } from "../new-note-form/types";
 
 interface useUpdateReminderProps {
   reminderId: number;
 }
 
-interface UpdateReminderData {
-  action: "review" | "undo_review";
-}
+type UpdateReminderData = { action: "review"; rating: Difficulty } | { action: "undo_review" };
 
 export function useUpdateReminder({ reminderId }: useUpdateReminderProps) {
   return useMutation({
     mutationKey: ["note-update", reminderId],
-    mutationFn: async ({ action }: UpdateReminderData) => {
+    mutationFn: async (data: UpdateReminderData) => {
       const fetcher = patchFetcher(`/notes/reminders/${reminderId}/now`);
-      const newNote = await fetcher(
-        JSON.stringify({
-          action,
-        }),
-      );
-      console.log("newNote:", newNote);
-      return newNote;
+      return await fetcher(JSON.stringify(data));
     },
     onSettled(_data, _error, _vars, _result, context) {
-      context.client.invalidateQueries({
-        queryKey: ["notes"],
-      });
+      context.client.invalidateQueries({ queryKey: ["notes"] });
+      context.client.invalidateQueries({ queryKey: ["due-notes"] });
     },
   });
 }

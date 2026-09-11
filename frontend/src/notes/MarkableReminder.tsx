@@ -1,10 +1,9 @@
-import type { NoteReminder } from "./new-note-form/types";
+import type { Difficulty, NoteReminder } from "./new-note-form/types";
 
-import { CheckIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,59 +14,67 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
-import { formatRelative } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import { useState } from "react";
-import { useUpdateReminder } from "./hooks/useUpdateReminder";
+import { RatingButtons } from "./RatingButtons";
 
 interface MarkableReminderProps {
   reminder: NoteReminder;
+  currentDifficulty?: Difficulty;
 }
 
-export function MarkableReminder({ reminder }: MarkableReminderProps) {
-  const { mutateAsync: updateNote, isPending } = useUpdateReminder({ reminderId: reminder.id });
+export function MarkableReminder({ reminder, currentDifficulty }: MarkableReminderProps) {
   const [open, setOpen] = useState(false);
-  const reviewNote = async () => {
-    try {
-      await updateNote({
-        action: "review",
-      });
-      setOpen(false);
-    } catch (error) {
-      console.error("error:", error);
-      setOpen(false);
-      toast.add({
-        type: "error",
-        priority: "high",
-        description: "Failed to update",
-      });
-    }
-  };
+  const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));
+  const isOverdue = daysOverdue > 0;
+
   return (
     <AlertDialog open={open}>
       <AlertDialogTrigger
         render={
-          <Button variant="outline" onClick={() => setOpen(true)}>
-            {formatRelative(reminder.remind_at, new Date())}
+          <Button
+            size="sm"
+            variant={isOverdue ? "destructive" : "outline"}
+            onClick={() => setOpen(true)}
+          >
+            {isOverdue ? (
+              <>
+                <AlertTriangleIcon />
+                {daysOverdue} day{daysOverdue === 1 ? "" : "s"} overdue
+              </>
+            ) : (
+              <>
+                <CheckIcon />
+                Review now
+              </>
+            )}
           </Button>
         }
       />
 
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogMedia>
-            <CheckIcon />
+          <AlertDialogMedia className={isOverdue ? "bg-destructive/10 text-destructive" : ""}>
+            {isOverdue ? <AlertTriangleIcon /> : <CheckIcon />}
           </AlertDialogMedia>
-          <AlertDialogTitle>Did you review it?</AlertDialogTitle>
-          <AlertDialogDescription>Did you review this note item today?</AlertDialogDescription>
+          <AlertDialogTitle>
+            {isOverdue
+              ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`
+              : "How difficult was this?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Pick a difficulty to mark it reviewed. This also sets the note's difficulty tag and
+            schedules the next review — easier means longer until it comes back.
+          </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setOpen(false)} disabled={isPending}>
-            Not Yet
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={reviewNote} disabled={isPending}>
-            Yes, Reviewed
-          </AlertDialogAction>
+        <RatingButtons
+          reminderId={reminder.id}
+          currentDifficulty={currentDifficulty}
+          onRated={() => setOpen(false)}
+          className="grid grid-cols-3 gap-2"
+        />
+        <AlertDialogFooter className="grid-cols-1">
+          <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

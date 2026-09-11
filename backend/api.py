@@ -1,6 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from auth import require_user
 from notes.router import router as notes_router
+from tags.router import router as tags_router
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", dependencies=[Depends(require_user)])
 router.include_router(notes_router)
+router.include_router(tags_router)

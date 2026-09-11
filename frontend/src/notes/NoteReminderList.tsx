@@ -1,57 +1,64 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatDistanceToNowStrict, formatRelative, isToday } from "date-fns";
+import { titleCase } from "@/utils/general";
+import { formatDistanceToNowStrict, isFuture, isToday } from "date-fns";
 import { MarkableReminder } from "./MarkableReminder";
-import type { NoteReminder } from "./new-note-form/types";
+import { NoteReminder } from "./NoteReminder";
+import type { Difficulty, NoteReminder as NoteReminderType } from "./new-note-form/types";
 import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
-  reminders: NoteReminder[];
+  reminders: NoteReminderType[];
+  difficulty: Difficulty;
 }
 
-export function NoteReminderList({ reminders }: NoteReminderListProps) {
-  const count = reminders.length;
-  if (count === 0) {
+export function NoteReminderList({ reminders, difficulty }: NoteReminderListProps) {
+  if (reminders.length === 0) {
     return <>No Reminders</>;
   }
-  const todaysReminder = reminders.find((reminder) => isToday(reminder.remind_at)) ?? reminders[0];
+
+  const pending = reminders.find((reminder) => reminder.reviewed_at === null);
+  const reviewed = reminders
+    .filter((reminder) => reminder.reviewed_at !== null)
+    .sort((a, b) => (b.reviewed_at?.getTime() ?? 0) - (a.reviewed_at?.getTime() ?? 0));
+  const lastReview = reviewed[0];
+  const canUndoLastReview = lastReview?.reviewed_at != null && isToday(lastReview.reviewed_at);
+
   return (
-    <div className="flex items-center gap-2">
-      {todaysReminder ? (
-        todaysReminder.reviewed_at ? (
-          <UndoMarkableReminder reminder={todaysReminder} />
+    <div className="flex flex-wrap items-center gap-1.5">
+      {canUndoLastReview && <UndoMarkableReminder reminder={lastReview} />}
+      {pending &&
+        (isFuture(pending.remind_at) ? (
+          <NoteReminder remindAt={pending.remind_at} />
         ) : (
-          <MarkableReminder reminder={todaysReminder} />
-        )
-      ) : (
-        <Badge
-          variant={"secondary"}
-          className={reminders[0].reviewed_at ? "text-green-700" : "text-blue-600"}
-        >
-          {formatRelative(reminders[0].remind_at, new Date())}
-        </Badge>
-      )}
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button size="sm" variant={"outline"}>
-              + {reminders.length} more
-            </Button>
-          }
-        />
-        <PopoverContent>
-          <ul className="list-none flex flex-col gap-2">
-            {reminders.slice(1).map((reminder) => {
-              return (
-                <li key={reminder.id} className="text-zinc-700">
-                  in {formatDistanceToNowStrict(reminder.remind_at)}
+          <MarkableReminder reminder={pending} currentDifficulty={difficulty} />
+        ))}
+      {reviewed.length > 0 && (
+        <Popover>
+          <PopoverTrigger
+            render={
+              <Button size="sm" variant={"outline"}>
+                {reviewed.length} reviewed
+              </Button>
+            }
+          />
+          <PopoverContent>
+            <ul className="list-none flex flex-col gap-2">
+              {reviewed.map((reminder) => (
+                <li key={reminder.id} className="text-zinc-700 flex items-center gap-2">
+                  <Badge variant="secondary">
+                    {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}
+                  </Badge>
+                  {reminder.reviewed_at
+                    ? `${formatDistanceToNowStrict(reminder.reviewed_at)} ago`
+                    : null}
                 </li>
-              );
-            })}
-          </ul>
-        </PopoverContent>
-      </Popover>
+              ))}
+            </ul>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }

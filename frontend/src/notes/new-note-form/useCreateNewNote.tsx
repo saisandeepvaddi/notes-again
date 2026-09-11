@@ -20,9 +20,9 @@ export function useCreateNewNote() {
       console.log("res:", res);
       return NoteItemSchema.parse(res);
     },
-    onSettled: (_data, _error, _variables, _onMutateResult, context) =>
-      context.client.invalidateQueries({
-        queryKey: ["notes"],
-      }),
+    onSettled: (_data, _error, _variables, _onMutateResult, context) => {
+      context.client.invalidateQueries({ queryKey: ["notes"] });
+      context.client.invalidateQueries({ queryKey: ["due-notes"] });
+    },
   });
 }

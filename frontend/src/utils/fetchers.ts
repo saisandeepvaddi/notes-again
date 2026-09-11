@@ -1,3 +1,5 @@
+import { auth, getAuthToken } from "@/lib/firebase";
+
 export const isDevEnv = () => import.meta.env.MODE === "development";
 
 export const getURL = () => {
@@ -12,18 +14,23 @@ export const getURL = () => {
   return `${PROTOCOL}://${SERVER_IP}:${SERVER_PORT}/api`;
 };
 
-export const getHeaders = (customHeaders?: Record<string, string>) =>
-  new Headers({
+export const getHeaders = async (customHeaders?: Record<string, string>) => {
+  const headers = new Headers({
     "Content-Type": "application/json",
     ...customHeaders,
   });
+  const token = await getAuthToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return headers;
+};
 
-// Auth is handled at the edge by Cloudflare Access (same-origin cookie). If a
-// request comes back 401 the Access session has expired — a full navigation lets
-// Cloudflare bounce the user back through Google.
+// The Firebase ID token is attached by getHeaders(). A 401 back from the API
+// means it's no longer valid — drop the session so the login screen returns.
 const handleResponse = async (response: Response, url: string) => {
   if (response.status === 401 && !isDevEnv()) {
-    window.location.reload();
+    await auth?.signOut().catch(() => {});
   }
   if (!response.ok) {
     throw new Error(`Error with ${url} with code: ${response.status}`);
@@ -36,7 +43,7 @@ interface FetcherOptions {
 }
 export const getFetcher = (url: string, options?: FetcherOptions) => async () => {
   const response = await fetch(`${getURL()}${url}`, {
-    headers: getHeaders(options?.headers),
+    headers: await getHeaders(options?.headers),
   });
   return handleResponse(response, url);
 };
@@ -44,7 +51,7 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
 export const postFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "POST",
-    headers: getHeaders(options?.headers),
+    headers: await getHeaders(options?.headers),
     body,
   });
   return handleResponse(response, url);
@@ -53,7 +60,7 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
 export const patchFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "PATCH",
-    headers: getHeaders(options?.headers),
+    headers: await getHeaders(options?.headers),
     body,
   });
   return handleResponse(response, url);
@@ -62,7 +69,7 @@ export const patchFetcher = (url: string, options?: FetcherOptions) => async (bo
 export const deleteFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await fetch(`${getURL()}${url}`, {
     method: "DELETE",
-    headers: getHeaders(options?.headers),
+    headers: await getHeaders(options?.headers),
     body,
   });
   return handleResponse(response, url);

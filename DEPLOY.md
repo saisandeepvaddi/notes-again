@@ -50,36 +50,50 @@ docker run --rm -v note-and-learn_db:/data -v "$HOME/Library/Application Support
 
 ## Auth
 
-Google login via **Cloudflare Access**, verified again by the app.
+Email/password login via **Firebase Auth**. The frontend gets an ID token; the
+backend verifies it with the Firebase Admin SDK on every `/api` request. Only
+users you create in the Firebase console can sign in — that console is the whole
+user-management surface.
 
-1. **Google OAuth client** — Google Cloud Console → *APIs & Services* →
-   *Credentials* → OAuth client ID (Web application). Authorized redirect URI:
-   `https://<your-team>.cloudflareaccess.com/cdn-cgi/access/callback`.
-2. **Zero Trust → Settings → Authentication → Login methods** — add Google with
-   that client ID + secret.
-3. **Zero Trust → Access → Applications → Add → Self-hosted**:
-   - Application domain = your tunnel hostname (e.g. `notes.example.com`).
-   - Identity providers: Google.
-   - Policy: **Allow**, Include → *Emails* → your address.
-4. Open the application's config and copy the **Application Audience (AUD) tag**;
-   note your team domain `https://<your-team>.cloudflareaccess.com`. Put both in
-   `.env`:
+### Firebase setup
+
+1. **Firebase console** → create a project (`console.firebase.google.com`).
+2. **Build → Authentication → Get started → Sign-in method** → enable
+   **Email/Password**.
+3. **Authentication → Users → Add user** — your email + a password.
+4. **Project settings → General → Your apps** → add a **Web app**; copy the SDK
+   config into `.env`:
 
    ```sh
-   CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
-   CF_ACCESS_AUD=<aud-tag>
+   VITE_FIREBASE_API_KEY=AIza...
+   VITE_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=<project-id>
    ```
 
-The app rejects any `/api` request without a valid Access token (401), so a
-direct hit on the container is blocked even if the port leaks. `docker-compose.yml`
-also binds the published port to `127.0.0.1` — point `cloudflared` at
-`http://localhost:8000`.
+   (These are client config, not secrets — they're compiled into the SPA.)
+5. **Project settings → Service accounts → Generate new private key** → save the
+   JSON as `./firebase-service-account.json` (git-ignored). `docker-compose.yml`
+   mounts it read-only at `/run/secrets/firebase.json`, which is what
+   `FIREBASE_CREDENTIALS_FILE` points at.
+6. **Authentication → Settings → Authorized domains** — add your production
+   hostname (e.g. `notes.example.com`).
 
-For local dev there is no Cloudflare in front: set `AUTH_DISABLED=1` (the
-`Backend` VS Code debug config already does). Never set it in the container.
+### Behavior
 
-Data is still single-user (`user_id` hardcoded to 1) — Access just controls who
-gets in.
+The API returns 401 for any request without a valid Firebase token, so a direct
+hit on the container is rejected even if the port leaks. `docker-compose.yml`
+also binds the published port to `127.0.0.1` — point `cloudflared` (or your
+reverse proxy) at `http://localhost:8000`.
+
+A production build **fails** if `VITE_FIREBASE_*` are missing, so an
+unauthenticated image can't ship by accident.
+
+For local dev there is no Firebase in front: set `AUTH_DISABLED=1` (the `Backend`
+VS Code debug config already does) and leave `VITE_FIREBASE_*` unset. Never set
+`AUTH_DISABLED` in the container.
+
+Data is still single-user (`user_id` hardcoded to 1) — Firebase just controls
+who gets in.
 
 ## Restoring a backup manually
 

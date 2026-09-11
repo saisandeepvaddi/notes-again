@@ -6,6 +6,16 @@ WORKDIR /app/frontend
 
 RUN corepack enable && corepack prepare pnpm@10.6.4 --activate
 
+# Firebase web config is baked into the bundle at build time. These values are
+# not secrets (client-side config), but the build fails loudly without them so a
+# production image is never shipped with auth disabled.
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
+    VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
+    VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID
+
 COPY frontend/ ./
 RUN pnpm install --frozen-lockfile && pnpm build
 # Output we care about: /app/frontend/dist/client (index.html + assets)

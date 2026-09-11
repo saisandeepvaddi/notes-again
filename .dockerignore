@@ -10,5 +10,7 @@ frontend/.output
 .git
 .github
 .vscode
-.env
+**/.env
+**/.env.*
+firebase-service-account.json
 *.md

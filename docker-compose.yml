@@ -1,13 +1,20 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        # Firebase web config (not secret) — baked into the SPA at build time.
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
     image: note-and-learn
     ports:
-      # Bound to loopback: reach it only via the reverse proxy / Cloudflare Tunnel,
-      # never directly. The app also verifies the CF Access token as a backstop.
+      # Bound to loopback: reach it only via the reverse proxy / tunnel.
       - "127.0.0.1:8000:8000"
     volumes:
       - db:/data
+      # Firebase Admin service-account JSON (secret) — used to verify ID tokens.
+      - ./firebase-service-account.json:/run/secrets/firebase.json:ro
     env_file: .env
     restart: unless-stopped
     healthcheck:

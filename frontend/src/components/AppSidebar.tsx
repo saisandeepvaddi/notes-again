@@ -1,8 +1,11 @@
+import { useAuth } from "@/auth/AuthProvider";
+import { firebaseEnabled } from "@/lib/firebase";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HomeIcon, NotebookIcon, RepeatIcon, Trash2Icon } from "lucide-react";
+import { HomeIcon, LogOutIcon, NotebookIcon, RepeatIcon, Trash2Icon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -17,6 +20,28 @@ const NAV_ITEMS = [
   { to: "/review", label: "Review", icon: RepeatIcon },
   { to: "/trash", label: "Trash", icon: Trash2Icon },
 ] as const;
+
+function SignOutButton() {
+  const { user, signOutUser } = useAuth();
+  if (!user) {
+    return null;
+  }
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={user.email ?? "Sign out"}
+          onClick={() => {
+            void signOutUser();
+          }}
+        >
+          <LogOutIcon />
+          <span>Sign out</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
 
 function AppSidebar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -42,6 +67,11 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      {firebaseEnabled ? (
+        <SidebarFooter>
+          <SignOutButton />
+        </SidebarFooter>
+      ) : null}
     </Sidebar>
   );
 }

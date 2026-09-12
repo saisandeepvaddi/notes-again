@@ -10,6 +10,12 @@
       "request": "launch",
       "module": "uvicorn",
       "args": ["--app-dir", "backend", "main:app", "--reload", "--host", "0.0.0.0"],
+      // VS Code's Python debugger auto-loads ${workspaceFolder}/.env by default,
+      // but that file holds container/production values (DB_PATH=/data/...,
+      // R2 + Firebase secrets) that must NOT leak into local dev. Point envFile
+      // at a path that doesn't exist so nothing gets auto-loaded; everything
+      // local dev needs is explicit below.
+      "envFile": "${workspaceFolder}/.vscode/backend.env",
       "env": {
         "AUTH_DISABLED": "1",
         "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173",

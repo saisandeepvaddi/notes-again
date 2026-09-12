@@ -34,6 +34,29 @@ docker compose up -d
 App is on `http://<host>:8000`. Put a reverse proxy / Cloudflare Tunnel in
 front for TLS + a domain.
 
+### Cloudflare Tunnel as its own container
+
+If you run `cloudflared` as a separate Docker container (rather than the
+`cloudflared service install` systemd route), it **must** use
+`--network host`:
+
+```sh
+docker run -d --name cloudflared --restart unless-stopped --network host \
+  cloudflare/cloudflared:latest tunnel run --token <your-tunnel-token>
+```
+
+Without `--network host`, `cloudflared` lives in its own network namespace, so
+the tunnel's origin config of `http://localhost:8000` points at *its own*
+container — not the app — and Cloudflare shows a **502 Bad Gateway**
+("Host Error"). `--network host` makes `localhost` inside `cloudflared`
+resolve to the box's real network stack, i.e. the same `127.0.0.1:8000` that
+`docker-compose.yml` publishes.
+
+(Alternative: keep `cloudflared` off host networking and instead attach it to
+the app's compose network — `docker network ls`, usually
+`note-and-learn_default` — then point the tunnel's origin at `http://app:8000`,
+the compose service name, instead of `localhost`.)
+
 ### Seeding from your current local DB
 
 Your dev DB is at

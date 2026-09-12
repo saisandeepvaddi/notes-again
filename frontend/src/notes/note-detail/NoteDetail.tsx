@@ -112,7 +112,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        <NoteReminderList reminders={note.reminders} difficulty={difficulty} />
+        <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
         <div className="flex flex-wrap items-center gap-2">
           <DifficultySelector noteId={note.id} difficulty={difficulty} />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} />

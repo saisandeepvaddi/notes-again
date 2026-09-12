@@ -354,6 +354,38 @@ def set_note_difficulty(note_id: int, body: SetDifficultyBody, session: SessionD
     return note
 
 
+class RescheduleReminderBody(BaseModel):
+    remind_at: datetime.datetime
+
+
+@router.patch("/{note_id}/reminders/pending", response_model=NoteResponse)
+def reschedule_pending_reminder(note_id: int, body: RescheduleReminderBody, session: SessionDep):
+    """Move a note's upcoming reminder to an arbitrary date — e.g. "review this
+    today" even though it isn't naturally due yet. Every not-deleted note has
+    exactly one pending (unreviewed) reminder at all times, so this just moves
+    it rather than adding a second one; SM-2 state (ease/interval) is untouched,
+    only the schedule."""
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+
+    pending = session.exec(
+        select(Reminder).where(
+            col(Reminder.note_id) == note.id,
+            col(Reminder.deleted_at).is_(None),
+            col(Reminder.reviewed_at).is_(None),
+        )
+    ).one_or_none()
+    if pending is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note has no pending reminder")
+
+    pending.remind_at = to_utc(body.remind_at)
+    session.add(pending)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
 class PatchReminderBody(BaseModel):
     action: Literal["review", "undo_review"]
     rating: Difficulty | None = None

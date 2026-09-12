@@ -5,15 +5,17 @@ import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isFuture, isToday } from "date-fns";
 import { MarkableReminder } from "./MarkableReminder";
 import { NoteReminder } from "./NoteReminder";
+import { ReschedulePopover } from "./ReschedulePopover";
 import type { Difficulty, NoteReminder as NoteReminderType } from "./new-note-form/types";
 import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
+  noteId: number;
   reminders: NoteReminderType[];
   difficulty: Difficulty;
 }
 
-export function NoteReminderList({ reminders, difficulty }: NoteReminderListProps) {
+export function NoteReminderList({ noteId, reminders, difficulty }: NoteReminderListProps) {
   if (reminders.length === 0) {
     return <>No Reminders</>;
   }
@@ -28,12 +30,16 @@ export function NoteReminderList({ reminders, difficulty }: NoteReminderListProp
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {canUndoLastReview && <UndoMarkableReminder reminder={lastReview} />}
-      {pending &&
-        (isFuture(pending.remind_at) ? (
-          <NoteReminder remindAt={pending.remind_at} />
-        ) : (
-          <MarkableReminder reminder={pending} currentDifficulty={difficulty} />
-        ))}
+      {pending && (
+        <>
+          {isFuture(pending.remind_at) ? (
+            <NoteReminder remindAt={pending.remind_at} />
+          ) : (
+            <MarkableReminder reminder={pending} currentDifficulty={difficulty} />
+          )}
+          <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />
+        </>
+      )}
       {reviewed.length > 0 && (
         <Popover>
           <PopoverTrigger

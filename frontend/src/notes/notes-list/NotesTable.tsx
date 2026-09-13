@@ -17,14 +17,14 @@ import {
   useReactTable,
   type SortingState,
 } from "@tanstack/react-table";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, FolderIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { markdownExcerpt } from "../markdownExcerpt";
 import { NoteReminderList } from "../NoteReminderList";
-import type { NoteItem } from "../new-note-form/types";
+import type { NoteItem, Project } from "../new-note-form/types";
 
 const columnHelper = createColumnHelper<NoteItem>();
 
@@ -36,6 +36,25 @@ function nextReviewTimestamp(note: NoteItem): number {
 }
 
 const MAX_VISIBLE_TAGS = 2;
+
+function ProjectCell({ project }: { project: Project | null | undefined }) {
+  const navigate = useNavigate();
+  if (!project) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  return (
+    <Badge variant="secondary" className="gap-1">
+      <FolderIcon className="size-3" />
+      <button
+        type="button"
+        onClick={() => navigate({ to: "/notes", search: { projectId: project.id } })}
+        className="hover:underline"
+      >
+        {project.name}
+      </button>
+    </Badge>
+  );
+}
 
 function DeleteRowButton({ noteId }: { noteId: number }) {
   const { mutate: deleteNote, isPending } = useDeleteNote({ noteId });
@@ -83,6 +102,12 @@ const columns = [
       );
     },
   }),
+  columnHelper.accessor((note) => note.project?.name ?? "", {
+    id: "project",
+    header: "Project",
+    sortingFn: "text",
+    cell: (info) => <ProjectCell project={info.row.original.project} />,
+  }),
   columnHelper.display({
     id: "tags",
     header: "Tags",
@@ -90,7 +115,6 @@ const columns = [
     cell: (info) => {
       const note = info.row.original;
       const difficulty = getDifficulty(note.tags);
-      const project = note.project;
       const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
       const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
       const overflow = regularTags.length - visible.length;
@@ -99,12 +123,6 @@ const columns = [
           <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
             {difficulty}
           </Badge>
-          {project && (
-            <Badge variant="secondary" className="gap-1">
-              <FolderIcon className="size-3" />
-              {project.name}
-            </Badge>
-          )}
           {visible.map((tag) => (
             <Badge key={tag.id} variant="outline">
               {tag.name}

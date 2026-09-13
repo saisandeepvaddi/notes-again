@@ -5,14 +5,14 @@ export const { fieldContext, useFieldContext, formContext, useFormContext } =
 import { Button } from "@/components/ui/button";
 import { createFormHook } from "@tanstack/react-form";
 import type { ComponentProps } from "react";
-import { NoteBaseSchema, type NoteBase } from "./types";
+import { NewNoteFormSchema, type NoteBase } from "./types";
 
 function SubmitButton({ label, ...props }: { label: string } & ComponentProps<typeof Button>) {
   const form = useFormContext();
   return (
-    <form.Subscribe selector={(state) => state.isSubmitting}>
-      {(isSubmitting) => (
-        <Button type="submit" disabled={isSubmitting} {...props}>
+    <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit] as const}>
+      {([isSubmitting, canSubmit]) => (
+        <Button type="submit" disabled={isSubmitting || !canSubmit} {...props}>
           {label}
         </Button>
       )}
@@ -28,7 +28,7 @@ const defaultNote: NoteBase = {
 export const newNoteFormOptions = formOptions({
   defaultValues: defaultNote,
   validators: {
-    onChange: NoteBaseSchema,
+    onChange: NewNoteFormSchema,
   },
 });
 

@@ -20,6 +20,13 @@ export const NoteBaseSchema = z.object({
   content: z.string(),
 });
 
+// Stricter than NoteBaseSchema (which also parses API responses, where we
+// don't want a pre-existing empty-named note to fail to load) — this is only
+// for validating the new-note form as the user types.
+export const NewNoteFormSchema = NoteBaseSchema.extend({
+  name: z.string().trim().min(1, "Name is required"),
+});
+
 export const NoteReminderSchema = z.object({
   id: z.number(),
   remind_at: z.coerce.date(),

@@ -49,14 +49,19 @@ function NewNoteForm() {
       <form.AppField
         name="name"
         children={(field) => {
+          const error = field.state.meta.isTouched ? field.state.meta.errors[0] : undefined;
           return (
-            <Input
-              autoComplete="new-password"
-              placeholder="Name"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
+            <div className="flex flex-col gap-1">
+              <Input
+                autoComplete="new-password"
+                placeholder="Name"
+                aria-invalid={Boolean(error)}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              {error && <p className="text-xs text-destructive">{error.message}</p>}
+            </div>
           );
         }}
       />

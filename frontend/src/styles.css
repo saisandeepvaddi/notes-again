@@ -155,7 +155,7 @@ body {
  * here; these are hand-written rules against the theme tokens above, so they
  * automatically track light/dark without a `prose-invert` variant. */
 .markdown-content {
-  @apply text-sm leading-relaxed text-foreground;
+  @apply text-sm leading-normal text-foreground;
 
   & > :first-child {
     margin-top: 0;
@@ -171,25 +171,25 @@ body {
   }
 
   & h1 {
-    @apply mt-6 mb-3 text-2xl;
+    @apply mt-4 mb-2 text-2xl;
   }
 
   & h2 {
-    @apply mt-5 mb-2 text-xl;
+    @apply mt-3 mb-1.5 text-xl;
   }
 
   & h3 {
-    @apply mt-4 mb-2 text-lg;
+    @apply mt-3 mb-1 text-lg;
   }
 
   & h4,
   & h5,
   & h6 {
-    @apply mt-3 mb-1.5 text-base;
+    @apply mt-2 mb-1 text-base;
   }
 
   & p {
-    @apply mb-3;
+    @apply mb-2;
   }
 
   & a {
@@ -210,7 +210,7 @@ body {
 
   & ul,
   & ol {
-    @apply mb-3 space-y-1 pl-6;
+    @apply mb-2 space-y-0.5 pl-6;
   }
 
   & ul {
@@ -226,11 +226,11 @@ body {
   }
 
   & blockquote {
-    @apply my-3 border-l-4 border-border pl-4 text-muted-foreground italic;
+    @apply my-2 border-l-4 border-border pl-4 text-muted-foreground italic;
   }
 
   & hr {
-    @apply my-6 border-border;
+    @apply my-4 border-border;
   }
 
   /* Inline code. Reset to transparent inside a <pre> so it doesn't double up
@@ -240,7 +240,7 @@ body {
   }
 
   & pre {
-    @apply my-3 overflow-x-auto rounded-md bg-muted/50 p-3 text-sm;
+    @apply my-2 overflow-x-auto rounded-md bg-muted/50 p-3 text-sm;
 
     & code {
       @apply bg-transparent p-0 text-inherit;
@@ -248,7 +248,7 @@ body {
   }
 
   & table {
-    @apply my-3 w-full border-collapse text-sm;
+    @apply my-2 w-full border-collapse text-sm;
   }
 
   & th,
@@ -261,7 +261,7 @@ body {
   }
 
   & img {
-    @apply my-3 max-w-full rounded-md;
+    @apply my-2 max-w-full rounded-md;
   }
 }
 

@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { toast } from "@/components/ui/toast";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { FolderIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
@@ -26,11 +27,20 @@ export function ProjectsSidebarSection() {
 
   async function submit() {
     const trimmed = name.trim();
-    if (trimmed) {
-      await createProject(trimmed);
-    }
     setName("");
     setCreating(false);
+    if (!trimmed) {
+      return;
+    }
+    try {
+      await createProject(trimmed);
+    } catch (error) {
+      toast.add({
+        type: "error",
+        priority: "high",
+        description: error instanceof Error ? error.message : "Failed to create project",
+      });
+    }
   }
 
   return (

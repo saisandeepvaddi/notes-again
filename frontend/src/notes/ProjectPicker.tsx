@@ -9,6 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "@/components/ui/toast";
 import { FolderIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useCreateProject } from "./hooks/useCreateProject";
@@ -44,8 +45,16 @@ export function ProjectPicker({ value, onChange, onProjectClick }: ProjectPicker
     if (!trimmedQuery) {
       return;
     }
-    const project = await createProject(trimmedQuery);
-    select(project);
+    try {
+      const project = await createProject(trimmedQuery);
+      select(project);
+    } catch (error) {
+      toast.add({
+        type: "error",
+        priority: "high",
+        description: error instanceof Error ? error.message : "Failed to create project",
+      });
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "@/components/ui/toast";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useCreateTag } from "./hooks/useCreateTag";
@@ -42,9 +43,17 @@ export function TagPicker({
 
   const createAndSelect = async () => {
     if (!trimmedQuery) return;
-    const tag = await createTag(trimmedQuery);
-    onToggle(tag);
-    setQuery("");
+    try {
+      const tag = await createTag(trimmedQuery);
+      onToggle(tag);
+      setQuery("");
+    } catch (error) {
+      toast.add({
+        type: "error",
+        priority: "high",
+        description: error instanceof Error ? error.message : "Failed to create tag",
+      });
+    }
   };
 
   return (

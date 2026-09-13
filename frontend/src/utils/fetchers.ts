@@ -33,7 +33,18 @@ const handleResponse = async (response: Response, url: string) => {
     await auth?.signOut().catch(() => {});
   }
   if (!response.ok) {
-    throw new Error(`Error with ${url} with code: ${response.status}`);
+    // FastAPI error bodies are {"detail": "..."} -- surface that message when
+    // present instead of just the status code.
+    const detail = await response
+      .clone()
+      .json()
+      .then((body: unknown) =>
+        typeof body === "object" && body !== null && "detail" in body
+          ? String((body as { detail: unknown }).detail)
+          : null,
+      )
+      .catch(() => null);
+    throw new Error(detail ?? `Error with ${url} with code: ${response.status}`);
   }
   return await response.json();
 };

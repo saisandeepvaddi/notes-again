@@ -37,10 +37,7 @@ export function NoteContent({ markdown, className }: NoteContentProps) {
   }, [markdown]);
   return (
     <div
-      className={cn(
-        "prose w-full max-w-none [&_h2]:font-semibold [&_a]:text-blue-600 [&_a]:underline",
-        className,
-      )}
+      className={cn("markdown-content w-full max-w-none", className)}
       dangerouslySetInnerHTML={{ __html: content }}
     />
   );

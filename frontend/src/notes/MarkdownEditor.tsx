@@ -37,7 +37,7 @@ export function MarkdownEditor({
       )}
     >
       <MDXEditor
-        contentEditableClassName="prose max-w-full font-sans"
+        contentEditableClassName="prose markdown-content max-w-full font-sans"
         className="h-1/2"
         markdown={markdown}
         plugins={[

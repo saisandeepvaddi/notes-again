@@ -150,6 +150,139 @@ body {
   }
 }
 
+/* Shared markdown typography — used for both the MDXEditor content area and
+ * the read-only rendered note (NoteContent). No Tailwind Typography plugin
+ * here; these are hand-written rules against the theme tokens above, so they
+ * automatically track light/dark without a `prose-invert` variant. */
+.markdown-content {
+  @apply text-sm leading-relaxed text-foreground;
+
+  & > :first-child {
+    margin-top: 0;
+  }
+
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
+    @apply font-semibold text-foreground;
+  }
+
+  & h1 {
+    @apply mt-6 mb-3 text-2xl;
+  }
+
+  & h2 {
+    @apply mt-5 mb-2 text-xl;
+  }
+
+  & h3 {
+    @apply mt-4 mb-2 text-lg;
+  }
+
+  & h4,
+  & h5,
+  & h6 {
+    @apply mt-3 mb-1.5 text-base;
+  }
+
+  & p {
+    @apply mb-3;
+  }
+
+  & a {
+    @apply text-primary underline underline-offset-2;
+
+    &:hover {
+      @apply opacity-80;
+    }
+  }
+
+  & strong {
+    @apply font-semibold;
+  }
+
+  & em {
+    @apply italic;
+  }
+
+  & ul,
+  & ol {
+    @apply mb-3 space-y-1 pl-6;
+  }
+
+  & ul {
+    @apply list-disc;
+  }
+
+  & ol {
+    @apply list-decimal;
+  }
+
+  & li > p {
+    @apply mb-0;
+  }
+
+  & blockquote {
+    @apply my-3 border-l-4 border-border pl-4 text-muted-foreground italic;
+  }
+
+  & hr {
+    @apply my-6 border-border;
+  }
+
+  /* Inline code. Reset to transparent inside a <pre> so it doesn't double up
+   * with the code-block background below. */
+  & code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground;
+  }
+
+  & pre {
+    @apply my-3 overflow-x-auto rounded-md bg-muted/50 p-3 text-sm;
+
+    & code {
+      @apply bg-transparent p-0 text-inherit;
+    }
+  }
+
+  & table {
+    @apply my-3 w-full border-collapse text-sm;
+  }
+
+  & th,
+  & td {
+    @apply border border-border px-2 py-1 text-left;
+  }
+
+  & thead {
+    @apply bg-muted font-medium;
+  }
+
+  & img {
+    @apply my-3 max-w-full rounded-md;
+  }
+}
+
+/* Shiki (used by NoteContent) emits both light/dark colors as CSS variables
+ * on each span and needs the consumer to pick one based on the active theme. */
+.markdown-content .shiki,
+.markdown-content .shiki span {
+  color: var(--shiki-light) !important;
+  background-color: var(--shiki-light-bg) !important;
+}
+
+.dark .markdown-content .shiki,
+.dark .markdown-content .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
+
+.markdown-content .shiki {
+  @apply rounded-md p-3;
+}
+
 .mdxeditor-contenteditable-wrapper {
   .prose {
     min-width: 0;
@@ -162,11 +295,6 @@ body {
         content: none;
         @apply text-accent;
       }
-    }
-
-    & a {
-      @apply text-shadow-emerald-400;
-      text-decoration: none;
     }
 
     & code[data-lexical-text] {

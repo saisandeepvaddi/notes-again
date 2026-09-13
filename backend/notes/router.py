@@ -3,7 +3,7 @@ from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
@@ -57,12 +57,26 @@ def get_notes(
     if start is not None and end is not None:
         start_utc = to_utc(start).replace(tzinfo=None)
         end_utc = to_utc(end).replace(tzinfo=None)
+
+        in_range = and_(col(Reminder.remind_at) >= start_utc, col(Reminder.remind_at) < end_utc)
+        if start_utc <= utcnow().replace(tzinfo=None) < end_utc:
+            # This window covers "now", i.e. it's today -- the calendar and
+            # the due-today count both roll every overdue pending reminder
+            # onto today regardless of how many days overdue it is, so match
+            # that here too, or clicking today's cell shows fewer notes than
+            # it counted.
+            remind_at_filter = or_(
+                in_range,
+                and_(col(Reminder.remind_at) < start_utc, col(Reminder.reviewed_at).is_(None)),
+            )
+        else:
+            remind_at_filter = in_range
+
         statement = (
             select(Reminder)
             .join(Note, col(Reminder.note_id) == col(Note.id))
             .where(
-                col(Reminder.remind_at) >= start_utc,
-                col(Reminder.remind_at) < end_utc,
+                remind_at_filter,
                 deleted_filter,
                 col(Reminder.deleted_at).is_(None),
             )

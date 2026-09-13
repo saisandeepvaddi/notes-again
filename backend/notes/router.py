@@ -7,7 +7,7 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
-from db.models import Note, NoteTag, Reminder, Tag, utcnow
+from db.models import Note, NoteTag, Project, Reminder, Tag, utcnow
 from db.setup import SessionDep
 from notes.srs import compute_next_interval
 from notes.utils import to_utc
@@ -42,19 +42,13 @@ def apply_difficulty(session: Session, note: Note, difficulty: Difficulty) -> Ta
     return tag
 
 
-def get_project_tag(session: Session, project_id: int) -> Tag:
-    tag = session.exec(
-        select(Tag).where(Tag.id == project_id, col(Tag.is_project).is_(True))
+def get_project(session: Session, project_id: int) -> Project:
+    project = session.exec(
+        select(Project).where(Project.id == project_id, col(Project.deleted_at).is_(None))
     ).one_or_none()
-    if tag is None:
+    if project is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
-    return tag
-
-
-def apply_project(note: Note, project_tag: Tag | None) -> None:
-    """Sets a note's project (swapping out any existing one, like difficulty).
-    A note holds at most one project; pass None to unassign."""
-    note.tags = [t for t in note.tags if not t.is_project] + ([project_tag] if project_tag else [])
+    return project
 
 
 @router.get("/list", response_model=list[NoteResponse])
@@ -102,9 +96,7 @@ def get_notes(
                 NoteTag, col(NoteTag.note_id) == col(Note.id)
             ).where(col(NoteTag.tag_id) == tag_id)
         if project_id is not None:
-            statement = statement.where(
-                col(Note.id).in_(select(NoteTag.note_id).where(NoteTag.tag_id == project_id))
-            )
+            statement = statement.where(col(Note.project_id) == project_id)
         reminders = session.exec(statement).all()
         seen = set()
         notes: list[Note] = []
@@ -120,6 +112,7 @@ def get_notes(
         .options(
             selectinload(cast(Any, Note.reminders)),
             selectinload(cast(Any, Note.tags)),
+            selectinload(cast(Any, Note.project)),
         )
     )
     if tag_id is not None:
@@ -127,9 +120,7 @@ def get_notes(
             col(NoteTag.tag_id) == tag_id
         )
     if project_id is not None:
-        statement = statement.where(
-            col(Note.id).in_(select(NoteTag.note_id).where(NoteTag.tag_id == project_id))
-        )
+        statement = statement.where(col(Note.project_id) == project_id)
     notes = list(session.exec(statement=statement).all())
     return notes
 
@@ -274,13 +265,13 @@ def create_note(body: NewNoteBody, session: SessionDep):
     tags: list[Tag] = []
     if body.tag_ids:
         tags = list(session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all())
-    # difficulty and project are sticky and applied separately, never via arbitrary tag_ids
-    tags = [tag for tag in tags if not tag.is_difficulty and not tag.is_project]
+    # difficulty is sticky and applied separately, never via arbitrary tag_ids
+    tags = [tag for tag in tags if not tag.is_difficulty]
 
     note = Note(name=body.name, content=body.content, tags=tags, user_id=1)
     apply_difficulty(session, note, body.difficulty)
     if body.project_id is not None:
-        apply_project(note, get_project_tag(session, body.project_id))
+        note.project = get_project(session, body.project_id)
     note.reminders = [
         Reminder(
             remind_at=to_utc(body.first_reminder_at),
@@ -405,8 +396,7 @@ def set_note_project(note_id: int, body: SetProjectBody, session: SessionDep):
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
 
-    project_tag = get_project_tag(session, body.project_id) if body.project_id is not None else None
-    apply_project(note, project_tag)
+    note.project = get_project(session, body.project_id) if body.project_id is not None else None
     session.add(note)
     session.commit()
     session.refresh(note)

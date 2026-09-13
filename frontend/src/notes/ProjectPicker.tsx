@@ -14,12 +14,12 @@ import { FolderIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useCreateProject } from "./hooks/useCreateProject";
 import { useProjects } from "./hooks/useProjects";
-import type { Tag } from "./new-note-form/types";
+import type { Project } from "./new-note-form/types";
 
 interface ProjectPickerProps {
-  value: Tag | null;
-  onChange: (project: Tag | null) => void;
-  onProjectClick?: (project: Tag) => void;
+  value: Project | null;
+  onChange: (project: Project | null) => void;
+  onProjectClick?: (project: Project) => void;
 }
 
 // Single-select, unlike TagPicker -- a note has at most one project, swapped
@@ -35,7 +35,7 @@ export function ProjectPicker({ value, onChange, onProjectClick }: ProjectPicker
     (project) => project.name.toLowerCase() === trimmedQuery.toLowerCase(),
   );
 
-  const select = (project: Tag | null) => {
+  const select = (project: Project | null) => {
     onChange(project);
     setOpen(false);
     setQuery("");

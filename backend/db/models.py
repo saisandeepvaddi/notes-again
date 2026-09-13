@@ -35,11 +35,21 @@ class Tag(SQLModel, table=True):
     is_difficulty: bool = Field(default=False)
     default_ease_factor: float | None = Field(default=None)
 
-    # project tags are user-created (unlike difficulty), but sticky the same
-    # way: a note holds at most one, swapped rather than added alongside
-    is_project: bool = Field(default=False)
-
     notes: list["Note"] = Relationship(back_populates="tags", link_model=NoteTag)
+
+
+class Project(SQLModel, table=True):
+    """A note's grouping -- a separate concept from tags, not a kind of tag:
+    its own name namespace, its own table, one per note (a foreign key on
+    Note, not a many-to-many)."""
+
+    __tablename__ = "projects"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    deleted_at: datetime.datetime | None = Field(default=None)
+
+    notes: list["Note"] = Relationship(back_populates="project")
 
 
 class Note(SQLModel, table=True):
@@ -63,6 +73,9 @@ class Note(SQLModel, table=True):
         cascade_delete=True,
     )
     tags: list["Tag"] = Relationship(back_populates="notes", link_model=NoteTag)
+
+    project_id: int | None = Field(default=None, foreign_key="projects.id")
+    project: Project | None = Relationship(back_populates="notes")
 
 
 class Reminder(SQLModel, table=True):

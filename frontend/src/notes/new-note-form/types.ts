@@ -7,10 +7,17 @@ export const TagSchema = z.object({
   id: z.number(),
   name: z.string(),
   is_difficulty: z.boolean(),
-  is_project: z.boolean(),
 });
 
 export type Tag = z.infer<typeof TagSchema>;
+
+// A separate concept from tags -- its own table/column, not a kind of tag.
+export const ProjectSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+export type Project = z.infer<typeof ProjectSchema>;
 
 export const ReminderBaseSchema = z.object({
   remind_at: z.coerce.date(),
@@ -48,6 +55,7 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   interval_days: z.number(),
   reminders: z.array(NoteReminderSchema).default([]),
   tags: z.array(TagSchema).default([]),
+  project: ProjectSchema.nullable().optional().default(null),
 });
 
 export type NoteItem = z.infer<typeof NoteItemSchema>;

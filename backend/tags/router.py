@@ -18,7 +18,6 @@ def get_tags(session: SessionDep):
 
 class NewTagBody(BaseModel):
     name: str
-    is_project: bool = False
 
 
 @router.post("/create", response_model=TagResponse)
@@ -30,19 +29,9 @@ def create_tag(body: NewTagBody, session: SessionDep):
     statement = select(Tag).where(func.lower(Tag.name) == normalized.lower())
     existing = session.exec(statement).one_or_none()
     if existing is not None:
-        if existing.is_project != body.is_project:
-            # Tag.name is globally unique, and a tag/project are different
-            # kinds of thing -- silently handing back the wrong kind here
-            # previously let a project *lookup* quietly resolve to a plain
-            # tag, which then 404'd wherever project-only checks applied it.
-            existing_kind = "a project" if existing.is_project else "a tag"
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                f'"{normalized}" already exists as {existing_kind}. Choose a different name.',
-            )
         return existing
 
-    tag = Tag(name=normalized, is_project=body.is_project)
+    tag = Tag(name=normalized)
     session.add(tag)
     session.commit()
     session.refresh(tag)

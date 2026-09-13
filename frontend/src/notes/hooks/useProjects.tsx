@@ -1,8 +1,12 @@
-import { useTags } from "./useTags";
+import { getFetcher } from "@/utils/fetchers";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { ProjectSchema } from "../new-note-form/types";
 
-// Projects are just tags with is_project=true, swapped sticky like difficulty
-// -- there's one shared tags cache, so no separate query here.
 export function useProjects() {
-  const query = useTags();
-  return { ...query, data: query.data?.filter((tag) => tag.is_project) };
+  return useQuery({
+    queryKey: ["projects"],
+    queryFn: () =>
+      getFetcher("/projects/list")().then((projects) => z.array(ProjectSchema).parse(projects)),
+  });
 }

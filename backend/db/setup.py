@@ -60,6 +60,7 @@ def add_missing_columns(engine: Engine) -> None:
         "notes": [
             ("ease_factor", "REAL NOT NULL DEFAULT 2.5"),
             ("interval_days", "INTEGER NOT NULL DEFAULT 0"),
+            ("project_id", "INTEGER"),
         ],
         "reminders": [
             ("rating", "TEXT"),
@@ -69,7 +70,6 @@ def add_missing_columns(engine: Engine) -> None:
         "tags": [
             ("is_difficulty", "BOOLEAN NOT NULL DEFAULT 0"),
             ("default_ease_factor", "REAL"),
-            ("is_project", "BOOLEAN NOT NULL DEFAULT 0"),
         ],
     }
     with engine.begin() as conn:

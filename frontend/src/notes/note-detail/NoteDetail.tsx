@@ -35,8 +35,8 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
-  const regularTags = note.tags.filter((tag) => !tag.is_difficulty && !tag.is_project);
-  const project = note.tags.find((tag) => tag.is_project) ?? null;
+  const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+  const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
 
   const toggleTag = (tag: Tag) => {

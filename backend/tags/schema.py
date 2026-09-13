@@ -5,4 +5,3 @@ class TagResponse(SQLModel):
     id: int
     name: str
     is_difficulty: bool
-    is_project: bool

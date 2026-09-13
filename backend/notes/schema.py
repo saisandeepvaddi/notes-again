@@ -5,6 +5,7 @@ from pydantic import PlainSerializer
 from sqlmodel import SQLModel
 
 from notes.utils import to_utc_iso
+from projects.schema import ProjectResponse
 from tags.schema import TagResponse
 
 UTCDateTime = Annotated[datetime.datetime, PlainSerializer(to_utc_iso, return_type=str)]
@@ -27,3 +28,4 @@ class NoteResponse(SQLModel):
     interval_days: int
     reminders: list[ReminderResponse] = []
     tags: list[TagResponse] = []
+    project: ProjectResponse | None = None

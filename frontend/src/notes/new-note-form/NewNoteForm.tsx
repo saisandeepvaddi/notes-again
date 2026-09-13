@@ -6,7 +6,7 @@ import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "../difficulty";
 import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
-import type { Difficulty, Tag } from "./types";
+import type { Difficulty, Project, Tag } from "./types";
 import NewNoteContent from "./NewNoteContent";
 import { newNoteFormOptions, useAppForm } from "./new-note-form-utils";
 import { useCreateNewNote } from "./useCreateNewNote";
@@ -16,7 +16,7 @@ function NewNoteForm() {
   const navigate = useNavigate();
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [project, setProject] = useState<Tag | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const toggleTag = (tag: Tag) => {
     setSelectedTags((current) =>
       current.some((selected) => selected.id === tag.id)

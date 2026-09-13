@@ -90,8 +90,8 @@ const columns = [
     cell: (info) => {
       const note = info.row.original;
       const difficulty = getDifficulty(note.tags);
-      const project = note.tags.find((tag) => tag.is_project);
-      const regularTags = note.tags.filter((tag) => !tag.is_difficulty && !tag.is_project);
+      const project = note.project;
+      const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
       const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
       const overflow = regularTags.length - visible.length;
       return (

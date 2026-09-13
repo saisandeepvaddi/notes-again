@@ -18,9 +18,7 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
   }
 
   const difficultyTags = allTags.filter((tag) => tag.is_difficulty);
-  // Projects have their own home (the sidebar) and filter param, so keep
-  // them out of the plain tag list here.
-  const regularTags = allTags.filter((tag) => !tag.is_difficulty && !tag.is_project);
+  const regularTags = allTags.filter((tag) => !tag.is_difficulty);
 
   const goToTag = (tagId?: number) => navigate({ to: "/notes", search: tagId ? { tagId } : {} });
 

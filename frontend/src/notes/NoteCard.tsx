@@ -8,7 +8,7 @@ import { useAttachTag } from "./hooks/useAttachTag";
 import { useDeleteNote } from "./hooks/useDeleteNote";
 import { useDetachTag } from "./hooks/useDetachTag";
 import { useSetProject } from "./hooks/useSetProject";
-import type { NoteItem, Tag } from "./new-note-form/types";
+import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
 import { ProjectPicker } from "./ProjectPicker";
@@ -26,8 +26,8 @@ export function NoteCard({ note }: NoteCardProps) {
   const { mutateAsync: attachTag } = useAttachTag({ noteId: note.id });
   const { mutateAsync: detachTag } = useDetachTag({ noteId: note.id });
   const { mutateAsync: setProject } = useSetProject({ noteId: note.id });
-  const regularTags = note.tags.filter((tag) => !tag.is_difficulty && !tag.is_project);
-  const project = note.tags.find((tag) => tag.is_project) ?? null;
+  const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+  const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
@@ -37,7 +37,7 @@ export function NoteCard({ note }: NoteCardProps) {
     }
   };
   const goToTag = (tag: Tag) => navigate({ to: "/notes", search: { tagId: tag.id } });
-  const goToProject = (proj: Tag) => navigate({ to: "/notes", search: { projectId: proj.id } });
+  const goToProject = (proj: Project) => navigate({ to: "/notes", search: { projectId: proj.id } });
   return (
     <Card className="h-fit">
       <CardHeader className="flex items-center justify-between gap-2">

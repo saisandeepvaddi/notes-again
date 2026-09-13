@@ -6,12 +6,13 @@ import { NoteItemSchema, type NoteItem } from "../new-note-form/types";
 export interface GetUseNotesOptionsArgs {
   date?: Date;
   tagId?: number;
+  projectId?: number;
 }
 
 const getUseNotesOptions = (
   options?: GetUseNotesOptionsArgs,
 ): UseSuspenseQueryOptions<NoteItem[]> => {
-  const { date, tagId } = options ?? {};
+  const { date, tagId, projectId } = options ?? {};
   const dateRange = date
     ? {
         start: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
@@ -27,10 +28,19 @@ const getUseNotesOptions = (
   if (tagId != null) {
     params.set("tag_id", String(tagId));
   }
+  if (projectId != null) {
+    params.set("project_id", String(projectId));
+  }
   const queryString = params.toString();
 
   return {
-    queryKey: ["notes", dateRange?.start.toISOString(), dateRange?.end.toISOString(), tagId],
+    queryKey: [
+      "notes",
+      dateRange?.start.toISOString(),
+      dateRange?.end.toISOString(),
+      tagId,
+      projectId,
+    ],
     queryFn: () =>
       getFetcher(queryString ? `/notes/list?${queryString}` : "/notes/list")()
         .then((notes) => {

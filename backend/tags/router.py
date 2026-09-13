@@ -18,6 +18,7 @@ def get_tags(session: SessionDep):
 
 class NewTagBody(BaseModel):
     name: str
+    is_project: bool = False
 
 
 @router.post("/create", response_model=TagResponse)
@@ -31,7 +32,7 @@ def create_tag(body: NewTagBody, session: SessionDep):
     if existing is not None:
         return existing
 
-    tag = Tag(name=normalized)
+    tag = Tag(name=normalized, is_project=body.is_project)
     session.add(tag)
     session.commit()
     session.refresh(tag)

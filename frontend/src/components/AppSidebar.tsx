@@ -1,5 +1,6 @@
 import { useAuth } from "@/auth/AuthProvider";
 import { firebaseEnabled } from "@/lib/firebase";
+import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { HomeIcon, LogOutIcon, NotebookIcon, RepeatIcon, Trash2Icon } from "lucide-react";
@@ -13,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "./ui/sidebar";
 
 const NAV_ITEMS = [
@@ -67,6 +69,8 @@ function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <SidebarSeparator />
+        <ProjectsSidebarSection />
       </SidebarContent>
       <SidebarFooter className="gap-2">
         <div className="flex items-center justify-between px-1">

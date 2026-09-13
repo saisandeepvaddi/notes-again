@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const notesSearchSchema = z.object({
   tagId: z.coerce.number().optional(),
+  projectId: z.coerce.number().optional(),
   date: z.coerce.date().optional(),
 });
 
@@ -15,11 +16,11 @@ export const Route = createFileRoute("/notes/")({
 });
 
 function AllNotes() {
-  const { tagId, date } = Route.useSearch();
+  const { tagId, projectId, date } = Route.useSearch();
   return (
     <div>
       <PageHeader title="All Notes" actions={<NewNoteButton />} />
-      <NotesListContainer tagId={tagId} initialDate={date} />
+      <NotesListContainer tagId={tagId} projectId={projectId} initialDate={date} />
     </div>
   );
 }

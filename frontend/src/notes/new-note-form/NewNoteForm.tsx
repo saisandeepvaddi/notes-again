@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "../difficulty";
+import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
 import type { Difficulty, Tag } from "./types";
 import NewNoteContent from "./NewNoteContent";
@@ -15,6 +16,7 @@ function NewNoteForm() {
   const navigate = useNavigate();
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [project, setProject] = useState<Tag | null>(null);
   const toggleTag = (tag: Tag) => {
     setSelectedTags((current) =>
       current.some((selected) => selected.id === tag.id)
@@ -31,6 +33,7 @@ function NewNoteForm() {
         first_reminder_at: new Date(),
         tag_ids: selectedTags.map((tag) => tag.id),
         difficulty,
+        project_id: project?.id ?? null,
       });
       navigate({
         to: "/notes",
@@ -81,6 +84,7 @@ function NewNoteForm() {
           </Button>
         ))}
       </div>
+      <ProjectPicker value={project} onChange={setProject} />
       <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
       <form.AppForm>
         <span>

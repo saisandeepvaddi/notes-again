@@ -7,6 +7,7 @@ export const TagSchema = z.object({
   id: z.number(),
   name: z.string(),
   is_difficulty: z.boolean(),
+  is_project: z.boolean(),
 });
 
 export type Tag = z.infer<typeof TagSchema>;
@@ -56,6 +57,7 @@ export const NewNoteBodySchema = NoteBaseSchema.extend({
   first_reminder_at: z.date(),
   tag_ids: z.array(z.number()).default([]),
   difficulty: DifficultySchema.default("medium"),
+  project_id: z.number().nullable().optional(),
 });
 
 export type NewNoteBody = z.infer<typeof NewNoteBodySchema>;

@@ -1,9 +1,12 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
+import { useNavigate } from "@tanstack/react-router";
 import { format, isToday } from "date-fns";
-import { LayoutGridIcon, TableIcon } from "lucide-react";
+import { FolderIcon, LayoutGridIcon, TableIcon, XIcon } from "lucide-react";
 import { useState } from "react";
+import { useProjects } from "../hooks/useProjects";
 import { NoteCard } from "../NoteCard";
 import { NoteGrid } from "../NoteGrid";
 import { TagFilterBar } from "../TagFilterBar";
@@ -13,6 +16,7 @@ import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 
 interface NotesListProps {
   tagId?: number;
+  projectId?: number;
   initialDate?: Date;
 }
 
@@ -50,15 +54,32 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
   );
 }
 
-function NotesList({ tagId, initialDate }: NotesListProps) {
+function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
   const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
   const [mode, setMode] = useNotesViewMode();
+  const { data: projects = [] } = useProjects();
+  const navigate = useNavigate();
+  const activeProject = projects.find((project) => project.id === projectId);
   const { data: notes } = useNotes({
     date: noteDate,
     tagId,
+    projectId,
   });
   return (
     <div className="flex flex-col gap-4">
+      {activeProject && (
+        <Badge variant="secondary" className="w-fit gap-1">
+          <FolderIcon className="size-3" />
+          {activeProject.name}
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: undefined }) })}
+            className="opacity-60 hover:opacity-100"
+          >
+            <XIcon className="size-2.5" />
+          </button>
+        </Badge>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <TagFilterBar activeTagId={tagId} />
         <div className="flex items-center gap-2">

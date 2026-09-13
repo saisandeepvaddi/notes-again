@@ -18,7 +18,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, Trash2Icon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, FolderIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
@@ -90,7 +90,8 @@ const columns = [
     cell: (info) => {
       const note = info.row.original;
       const difficulty = getDifficulty(note.tags);
-      const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+      const project = note.tags.find((tag) => tag.is_project);
+      const regularTags = note.tags.filter((tag) => !tag.is_difficulty && !tag.is_project);
       const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
       const overflow = regularTags.length - visible.length;
       return (
@@ -98,6 +99,12 @@ const columns = [
           <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
             {difficulty}
           </Badge>
+          {project && (
+            <Badge variant="secondary" className="gap-1">
+              <FolderIcon className="size-3" />
+              {project.name}
+            </Badge>
+          )}
           {visible.map((tag) => (
             <Badge key={tag.id} variant="outline">
               {tag.name}

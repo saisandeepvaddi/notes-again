@@ -42,12 +42,28 @@ def apply_difficulty(session: Session, note: Note, difficulty: Difficulty) -> Ta
     return tag
 
 
+def get_project_tag(session: Session, project_id: int) -> Tag:
+    tag = session.exec(
+        select(Tag).where(Tag.id == project_id, col(Tag.is_project).is_(True))
+    ).one_or_none()
+    if tag is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    return tag
+
+
+def apply_project(note: Note, project_tag: Tag | None) -> None:
+    """Sets a note's project (swapping out any existing one, like difficulty).
+    A note holds at most one project; pass None to unassign."""
+    note.tags = [t for t in note.tags if not t.is_project] + ([project_tag] if project_tag else [])
+
+
 @router.get("/list", response_model=list[NoteResponse])
 def get_notes(
     session: SessionDep,
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
     tag_id: int | None = None,
+    project_id: int | None = None,
     deleted: bool = False,
 ):
     deleted_filter = (
@@ -85,6 +101,10 @@ def get_notes(
             statement = statement.join(
                 NoteTag, col(NoteTag.note_id) == col(Note.id)
             ).where(col(NoteTag.tag_id) == tag_id)
+        if project_id is not None:
+            statement = statement.where(
+                col(Note.id).in_(select(NoteTag.note_id).where(NoteTag.tag_id == project_id))
+            )
         reminders = session.exec(statement).all()
         seen = set()
         notes: list[Note] = []
@@ -105,6 +125,10 @@ def get_notes(
     if tag_id is not None:
         statement = statement.join(NoteTag, col(NoteTag.note_id) == col(Note.id)).where(
             col(NoteTag.tag_id) == tag_id
+        )
+    if project_id is not None:
+        statement = statement.where(
+            col(Note.id).in_(select(NoteTag.note_id).where(NoteTag.tag_id == project_id))
         )
     notes = list(session.exec(statement=statement).all())
     return notes
@@ -242,6 +266,7 @@ class NewNoteBody(BaseModel):
     first_reminder_at: datetime.datetime = Field(default_factory=utcnow)
     tag_ids: list[int] = Field(default_factory=list)
     difficulty: Difficulty = "medium"
+    project_id: int | None = None
 
 
 @router.post("/create", response_model=NoteResponse)
@@ -249,11 +274,13 @@ def create_note(body: NewNoteBody, session: SessionDep):
     tags: list[Tag] = []
     if body.tag_ids:
         tags = list(session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all())
-    # difficulty is sticky and applied separately, never via arbitrary tag_ids
-    tags = [tag for tag in tags if not tag.is_difficulty]
+    # difficulty and project are sticky and applied separately, never via arbitrary tag_ids
+    tags = [tag for tag in tags if not tag.is_difficulty and not tag.is_project]
 
     note = Note(name=body.name, content=body.content, tags=tags, user_id=1)
     apply_difficulty(session, note, body.difficulty)
+    if body.project_id is not None:
+        apply_project(note, get_project_tag(session, body.project_id))
     note.reminders = [
         Reminder(
             remind_at=to_utc(body.first_reminder_at),
@@ -362,6 +389,24 @@ def set_note_difficulty(note_id: int, body: SetDifficultyBody, session: SessionD
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
 
     apply_difficulty(session, note, body.difficulty)
+    session.add(note)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
+class SetProjectBody(BaseModel):
+    project_id: int | None = None
+
+
+@router.patch("/{note_id}/project", response_model=NoteResponse)
+def set_note_project(note_id: int, body: SetProjectBody, session: SessionDep):
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+
+    project_tag = get_project_tag(session, body.project_id) if body.project_id is not None else None
+    apply_project(note, project_tag)
     session.add(note)
     session.commit()
     session.refresh(note)

@@ -29,8 +29,9 @@ export function TagPicker({
   triggerLabel = "Tag",
 }: TagPickerProps) {
   const { data: allTags = [] } = useTags();
-  // difficulty tags (Easy/Medium/Hard) are sticky and managed via DifficultySelector, not here
-  const tags = allTags.filter((tag) => !tag.is_difficulty);
+  // difficulty tags are sticky and managed via DifficultySelector, projects
+  // via ProjectPicker -- neither belongs in the free-form tag picker
+  const tags = allTags.filter((tag) => !tag.is_difficulty && !tag.is_project);
   const { mutateAsync: createTag, isPending: isCreating } = useCreateTag();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");

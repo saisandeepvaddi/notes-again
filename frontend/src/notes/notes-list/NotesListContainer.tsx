@@ -4,15 +4,16 @@ import NotesList from "./NotesList";
 
 interface NotesListContainerProps {
   tagId?: number;
+  projectId?: number;
   initialDate?: Date;
 }
 
-export function NotesListContainer({ tagId, initialDate }: NotesListContainerProps) {
+export function NotesListContainer({ tagId, projectId, initialDate }: NotesListContainerProps) {
   return (
     <Suspense fallback={<>Loading...</>}>
       <div className="py-2 w-full h-full">
         <ClientOnly>
-          <NotesList tagId={tagId} initialDate={initialDate} />
+          <NotesList tagId={tagId} projectId={projectId} initialDate={initialDate} />
         </ClientOnly>
       </div>
     </Suspense>

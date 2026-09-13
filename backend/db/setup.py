@@ -69,6 +69,7 @@ def add_missing_columns(engine: Engine) -> None:
         "tags": [
             ("is_difficulty", "BOOLEAN NOT NULL DEFAULT 0"),
             ("default_ease_factor", "REAL"),
+            ("is_project", "BOOLEAN NOT NULL DEFAULT 0"),
         ],
     }
     with engine.begin() as conn:

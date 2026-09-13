@@ -10,11 +10,13 @@ import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
 import { useNote } from "../hooks/useNote";
+import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import type { Tag } from "../new-note-form/types";
 import { NoteContent } from "../NoteContent";
 import { NoteReminderList } from "../NoteReminderList";
+import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
 
 interface NoteDetailProps {
@@ -28,11 +30,13 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId });
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
+  const { mutateAsync: setProject } = useSetProject({ noteId });
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
-  const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+  const regularTags = note.tags.filter((tag) => !tag.is_difficulty && !tag.is_project);
+  const project = note.tags.find((tag) => tag.is_project) ?? null;
   const difficulty = getDifficulty(note.tags);
 
   const toggleTag = (tag: Tag) => {
@@ -115,6 +119,11 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
         <div className="flex flex-wrap items-center gap-2">
           <DifficultySelector noteId={note.id} difficulty={difficulty} />
+          <ProjectPicker
+            value={project}
+            onChange={(next) => setProject(next?.id ?? null)}
+            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
+          />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
         </div>
       </div>

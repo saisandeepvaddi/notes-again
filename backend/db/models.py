@@ -35,6 +35,10 @@ class Tag(SQLModel, table=True):
     is_difficulty: bool = Field(default=False)
     default_ease_factor: float | None = Field(default=None)
 
+    # project tags are user-created (unlike difficulty), but sticky the same
+    # way: a note holds at most one, swapped rather than added alongside
+    is_project: bool = Field(default=False)
+
     notes: list["Note"] = Relationship(back_populates="tags", link_model=NoteTag)
 
 

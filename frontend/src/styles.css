@@ -265,22 +265,14 @@ body {
   }
 }
 
-/* Shiki (used by NoteContent) emits both light/dark colors as CSS variables
- * on each span and needs the consumer to pick one based on the active theme. */
-.markdown-content .shiki,
-.markdown-content .shiki span {
-  color: var(--shiki-light) !important;
-  background-color: var(--shiki-light-bg) !important;
-}
-
+/* Shiki's dual-theme output (used by NoteContent) inlines the LIGHT colors
+ * directly as color/background-color and only exposes the dark ones as
+ * --shiki-dark/--shiki-dark-bg — there's no --shiki-light var to reference.
+ * So: light mode needs no override at all, dark mode swaps in those vars. */
 .dark .markdown-content .shiki,
 .dark .markdown-content .shiki span {
   color: var(--shiki-dark) !important;
   background-color: var(--shiki-dark-bg) !important;
-}
-
-.markdown-content .shiki {
-  @apply rounded-md p-3;
 }
 
 .mdxeditor-contenteditable-wrapper {

@@ -33,7 +33,7 @@ function NewNoteForm() {
         difficulty,
       });
       navigate({
-        to: "/",
+        to: "/notes",
         replace: true,
       });
     },

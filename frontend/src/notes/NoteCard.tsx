@@ -1,45 +1,37 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Trash2Icon } from "lucide-react";
-import { DifficultySelector } from "./DifficultySelector";
-import { getDifficulty } from "./difficulty";
-import { useAttachTag } from "./hooks/useAttachTag";
+import { FolderIcon, Trash2Icon } from "lucide-react";
+import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "./difficulty";
 import { useDeleteNote } from "./hooks/useDeleteNote";
-import { useDetachTag } from "./hooks/useDetachTag";
-import { useSetProject } from "./hooks/useSetProject";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
-import { ProjectPicker } from "./ProjectPicker";
-import { TagPicker } from "./TagPicker";
+
+const MAX_VISIBLE_TAGS = 2;
 
 interface NoteCardProps {
   note: NoteItem;
 }
 
+// Read-only by design -- no inline "add a tag"/"add a project" controls
+// here. Changing a note's tags/project/difficulty happens on its own page
+// (which reuses the note form), not from the grid.
 export function NoteCard({ note }: NoteCardProps) {
   const navigate = useNavigate();
-  const { mutateAsync: deleteNote } = useDeleteNote({
-    noteId: note.id,
-  });
-  const { mutateAsync: attachTag } = useAttachTag({ noteId: note.id });
-  const { mutateAsync: detachTag } = useDetachTag({ noteId: note.id });
-  const { mutateAsync: setProject } = useSetProject({ noteId: note.id });
+  const { mutateAsync: deleteNote } = useDeleteNote({ noteId: note.id });
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+  const visibleTags = regularTags.slice(0, MAX_VISIBLE_TAGS);
+  const overflowTags = regularTags.length - visibleTags.length;
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
-  const toggleTag = (tag: Tag) => {
-    if (note.tags.some((attached) => attached.id === tag.id)) {
-      detachTag(tag.id);
-    } else {
-      attachTag(tag.id);
-    }
-  };
   const goToTag = (tag: Tag) => navigate({ to: "/notes", search: { tagId: tag.id } });
   const goToProject = (proj: Project) => navigate({ to: "/notes", search: { projectId: proj.id } });
+
   return (
-    <Card className="h-fit">
+    <Card className="group/card h-fit">
       <CardHeader className="flex items-center justify-between gap-2">
         <h2 className="truncate font-semibold text-sm">
           <Link
@@ -54,7 +46,8 @@ export function NoteCard({ note }: NoteCardProps) {
           size="icon-xs"
           onClick={() => deleteNote()}
           variant="ghost"
-          className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/card:opacity-100"
+          aria-label="Delete note"
+          className="shrink-0 text-muted-foreground hover:text-destructive"
         >
           <Trash2Icon />
         </Button>
@@ -69,16 +62,38 @@ export function NoteCard({ note }: NoteCardProps) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
         </Link>
       </CardContent>
-      <CardFooter className="flex flex-col items-start gap-2">
-        <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
-        <div className="flex flex-wrap items-center gap-2">
-          <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          <ProjectPicker
-            value={project}
-            onChange={(next) => setProject(next?.id ?? null)}
-            onProjectClick={goToProject}
-          />
-          <TagPicker selectedTags={regularTags} onToggle={toggleTag} onTagClick={goToTag} />
+      <CardFooter className="flex flex-col items-start gap-1.5">
+        <NoteReminderList
+          noteId={note.id}
+          reminders={note.reminders}
+          difficulty={difficulty}
+          compact
+        />
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
+            {difficulty}
+          </Badge>
+          {project && (
+            <Badge
+              variant="secondary"
+              className="cursor-pointer gap-1"
+              onClick={() => goToProject(project)}
+            >
+              <FolderIcon className="size-2.5" />
+              {project.name}
+            </Badge>
+          )}
+          {visibleTags.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => goToTag(tag)}
+            >
+              {tag.name}
+            </Badge>
+          ))}
+          {overflowTags > 0 && <Badge variant="outline">+{overflowTags}</Badge>}
         </div>
       </CardFooter>
     </Card>

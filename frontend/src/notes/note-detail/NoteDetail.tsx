@@ -1,12 +1,14 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, FolderIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
-import { getDifficulty } from "../difficulty";
+import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
@@ -123,15 +125,42 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
 
       <div className="flex flex-col gap-2">
         <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
-        <div className="flex flex-wrap items-center gap-2">
-          <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          <ProjectPicker
-            value={project}
-            onChange={(next) => setProject(next?.id ?? null)}
-            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
-          />
-          <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
-        </div>
+        {isEditing ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <DifficultySelector noteId={note.id} difficulty={difficulty} />
+            <ProjectPicker value={project} onChange={(next) => setProject(next?.id ?? null)} />
+            <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge
+              variant="outline"
+              className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}
+            >
+              {difficulty}
+            </Badge>
+            {project && (
+              <Badge
+                variant="secondary"
+                className="cursor-pointer gap-1"
+                onClick={() => navigate({ to: "/notes", search: { projectId: project.id } })}
+              >
+                <FolderIcon className="size-2.5" />
+                {project.name}
+              </Badge>
+            )}
+            {regularTags.map((tag) => (
+              <Badge
+                key={tag.id}
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => navigate({ to: "/notes", search: { tagId: tag.id } })}
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {isEditing ? (

@@ -21,6 +21,9 @@ interface TagPickerProps {
   onToggle: (tag: Tag) => void;
   onTagClick?: (tag: Tag) => void;
   triggerLabel?: string;
+  // Icon-only trigger instead of a labeled button -- for contexts (like the
+  // note detail page) where a "Tags" row label already says what this is.
+  compact?: boolean;
 }
 
 export function TagPicker({
@@ -28,6 +31,7 @@ export function TagPicker({
   onToggle,
   onTagClick,
   triggerLabel = "Tag",
+  compact = false,
 }: TagPickerProps) {
   const { data: allTags = [] } = useTags();
   // difficulty tags (Easy/Medium/Hard) are sticky and managed via DifficultySelector, not here
@@ -78,9 +82,15 @@ export function TagPicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
-            <Button size="sm" variant="outline">
-              <PlusIcon /> {triggerLabel}
-            </Button>
+            compact ? (
+              <Button size="icon-xs" variant="ghost" aria-label={`Add ${triggerLabel.toLowerCase()}`}>
+                <PlusIcon />
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline">
+                <PlusIcon /> {triggerLabel}
+              </Button>
+            )
           }
         />
         <PopoverContent className="w-56 p-0">

@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
@@ -23,6 +24,18 @@ const AUTOSAVE_DELAY_MS = 800;
 
 interface NoteDetailProps {
   noteId: number;
+}
+
+// Label-left, value-right property row -- stacks on mobile (label above,
+// full-width value) instead of squeezing a fixed label column into a
+// narrow screen.
+function PropertyRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+      <span className="text-xs text-muted-foreground sm:w-20 sm:shrink-0">{label}</span>
+      <div className="flex flex-wrap items-center gap-1.5">{children}</div>
+    </div>
+  );
 }
 
 // Directly editable, no separate edit mode -- this page (unlike the
@@ -138,16 +151,26 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         className="h-auto border-transparent bg-transparent px-0 text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20"
       />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
-        <div className="flex flex-wrap items-center gap-2">
-          <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          <ProjectPicker
-            value={project}
-            onChange={(next) => setProject(next?.id ?? null)}
-            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
-          />
-          <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
+
+        <Separator />
+
+        <div className="flex flex-col gap-2">
+          <PropertyRow label="Difficulty">
+            <DifficultySelector noteId={note.id} difficulty={difficulty} />
+          </PropertyRow>
+          <PropertyRow label="Project">
+            <ProjectPicker
+              value={project}
+              onChange={(next) => setProject(next?.id ?? null)}
+              onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
+              compact
+            />
+          </PropertyRow>
+          <PropertyRow label="Tags">
+            <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
+          </PropertyRow>
         </div>
       </div>
 

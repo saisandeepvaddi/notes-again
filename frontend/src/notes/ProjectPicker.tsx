@@ -20,11 +20,19 @@ interface ProjectPickerProps {
   value: Project | null;
   onChange: (project: Project | null) => void;
   onProjectClick?: (project: Project) => void;
+  // Icon-only trigger instead of a labeled button -- for contexts (like the
+  // note detail page) where a "Project" row label already says what this is.
+  compact?: boolean;
 }
 
 // Single-select, unlike TagPicker -- a note has at most one project, swapped
 // rather than added alongside (mirrors how Easy/Medium/Hard difficulty works).
-export function ProjectPicker({ value, onChange, onProjectClick }: ProjectPickerProps) {
+export function ProjectPicker({
+  value,
+  onChange,
+  onProjectClick,
+  compact = false,
+}: ProjectPickerProps) {
   const { data: projects = [] } = useProjects();
   const { mutateAsync: createProject, isPending: isCreating } = useCreateProject();
   const [open, setOpen] = useState(false);
@@ -81,9 +89,20 @@ export function ProjectPicker({ value, onChange, onProjectClick }: ProjectPicker
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
-            <Button type="button" size="sm" variant="outline">
-              <PlusIcon /> {value ? "Change project" : "Project"}
-            </Button>
+            compact ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={value ? "Change project" : "Add project"}
+              >
+                <PlusIcon />
+              </Button>
+            ) : (
+              <Button type="button" size="sm" variant="outline">
+                <PlusIcon /> {value ? "Change project" : "Project"}
+              </Button>
+            )
           }
         />
         <PopoverContent className="w-56 p-0">

@@ -18,6 +18,13 @@
       "envFile": "${workspaceFolder}/.vscode/backend.env",
       "env": {
         "AUTH_DISABLED": "1",
+        // Explicitly blanked, not just omitted: VS Code the application can
+        // inherit DB_PATH from whatever environment it happened to be
+        // launched in (e.g. a terminal that once had it exported), and that
+        // sticks for the app's whole lifetime regardless of what a fresh
+        // terminal shows. An empty string here always wins over anything
+        // inherited -- code treats "" the same as unset.
+        "DB_PATH": "",
         "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173",
         "CORS_ORIGIN_REGEX": "http://(localhost|127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+):5173"
       },

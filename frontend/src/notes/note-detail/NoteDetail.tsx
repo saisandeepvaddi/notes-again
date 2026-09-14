@@ -5,7 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
@@ -24,18 +24,6 @@ const AUTOSAVE_DELAY_MS = 800;
 
 interface NoteDetailProps {
   noteId: number;
-}
-
-// A "Label value" pair, inline. Meant to sit in a flex-wrap row with
-// vertical Separators between groups -- if it doesn't fit one line, the
-// whole row wraps rather than each group stacking to its own line.
-function PropertyGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      {children}
-    </div>
-  );
 }
 
 // Directly editable, no separate edit mode -- this page (unlike the
@@ -157,22 +145,16 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         <Separator />
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <PropertyGroup label="Difficulty">
-            <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          </PropertyGroup>
+          <DifficultySelector noteId={note.id} difficulty={difficulty} />
           <Separator orientation="vertical" className="h-4" />
-          <PropertyGroup label="Project">
-            <ProjectPicker
-              value={project}
-              onChange={(next) => setProject(next?.id ?? null)}
-              onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
-              compact
-            />
-          </PropertyGroup>
+          <ProjectPicker
+            value={project}
+            onChange={(next) => setProject(next?.id ?? null)}
+            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
+            compact
+          />
           <Separator orientation="vertical" className="h-4" />
-          <PropertyGroup label="Tags">
-            <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
-          </PropertyGroup>
+          <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
         </div>
       </div>
 

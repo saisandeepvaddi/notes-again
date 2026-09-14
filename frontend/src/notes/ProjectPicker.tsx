@@ -90,14 +90,20 @@ export function ProjectPicker({
         <PopoverTrigger
           render={
             compact ? (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                aria-label={value ? "Change project" : "Add project"}
-              >
-                <PlusIcon />
-              </Button>
+              value ? (
+                // The project badge right next to this already says
+                // "project" -- a bare icon is unambiguous once one's set.
+                <Button type="button" size="icon-xs" variant="ghost" aria-label="Change project">
+                  <PlusIcon />
+                </Button>
+              ) : (
+                // Nothing else on the row says "project" yet, so spell it
+                // out here -- unlike Tags, there's no existing chip to
+                // give a bare "+" context.
+                <Button type="button" size="xs" variant="ghost">
+                  <PlusIcon /> Project
+                </Button>
+              )
             ) : (
               <Button type="button" size="sm" variant="outline">
                 <PlusIcon /> {value ? "Change project" : "Project"}

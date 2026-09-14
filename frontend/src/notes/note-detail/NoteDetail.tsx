@@ -26,14 +26,14 @@ interface NoteDetailProps {
   noteId: number;
 }
 
-// Label-left, value-right property row -- stacks on mobile (label above,
-// full-width value) instead of squeezing a fixed label column into a
-// narrow screen.
-function PropertyRow({ label, children }: { label: string; children: ReactNode }) {
+// A "Label value" pair, inline. Meant to sit in a flex-wrap row with
+// vertical Separators between groups -- if it doesn't fit one line, the
+// whole row wraps rather than each group stacking to its own line.
+function PropertyGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
-      <span className="text-xs text-muted-foreground sm:w-20 sm:shrink-0">{label}</span>
-      <div className="flex flex-wrap items-center gap-1.5">{children}</div>
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      {children}
     </div>
   );
 }
@@ -156,21 +156,23 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
 
         <Separator />
 
-        <div className="flex flex-col gap-2">
-          <PropertyRow label="Difficulty">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <PropertyGroup label="Difficulty">
             <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          </PropertyRow>
-          <PropertyRow label="Project">
+          </PropertyGroup>
+          <Separator orientation="vertical" className="h-4" />
+          <PropertyGroup label="Project">
             <ProjectPicker
               value={project}
               onChange={(next) => setProject(next?.id ?? null)}
               onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
               compact
             />
-          </PropertyRow>
-          <PropertyRow label="Tags">
+          </PropertyGroup>
+          <Separator orientation="vertical" className="h-4" />
+          <PropertyGroup label="Tags">
             <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
-          </PropertyRow>
+          </PropertyGroup>
         </div>
       </div>
 

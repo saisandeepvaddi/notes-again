@@ -1,14 +1,12 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, FolderIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
-import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
+import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
@@ -17,15 +15,19 @@ import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import type { Tag } from "../new-note-form/types";
-import { NoteContent } from "../NoteContent";
 import { NoteReminderList } from "../NoteReminderList";
 import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
+
+const AUTOSAVE_DELAY_MS = 800;
 
 interface NoteDetailProps {
   noteId: number;
 }
 
+// Directly editable, no separate edit mode -- this page (unlike the
+// read-only note card) is exactly where tag/project/name/content changes
+// happen, so nothing here should require an extra click to unlock.
 export function NoteDetail({ noteId }: NoteDetailProps) {
   const { data: note } = useNote(noteId);
   const navigate = useNavigate();
@@ -35,34 +37,64 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
 
-  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
+  const [justSaved, setJustSaved] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
+
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
+
+  // Switching to a different note: reset local state from the freshly
+  // loaded note instead of carrying over the previous note's edits.
+  useEffect(() => {
+    setName(note.name);
+    setContent(note.content);
+    isFirstRender.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteId]);
+
+  // Debounced autosave: skip the render that just synced from `note` above,
+  // save `AUTOSAVE_DELAY_MS` after the user stops typing otherwise. Known
+  // tradeoff: navigating to a different note within the debounce window
+  // discards the pending save rather than flushing it (the cleanup below
+  // clears it as part of resetting state for the new note) -- acceptable
+  // for a single-user app; a save-on-route-change flush would need the old
+  // note's id/updateNote captured separately since this effect's own
+  // closures are already bound to the new note by the time it runs.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+    }
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await updateNote({ name, content });
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 1500);
+      } catch (error) {
+        console.error("error:", error);
+        toast.add({ type: "error", priority: "high", description: "Failed to save note" });
+      }
+    }, AUTOSAVE_DELAY_MS);
+    return () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, content]);
 
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
       detachTag(tag.id);
     } else {
       attachTag(tag.id);
-    }
-  };
-
-  const startEditing = () => {
-    setName(note.name);
-    setContent(note.content);
-    setIsEditing(true);
-  };
-
-  const save = async () => {
-    try {
-      await updateNote({ name, content });
-      setIsEditing(false);
-    } catch (error) {
-      console.error("error:", error);
-      toast.add({ type: "error", priority: "high", description: "Failed to save note" });
     }
   };
 
@@ -90,84 +122,36 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
             <ArrowLeftIcon className="size-3.5" /> All Notes
           </Link>
         </div>
-        <div className="flex gap-2">
-          {isEditing ? (
-            <>
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={save} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button size="sm" variant="outline" onClick={startEditing}>
-                <PencilIcon /> Edit
-              </Button>
-              <Button size="sm" variant="destructive" onClick={remove}>
-                <Trash2Icon /> Delete
-              </Button>
-            </>
-          )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {isSaving ? "Saving…" : justSaved ? "Saved" : ""}
+          </span>
+          <Button size="sm" variant="destructive" onClick={remove}>
+            <Trash2Icon /> Delete
+          </Button>
         </div>
       </div>
 
-      {isEditing ? (
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="text-lg font-semibold"
-        />
-      ) : (
-        <h1 className="text-lg font-semibold">{note.name}</h1>
-      )}
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="h-auto border-transparent bg-transparent px-0 text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20"
+      />
 
       <div className="flex flex-col gap-2">
         <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
-        {isEditing ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <DifficultySelector noteId={note.id} difficulty={difficulty} />
-            <ProjectPicker value={project} onChange={(next) => setProject(next?.id ?? null)} />
-            <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}
-            >
-              {difficulty}
-            </Badge>
-            {project && (
-              <Badge
-                variant="secondary"
-                className="cursor-pointer gap-1"
-                onClick={() => navigate({ to: "/notes", search: { projectId: project.id } })}
-              >
-                <FolderIcon className="size-2.5" />
-                {project.name}
-              </Badge>
-            )}
-            {regularTags.map((tag) => (
-              <Badge
-                key={tag.id}
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => navigate({ to: "/notes", search: { tagId: tag.id } })}
-              >
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <DifficultySelector noteId={note.id} difficulty={difficulty} />
+          <ProjectPicker
+            value={project}
+            onChange={(next) => setProject(next?.id ?? null)}
+            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
+          />
+          <TagPicker selectedTags={regularTags} onToggle={toggleTag} />
+        </div>
       </div>
 
-      {isEditing ? (
-        <MarkdownEditor markdown={content} onChange={setContent} />
-      ) : (
-        <NoteContent markdown={note.content} />
-      )}
+      <MarkdownEditor markdown={content} onChange={setContent} />
     </div>
   );
 }

@@ -69,7 +69,9 @@ export function ReviewCalendar() {
       // up click handling) when it considers days "interactive," which
       // requires a mode or onDayClick prop here at the DayPicker level.
       onDayClick={(date) => navigate({ to: "/notes", search: (prev) => ({ ...prev, date }) })}
-      className="w-full max-w-4xl [--cell-size:--spacing(16)]"
+      // 64px cells (7 columns = 448px+) overflow a phone-width viewport --
+      // shrink at narrow widths, grow back at sm/md like the original.
+      className="w-full max-w-4xl [--cell-size:--spacing(10)] sm:[--cell-size:--spacing(13)] md:[--cell-size:--spacing(16)]"
       classNames={{ root: "w-full", month: "w-full", month_grid: "w-full" }}
       components={{
         DayButton: (props) => <DayButtonWithInfo {...props} calendarData={calendarData} />,

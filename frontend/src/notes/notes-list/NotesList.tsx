@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
 import { useNavigate } from "@tanstack/react-router";
@@ -57,6 +58,11 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
 function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
   const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
   const [mode, setMode] = useNotesViewMode();
+  const isMobile = useIsMobile();
+  // A data table isn't a mobile-native pattern and there's no room for 6
+  // columns on a phone screen -- force the card grid there regardless of
+  // the stored preference, and don't offer the toggle at all.
+  const effectiveMode = isMobile ? "grid" : mode;
   const { data: projects = [] } = useProjects();
   const navigate = useNavigate();
   const activeProject = projects.find((project) => project.id === projectId);
@@ -92,12 +98,12 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
               Show All (currently: {isToday(noteDate) ? "today" : format(noteDate, "MMM d")})
             </Button>
           )}
-          <ViewModeToggle mode={mode} onChange={setMode} />
+          {!isMobile && <ViewModeToggle mode={mode} onChange={setMode} />}
         </div>
       </div>
       {notes.length === 0 ? (
         <p className="text-muted-foreground">No notes yet.</p>
-      ) : mode === "table" ? (
+      ) : effectiveMode === "table" ? (
         <NotesTable notes={notes} />
       ) : (
         <NoteGrid>

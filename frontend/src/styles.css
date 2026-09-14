@@ -150,6 +150,26 @@ body {
   }
 }
 
+/* Every Button size variant is sized for mouse precision (20-32px) --
+ * comfortably below the ~44px touch target guidance -- and the sidebar's
+ * own nav-item button (SidebarMenuButton) and trigger aren't even built on
+ * top of Button (they set their own data-slot, which wins over Button's
+ * default "button" slot since it's applied via prop spread). Rather than
+ * resizing every usage individually, bump the minimum hit area only on
+ * coarse (touch) pointers, leaving the compact visual sizing intact for
+ * mouse users. Flex centering on all of these keeps icon/label centered
+ * as the box grows. */
+@media (pointer: coarse) {
+  [data-slot="button"],
+  [data-slot="sidebar-trigger"],
+  [data-slot="sidebar-menu-button"],
+  [data-slot="alert-dialog-action"],
+  [data-slot="alert-dialog-cancel"] {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
 /* Shared markdown typography — used for both the MDXEditor content area and
  * the read-only rendered note (NoteContent). No Tailwind Typography plugin
  * here; these are hand-written rules against the theme tokens above, so they

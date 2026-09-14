@@ -76,9 +76,11 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
 
   return (
     <div className="flex max-w-3xl flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <SidebarTrigger />
+          {/* The Layout mobile header already has its own trigger; this one is
+              for desktop, where that bar is hidden. */}
+          <SidebarTrigger className="hidden md:inline-flex" />
           <Link
             to="/notes"
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"

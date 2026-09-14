@@ -69,7 +69,7 @@ function NewNoteForm() {
         }}
       />
       <NewNoteContent form={form} />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted-foreground">Difficulty</span>
         {DIFFICULTY_OPTIONS.map((option) => (
           <Button

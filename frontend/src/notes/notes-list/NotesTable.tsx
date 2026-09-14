@@ -80,13 +80,18 @@ const columns = [
     header: "Note",
     sortingFn: "text",
     cell: (info) => (
-      <Link
-        to="/notes/$noteId"
-        params={{ noteId: String(info.row.original.id) }}
-        className="font-medium hover:underline"
-      >
-        {info.getValue()}
-      </Link>
+      // Stretched-link pattern: the ::after pseudo-element covers the whole
+      // cell (relative to this wrapper), so clicking anywhere in the Note
+      // column opens the note, not just the text itself.
+      <div className="relative">
+        <Link
+          to="/notes/$noteId"
+          params={{ noteId: String(info.row.original.id) }}
+          className="font-medium after:absolute after:inset-0 hover:underline"
+        >
+          {info.getValue()}
+        </Link>
+      </div>
     ),
   }),
   columnHelper.display({

@@ -32,12 +32,18 @@ export function NoteCard({ note }: NoteCardProps) {
 
   return (
     <Card className="group/card h-fit">
-      <CardHeader className="flex items-center justify-between gap-2">
+      <CardHeader className="relative flex items-center justify-between gap-2">
         <h2 className="truncate font-semibold text-sm">
+          {/* Stretched-link pattern: the ::after pseudo-element covers the
+              whole header (relative to it), so the entire bar is clickable,
+              not just this text -- while staying a real <a> (middle-click,
+              "open in new tab", etc. all still work). The delete button
+              sits above it (relative + z-10) so it stays independently
+              clickable instead of the stretched link swallowing the click. */}
           <Link
             to="/notes/$noteId"
             params={{ noteId: String(note.id) }}
-            className="hover:underline"
+            className="after:absolute after:inset-0 hover:underline"
           >
             {note.name}
           </Link>
@@ -47,7 +53,7 @@ export function NoteCard({ note }: NoteCardProps) {
           onClick={() => deleteNote()}
           variant="ghost"
           aria-label="Delete note"
-          className="shrink-0 text-muted-foreground hover:text-destructive"
+          className="relative z-10 shrink-0 text-muted-foreground hover:text-destructive"
         >
           <Trash2Icon />
         </Button>

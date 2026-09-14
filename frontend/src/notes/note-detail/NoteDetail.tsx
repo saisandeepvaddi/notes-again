@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, PencilIcon, Trash2Icon } from "lucide-react";
@@ -76,12 +77,15 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   return (
     <div className="flex max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <Link
-          to="/notes"
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          <ArrowLeftIcon className="size-3.5" /> All Notes
-        </Link>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger />
+          <Link
+            to="/notes"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            <ArrowLeftIcon className="size-3.5" /> All Notes
+          </Link>
+        </div>
         <div className="flex gap-2">
           {isEditing ? (
             <>

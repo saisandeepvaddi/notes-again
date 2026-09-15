@@ -1,28 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "./difficulty";
 import { useUpdateReminder } from "./hooks/useUpdateReminder";
-import type { Difficulty } from "./new-note-form/types";
+import type { Rating } from "./new-note-form/types";
+import { RATING_BADGE_CLASSES, RATING_OPTIONS } from "./rating";
 
 interface RatingButtonsProps {
   reminderId: number;
-  currentDifficulty?: Difficulty;
   onRated?: () => void;
   className?: string;
 }
 
-export function RatingButtons({
-  reminderId,
-  currentDifficulty,
-  onRated,
-  className,
-}: RatingButtonsProps) {
+// A rating is a momentary per-review action, not a sticky note attribute --
+// unlike the old difficulty-based buttons, there's no "current" value to
+// highlight, so every button is always tinted by its own rating.
+export function RatingButtons({ reminderId, onRated, className }: RatingButtonsProps) {
   const { mutateAsync, isPending } = useUpdateReminder({ reminderId });
 
-  const rate = async (difficulty: Difficulty) => {
+  const rate = async (rating: Rating) => {
     try {
-      await mutateAsync({ action: "review", rating: difficulty });
+      await mutateAsync({ action: "review", rating });
       onRated?.();
     } catch (error) {
       console.error("error:", error);
@@ -35,17 +32,15 @@ export function RatingButtons({
   };
 
   return (
-    <div className={cn("flex gap-2", className)}>
-      {DIFFICULTY_OPTIONS.map((option) => (
+    <div className={cn("grid grid-cols-4 gap-2", className)}>
+      {RATING_OPTIONS.map((option) => (
         <Button
           key={option.value}
           size="sm"
           variant="outline"
           disabled={isPending}
           onClick={() => rate(option.value)}
-          className={cn(
-            currentDifficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
-          )}
+          className={RATING_BADGE_CLASSES[option.value]}
         >
           {option.label}
         </Button>

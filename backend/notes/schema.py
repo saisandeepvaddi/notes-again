@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import PlainSerializer
 from sqlmodel import SQLModel
 
+from notes.scheduling.types import Algorithm
 from notes.utils import to_utc_iso
 from projects.schema import ProjectResponse
 from tags.schema import TagResponse
@@ -26,6 +27,7 @@ class NoteResponse(SQLModel):
     updated_at: UTCDateTime
     ease_factor: float
     interval_days: int
+    algorithm: Algorithm
     reminders: list[ReminderResponse] = []
     tags: list[TagResponse] = []
     project: ProjectResponse | None = None

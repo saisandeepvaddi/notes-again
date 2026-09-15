@@ -143,8 +143,7 @@ const columns = [
     header: "Reviews",
     cell: (info) => {
       const note = info.row.original;
-      const difficulty = getDifficulty(note.tags);
-      return <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />;
+      return <NoteReminderList noteId={note.id} reminders={note.reminders} />;
     },
   }),
   columnHelper.display({

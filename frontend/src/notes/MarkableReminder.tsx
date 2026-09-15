@@ -1,6 +1,6 @@
-import type { Difficulty, NoteReminder } from "./new-note-form/types";
+import type { NoteReminder } from "./new-note-form/types";
 
-import { AlertTriangleIcon, CheckIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, ClockIcon } from "lucide-react";
 
 import {
   AlertDialog,
@@ -14,19 +14,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, formatDistanceToNowStrict, isFuture } from "date-fns";
 import { useState } from "react";
 import { RatingButtons } from "./RatingButtons";
 
 interface MarkableReminderProps {
   reminder: NoteReminder;
-  currentDifficulty?: Difficulty;
 }
 
-export function MarkableReminder({ reminder, currentDifficulty }: MarkableReminderProps) {
+// Reviewing is always available, not gated on the reminder actually being
+// due -- "isUpcoming" just changes the copy/urgency, not whether the rating
+// dialog opens.
+export function MarkableReminder({ reminder }: MarkableReminderProps) {
   const [open, setOpen] = useState(false);
   const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));
   const isOverdue = daysOverdue > 0;
+  const isUpcoming = !isOverdue && isFuture(reminder.remind_at);
 
   return (
     <AlertDialog open={open}>
@@ -34,13 +37,18 @@ export function MarkableReminder({ reminder, currentDifficulty }: MarkableRemind
         render={
           <Button
             size="sm"
-            variant={isOverdue ? "destructive" : "outline"}
+            variant={isOverdue ? "destructive" : isUpcoming ? "secondary" : "outline"}
             onClick={() => setOpen(true)}
           >
             {isOverdue ? (
               <>
                 <AlertTriangleIcon />
                 {daysOverdue} day{daysOverdue === 1 ? "" : "s"} overdue
+              </>
+            ) : isUpcoming ? (
+              <>
+                <ClockIcon />
+                Next review in {formatDistanceToNowStrict(reminder.remind_at)}
               </>
             ) : (
               <>
@@ -55,23 +63,25 @@ export function MarkableReminder({ reminder, currentDifficulty }: MarkableRemind
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia className={isOverdue ? "bg-destructive/10 text-destructive" : ""}>
-            {isOverdue ? <AlertTriangleIcon /> : <CheckIcon />}
+            {isOverdue ? <AlertTriangleIcon /> : isUpcoming ? <ClockIcon /> : <CheckIcon />}
           </AlertDialogMedia>
           <AlertDialogTitle>
             {isOverdue
               ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`
-              : "How difficult was this?"}
+              : isUpcoming
+                ? "Review early?"
+                : "How did it go?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Pick a difficulty to mark it reviewed. This also sets the note's difficulty tag and
-            schedules the next review — easier means longer until it comes back.
+            {isUpcoming
+              ? "This note isn't due yet, but you can review it now anyway — that still updates its schedule."
+              : "Rate how well you remembered this. This schedules the next review."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <RatingButtons
           reminderId={reminder.id}
-          currentDifficulty={currentDifficulty}
           onRated={() => setOpen(false)}
-          className="grid grid-cols-3 gap-2"
+          className="grid-cols-2"
         />
         <AlertDialogFooter className="grid-cols-1">
           <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>

@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -140,7 +141,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       />
 
       <div className="flex flex-col gap-3">
-        <NoteReminderList noteId={note.id} reminders={note.reminders} difficulty={difficulty} />
+        <NoteReminderList noteId={note.id} reminders={note.reminders} />
 
         <Separator />
 
@@ -155,6 +156,10 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           />
           <Separator orientation="vertical" className="h-4" />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
+          <Separator orientation="vertical" className="h-4" />
+          <Badge variant="outline" className="text-[10px] tracking-wide text-muted-foreground uppercase">
+            {note.algorithm}
+          </Badge>
         </div>
       </div>
 

@@ -2,29 +2,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { titleCase } from "@/utils/general";
-import { formatDistanceToNowStrict, isFuture, isToday } from "date-fns";
+import { formatDistanceToNowStrict, isToday } from "date-fns";
 import { MarkableReminder } from "./MarkableReminder";
-import { NoteReminder } from "./NoteReminder";
 import { ReschedulePopover } from "./ReschedulePopover";
-import type { Difficulty, NoteReminder as NoteReminderType } from "./new-note-form/types";
+import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
 import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
   noteId: number;
   reminders: NoteReminderType[];
-  difficulty: Difficulty;
   // Card view: just the one actionable/status badge, none of the secondary
   // controls (undo, reschedule, review history) -- those live on the note's
   // own page.
   compact?: boolean;
 }
 
-export function NoteReminderList({
-  noteId,
-  reminders,
-  difficulty,
-  compact = false,
-}: NoteReminderListProps) {
+export function NoteReminderList({ noteId, reminders, compact = false }: NoteReminderListProps) {
   if (reminders.length === 0) {
     return <>No Reminders</>;
   }
@@ -36,15 +29,7 @@ export function NoteReminderList({
   const lastReview = reviewed[0];
   const canUndoLastReview = lastReview?.reviewed_at != null && isToday(lastReview.reviewed_at);
 
-  const pendingBadge = pending && (
-    <>
-      {isFuture(pending.remind_at) ? (
-        <NoteReminder remindAt={pending.remind_at} />
-      ) : (
-        <MarkableReminder reminder={pending} currentDifficulty={difficulty} />
-      )}
-    </>
-  );
+  const pendingBadge = pending && <MarkableReminder reminder={pending} />;
 
   if (compact) {
     return <div className="flex items-center gap-1.5">{pendingBadge}</div>;

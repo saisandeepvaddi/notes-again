@@ -7,9 +7,16 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
-from db.models import Note, NoteTag, Project, Reminder, Tag, utcnow
+from db.models import Note, NoteTag, Project, Reminder, Settings, Tag, utcnow
 from db.setup import SessionDep
-from notes.srs import compute_next_interval
+from notes.scheduling import (
+    Algorithm,
+    Rating,
+    new_note_scheduling_state,
+    restore_from_snapshot,
+    review_note,
+    snapshot_for_new_reminder,
+)
 from notes.utils import to_utc
 from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
@@ -24,12 +31,6 @@ def get_difficulty_tag(session: Session, difficulty: Difficulty) -> Tag:
     if tag is None:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Difficulty tag missing")
     return tag
-
-
-def get_difficulty_tag_by_ease_factor(session: Session, ease_factor: float) -> Tag | None:
-    return session.exec(
-        select(Tag).where(col(Tag.is_difficulty).is_(True), Tag.default_ease_factor == ease_factor)
-    ).one_or_none()
 
 
 def apply_difficulty(session: Session, note: Note, difficulty: Difficulty) -> Tag:
@@ -49,6 +50,12 @@ def get_project(session: Session, project_id: int) -> Project:
     if project is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
     return project
+
+
+def get_default_algorithm(session: Session) -> Algorithm:
+    settings = session.get(Settings, 1)
+    algorithm = settings.default_algorithm if settings is not None else "fsrs"
+    return cast(Algorithm, algorithm)
 
 
 @router.get("/list", response_model=list[NoteResponse])
@@ -268,16 +275,15 @@ def create_note(body: NewNoteBody, session: SessionDep):
     # difficulty is sticky and applied separately, never via arbitrary tag_ids
     tags = [tag for tag in tags if not tag.is_difficulty]
 
-    note = Note(name=body.name, content=body.content, tags=tags, user_id=1)
+    algorithm = get_default_algorithm(session)
+    note = Note(name=body.name, content=body.content, tags=tags, user_id=1, algorithm=algorithm)
     apply_difficulty(session, note, body.difficulty)
+    for field, value in new_note_scheduling_state(algorithm).items():
+        setattr(note, field, value)
     if body.project_id is not None:
         note.project = get_project(session, body.project_id)
     note.reminders = [
-        Reminder(
-            remind_at=to_utc(body.first_reminder_at),
-            ease_factor=note.ease_factor,
-            interval_days=0,
-        )
+        Reminder(remind_at=to_utc(body.first_reminder_at), **snapshot_for_new_reminder(note))
     ]
     session.add(note)
     session.commit()
@@ -437,7 +443,7 @@ def reschedule_pending_reminder(note_id: int, body: RescheduleReminderBody, sess
 
 class PatchReminderBody(BaseModel):
     action: Literal["review", "undo_review"]
-    rating: Difficulty | None = None
+    rating: Rating | None = None
 
 
 @router.patch("/reminders/{reminder_id}/now", response_model=NoteResponse)
@@ -453,19 +459,14 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
 
     if body.action == "review":
         if body.rating is None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "difficulty is required to review")
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "rating is required to review")
 
-        apply_difficulty(session, note, body.rating)
-        new_interval = compute_next_interval(note.interval_days, note.ease_factor)
+        due_at = review_note(note, body.rating)
 
         reminder.reviewed_at = utcnow()
         reminder.rating = body.rating
-        note.interval_days = new_interval
         next_reminder = Reminder(
-            note_id=note.id,
-            remind_at=utcnow() + datetime.timedelta(days=new_interval),
-            ease_factor=note.ease_factor,
-            interval_days=new_interval,
+            note_id=note.id, remind_at=due_at, **snapshot_for_new_reminder(note)
         )
         session.add_all([reminder, note, next_reminder])
         session.commit()
@@ -498,13 +499,7 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
     if pending is not None:
         session.delete(pending)
 
-    if reminder.ease_factor is not None:
-        note.ease_factor = reminder.ease_factor
-        restored_tag = get_difficulty_tag_by_ease_factor(session, reminder.ease_factor)
-        if restored_tag is not None:
-            note.tags = [tag for tag in note.tags if not tag.is_difficulty] + [restored_tag]
-    if reminder.interval_days is not None:
-        note.interval_days = reminder.interval_days
+    restore_from_snapshot(note, reminder)
     reminder.reviewed_at = None
     reminder.rating = None
     session.add_all([reminder, note])

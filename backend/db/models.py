@@ -65,6 +65,20 @@ class Note(SQLModel, table=True):
     ease_factor: float = Field(default=2.5)
     interval_days: int = Field(default=0)
 
+    # which scheduler produced this note's ease_factor/interval_days (sm2)
+    # or fsrs_card (fsrs) state -- permanent once set at creation,
+    # independent of Settings.default_algorithm, which only decides what
+    # NEW notes get. Existing notes must never be reinterpreted under a
+    # different algorithm just because the global default changed.
+    algorithm: str = Field(default="sm2")  # Literal["sm2", "fsrs"]
+
+    # serialized fsrs.Card (via Card.to_json()/from_json()), only
+    # populated/consulted when algorithm == "fsrs". Kept as one opaque
+    # blob rather than exploded into columns -- nothing in this app
+    # queries FSRS's internal fields individually, and due dates live on
+    # Reminder.remind_at same as they do for SM-2 notes.
+    fsrs_card: str | None = Field(default=None)
+
     # 1 is default_user's user_id
     user_id: int | None = Field(default=1, foreign_key="users.id")
     user: User | None = Relationship(back_populates="notes")
@@ -91,6 +105,18 @@ class Reminder(SQLModel, table=True):
     # snapshot of the note's SM-2 state before this reminder was created, used to undo a review
     ease_factor: float | None = Field(default=None)
     interval_days: int | None = Field(default=None)
+    # same idea for fsrs notes: the note's fsrs_card before this reminder
+    # was created
+    fsrs_card: str | None = Field(default=None)
 
     note_id: int | None = Field(default=None, foreign_key="notes.id")
     note: Note | None = Relationship(back_populates="reminders")
+
+
+class Settings(SQLModel, table=True):
+    """Single global row (id fixed at 1) for app-wide preferences -- today
+    just which scheduling algorithm new notes are created with."""
+
+    __tablename__ = "settings"  # type: ignore
+    id: int = Field(default=1, primary_key=True)
+    default_algorithm: str = Field(default="fsrs")  # Literal["sm2", "fsrs"]

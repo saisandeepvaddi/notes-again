@@ -1,6 +1,5 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useState } from "react";
-import { getDifficulty } from "../difficulty";
 import { NoteContent } from "../NoteContent";
 import { RatingButtons } from "../RatingButtons";
 import { useDueNotes } from "../notes-list/useDueNotes";
@@ -28,13 +27,7 @@ export function ReviewSession() {
           <NoteContent markdown={current.content} />
         </CardContent>
         <CardFooter>
-          {pendingReminder && (
-            <RatingButtons
-              reminderId={pendingReminder.id}
-              currentDifficulty={getDifficulty(current.tags)}
-              onRated={advance}
-            />
-          )}
+          {pendingReminder && <RatingButtons reminderId={pendingReminder.id} onRated={advance} />}
         </CardFooter>
       </Card>
     </div>

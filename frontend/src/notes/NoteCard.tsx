@@ -69,12 +69,7 @@ export function NoteCard({ note }: NoteCardProps) {
         </Link>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-1.5">
-        <NoteReminderList
-          noteId={note.id}
-          reminders={note.reminders}
-          difficulty={difficulty}
-          compact
-        />
+        <NoteReminderList noteId={note.id} reminders={note.reminders} compact />
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
             {difficulty}

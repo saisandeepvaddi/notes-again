@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReviewRouteImport } from './routes/review'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TrashRouteImport } from './routes/trash'
 import { Route as NotesIndexRouteImport } from './routes/notes/index'
 import { Route as NotesNoteIdRouteImport } from './routes/notes/$noteId'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const ReviewRoute = ReviewRouteImport.update({
   id: '/review',
   path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrashRoute = TrashRouteImport.update({
@@ -50,6 +56,7 @@ const NotesNewRoute = NotesNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/trash': typeof TrashRoute
   '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/trash': typeof TrashRoute
   '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/trash': typeof TrashRoute
   '/notes/$noteId': typeof NotesNoteIdRoute
   '/notes/new': typeof NotesNewRoute
@@ -75,13 +84,27 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/review' | '/trash' | '/notes/$noteId' | '/notes/new' | '/notes/'
+    | '/'
+    | '/review'
+    | '/settings'
+    | '/trash'
+    | '/notes/$noteId'
+    | '/notes/new'
+    | '/notes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/review' | '/trash' | '/notes/$noteId' | '/notes/new' | '/notes'
+  to:
+    | '/'
+    | '/review'
+    | '/settings'
+    | '/trash'
+    | '/notes/$noteId'
+    | '/notes/new'
+    | '/notes'
   id:
     | '__root__'
     | '/'
     | '/review'
+    | '/settings'
     | '/trash'
     | '/notes/$noteId'
     | '/notes/new'
@@ -91,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ReviewRoute: typeof ReviewRoute
+  SettingsRoute: typeof SettingsRoute
   TrashRoute: typeof TrashRoute
   NotesNoteIdRoute: typeof NotesNoteIdRoute
   NotesNewRoute: typeof NotesNewRoute
@@ -111,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/review'
       preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trash': {
@@ -147,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ReviewRoute: ReviewRoute,
+  SettingsRoute: SettingsRoute,
   TrashRoute: TrashRoute,
   NotesNoteIdRoute: NotesNoteIdRoute,
   NotesNewRoute: NotesNewRoute,

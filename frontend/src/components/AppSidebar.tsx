@@ -3,7 +3,14 @@ import { firebaseEnabled } from "@/lib/firebase";
 import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HomeIcon, LogOutIcon, NotebookIcon, RepeatIcon, Trash2Icon } from "lucide-react";
+import {
+  HomeIcon,
+  LogOutIcon,
+  NotebookIcon,
+  RepeatIcon,
+  SettingsIcon,
+  Trash2Icon,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +29,7 @@ const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
   { to: "/trash", label: "Trash", icon: Trash2Icon },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 function SignOutButton() {

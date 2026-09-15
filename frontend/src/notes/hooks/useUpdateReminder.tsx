@@ -1,12 +1,12 @@
 import { patchFetcher } from "@/utils/fetchers";
 import { useMutation } from "@tanstack/react-query";
-import type { Difficulty } from "../new-note-form/types";
+import type { Rating } from "../new-note-form/types";
 
 interface useUpdateReminderProps {
   reminderId: number;
 }
 
-type UpdateReminderData = { action: "review"; rating: Difficulty } | { action: "undo_review" };
+type UpdateReminderData = { action: "review"; rating: Rating } | { action: "undo_review" };
 
 export function useUpdateReminder({ reminderId }: useUpdateReminderProps) {
   return useMutation({

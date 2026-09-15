@@ -9,7 +9,7 @@ from sqlalchemy import Engine, func, inspect, text
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
-from db.models import Note, Reminder, Tag, User
+from db.models import Note, Reminder, Settings, Tag, User
 from tags.difficulty import DIFFICULTY_TAGS
 
 logging.basicConfig(level=logging.INFO)
@@ -61,11 +61,17 @@ def add_missing_columns(engine: Engine) -> None:
             ("ease_factor", "REAL NOT NULL DEFAULT 2.5"),
             ("interval_days", "INTEGER NOT NULL DEFAULT 0"),
             ("project_id", "INTEGER"),
+            # existing notes get 'sm2' so their ease_factor/interval_days
+            # keep meaning exactly what they always did -- only new notes
+            # created after this migration can be 'fsrs'
+            ("algorithm", "TEXT NOT NULL DEFAULT 'sm2'"),
+            ("fsrs_card", "TEXT"),
         ],
         "reminders": [
             ("rating", "TEXT"),
             ("ease_factor", "REAL"),
             ("interval_days", "INTEGER"),
+            ("fsrs_card", "TEXT"),
         ],
         "tags": [
             ("is_difficulty", "BOOLEAN NOT NULL DEFAULT 0"),
@@ -158,12 +164,22 @@ def backfill_note_difficulty(engine: Engine) -> None:
         session.commit()
 
 
+def seed_settings(engine: Engine) -> None:
+    """Ensures the single global Settings row (id=1) exists. New installs
+    default new notes to FSRS (matching Anki's own current default)."""
+    with Session(engine) as session:
+        if session.get(Settings, 1) is None:
+            session.add(Settings(id=1, default_algorithm="fsrs"))
+            session.commit()
+
+
 def create_db_and_tables(engine: Engine) -> None:
     add_missing_columns(engine)
     SQLModel.metadata.create_all(engine)
     collapse_legacy_pending_reminders(engine)
     seed_difficulty_tags(engine)
     backfill_note_difficulty(engine)
+    seed_settings(engine)
     with Session(engine) as session:
         default_user = session.exec(
             select(User).where(User.username == "default")

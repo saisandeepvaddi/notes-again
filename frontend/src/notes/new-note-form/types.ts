@@ -3,6 +3,14 @@ import { z } from "zod";
 export const DifficultySchema = z.enum(["easy", "medium", "hard"]);
 export type Difficulty = z.infer<typeof DifficultySchema>;
 
+// Per-review grade (Anki's own 4-button scale), distinct from Difficulty --
+// that's a sticky, manually-set note label, not a review rating.
+export const RatingSchema = z.enum(["again", "hard", "good", "easy"]);
+export type Rating = z.infer<typeof RatingSchema>;
+
+export const AlgorithmSchema = z.enum(["sm2", "fsrs"]);
+export type Algorithm = z.infer<typeof AlgorithmSchema>;
+
 export const TagSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -53,6 +61,7 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   updated_at: z.coerce.date(),
   ease_factor: z.number(),
   interval_days: z.number(),
+  algorithm: AlgorithmSchema,
   reminders: z.array(NoteReminderSchema).default([]),
   tags: z.array(TagSchema).default([]),
   project: ProjectSchema.nullable().optional().default(null),

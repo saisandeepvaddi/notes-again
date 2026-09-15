@@ -87,7 +87,7 @@ const columns = [
         <Link
           to="/notes/$noteId"
           params={{ noteId: String(info.row.original.id) }}
-          className="font-medium after:absolute after:inset-0 hover:underline"
+          className="font-serif font-medium after:absolute after:inset-0 hover:underline"
         >
           {info.getValue()}
         </Link>

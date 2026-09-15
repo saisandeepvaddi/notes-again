@@ -111,7 +111,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   };
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex h-full max-w-4xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {/* The Layout mobile header already has its own trigger; this one is
@@ -137,7 +137,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="h-auto border-transparent bg-transparent px-0 text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20"
+        className="h-auto border-transparent bg-transparent px-0 font-serif text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20"
       />
 
       <div className="flex flex-col gap-3">
@@ -163,7 +163,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         </div>
       </div>
 
-      <MarkdownEditor markdown={content} onChange={setContent} />
+      <MarkdownEditor markdown={content} onChange={setContent} className="flex-1 min-h-0" />
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
             for desktop, where that bar is hidden. */}
         <SidebarTrigger className="hidden md:inline-flex" />
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold">{title}</h1>
+          <h1 className="truncate font-serif text-lg font-semibold">{title}</h1>
           {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
         </div>
       </div>

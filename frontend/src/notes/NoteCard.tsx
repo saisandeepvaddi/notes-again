@@ -33,7 +33,7 @@ export function NoteCard({ note }: NoteCardProps) {
   return (
     <Card className="group/card h-fit">
       <CardHeader className="relative flex items-center justify-between gap-2">
-        <h2 className="truncate font-semibold text-sm">
+        <h2 className="truncate font-serif font-semibold text-sm">
           {/* Stretched-link pattern: the ::after pseudo-element covers the
               whole header (relative to it), so the entire bar is clickable,
               not just this text -- while staying a real <a> (middle-click,

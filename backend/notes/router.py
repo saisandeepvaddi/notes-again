@@ -310,6 +310,16 @@ def update_note(note_id: int, body: UpdateNoteBody, session: SessionDep):
     return note
 
 
+@router.delete("/trash", status_code=status.HTTP_204_NO_CONTENT)
+def empty_trash(session: SessionDep):
+    """Permanently deletes every note currently in the trash. Registered
+    before DELETE /{note_id} below so "trash" isn't swallowed as a note_id."""
+    notes = session.exec(select(Note).where(col(Note.deleted_at).is_not(None))).all()
+    for note in notes:
+        session.delete(note)
+    session.commit()
+
+
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_note(note_id: int, session: SessionDep):
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()

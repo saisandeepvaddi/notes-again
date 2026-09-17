@@ -46,6 +46,12 @@ const handleResponse = async (response: Response, url: string) => {
       .catch(() => null);
     throw new Error(detail ?? `Error with ${url} with code: ${response.status}`);
   }
+  // 204 No Content has no body -- response.json() throws on an empty body,
+  // which would otherwise surface as a false "failed" error even though the
+  // request succeeded (hit by delete_note/permanently_delete_note/empty_trash).
+  if (response.status === 204) {
+    return null;
+  }
   return await response.json();
 };
 

@@ -315,12 +315,28 @@ body {
     min-width: 0;
 
     & code {
-      @apply text-secondary px-1;
+      /* text-foreground, not text-secondary: --secondary is a surface/background
+       * token (it's literally identical to --muted in this palette), and this
+       * chip's background already comes from .markdown-content code's bg-muted
+       * below -- pairing that background with --secondary as the text color
+       * made inline code render as same-color-on-same-color, invisible. */
+      @apply text-foreground px-1;
 
       &:before,
       &:after {
         content: none;
         @apply text-accent;
+      }
+
+      /* MDXEditor wraps inline code text in its own <span> with a hardcoded
+       * background-color: var(--baseBg) -- their own internal token, not
+       * ours, and not theme-aware -- which paints over the bg-muted chip
+       * background above. There's no stable class name to target (it's a
+       * content-hashed CSS-module class), so target the structural position
+       * instead: every span MDXEditor renders directly inside one of these
+       * code elements. */
+      & > span {
+        background-color: transparent;
       }
     }
 

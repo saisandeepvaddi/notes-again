@@ -15,6 +15,7 @@ import {
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
+import { codeMirrorTheme } from "./codeMirrorTheme";
 
 interface MarkdownEditorProps {
   markdown: string;
@@ -58,6 +59,7 @@ export function MarkdownEditor({
               py: "Python",
               rs: "Rust",
             },
+            codeMirrorExtensions: [codeMirrorTheme],
           }),
           directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
           markdownShortcutPlugin(),

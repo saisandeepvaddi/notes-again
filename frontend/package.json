@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --port 5273 --host",
     "build": "vite build && tsc --noEmit",
     "preview": "vite preview",
     "lint": "oxlint",

@@ -298,7 +298,20 @@ body {
 }
 
 .mdxeditor-contenteditable-wrapper {
+  /* MDXEditor ships its own Radix-style color tokens and sets `color: var(--baseTextContrast)`
+   * directly on the contenteditable root. That variable doesn't reliably
+   * resolve to a dark-appropriate value under our .dark class (an internal
+   * cascade quirk in their bundled CSS -- --slate-12 stays pinned to its
+   * light-mode near-black value even on an ancestor with .dark), which made
+   * typed text (and the caret, which defaults to currentColor) nearly
+   * invisible in dark mode. `.mdxeditor-contenteditable-wrapper .prose` is a
+   * two-class selector on the same element `._contentEditable...` (one
+   * class) sets color on, so this reliably wins regardless of stylesheet
+   * injection order, pinning it to our own theme token instead. */
+  --basePageBg: var(--background);
+
   .prose {
+    @apply text-foreground;
     min-width: 0;
 
     & code {

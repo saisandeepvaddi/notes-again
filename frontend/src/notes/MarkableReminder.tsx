@@ -32,7 +32,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
   const isUpcoming = !isOverdue && isFuture(reminder.remind_at);
 
   return (
-    <AlertDialog open={open}>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
           <Button
@@ -60,7 +60,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
         }
       />
 
-      <AlertDialogContent size="sm">
+      <AlertDialogContent size="sm" onBackdropClick={() => setOpen(false)}>
         <AlertDialogHeader>
           <AlertDialogMedia className={isOverdue ? "bg-destructive/10 text-destructive" : ""}>
             {isOverdue ? <AlertTriangleIcon /> : isUpcoming ? <ClockIcon /> : <CheckIcon />}
@@ -74,14 +74,14 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
           </AlertDialogTitle>
           <AlertDialogDescription>
             {isUpcoming
-              ? "This note isn't due yet, but you can review it now anyway — that still updates its schedule."
-              : "Rate how well you remembered this. This schedules the next review."}
+              ? "This note isn't due yet, but you can review it now anyway — how well you recall it still updates its schedule."
+              : "How well did you remember this? Your answer decides when it comes back."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <RatingButtons
           reminderId={reminder.id}
           onRated={() => setOpen(false)}
-          className="grid-cols-2"
+          className="grid-cols-2 sm:grid-cols-2"
         />
         <AlertDialogFooter className="grid-cols-1">
           <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>

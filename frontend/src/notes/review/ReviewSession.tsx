@@ -27,7 +27,12 @@ export function ReviewSession() {
           <NoteContent markdown={current.content} />
         </CardContent>
         <CardFooter>
-          {pendingReminder && <RatingButtons reminderId={pendingReminder.id} onRated={advance} />}
+          {pendingReminder && (
+            <div className="flex w-full flex-col gap-2">
+              <p className="text-sm font-medium">How well did you remember this?</p>
+              <RatingButtons reminderId={pendingReminder.id} onRated={advance} />
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>

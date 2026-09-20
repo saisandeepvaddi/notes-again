@@ -1,10 +1,13 @@
 import type { Rating } from "./new-note-form/types";
 
-export const RATING_OPTIONS: { value: Rating; label: string }[] = [
-  { value: "again", label: "Again" },
-  { value: "hard", label: "Hard" },
-  { value: "good", label: "Good" },
-  { value: "easy", label: "Easy" },
+// `caption` is plain-language recall wording: the labels alone (Again/Hard/
+// Good/Easy) are Anki jargon, and Hard/Easy also collide with a note's
+// separate Easy/Medium/Hard difficulty label, which means something else.
+export const RATING_OPTIONS: { value: Rating; label: string; caption: string }[] = [
+  { value: "again", label: "Again", caption: "Forgot it" },
+  { value: "hard", label: "Hard", caption: "Struggled" },
+  { value: "good", label: "Good", caption: "Remembered" },
+  { value: "easy", label: "Easy", caption: "Effortless" },
 ];
 
 export const RATING_BADGE_CLASSES: Record<Rating, string> = {

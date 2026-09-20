@@ -34,13 +34,18 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 function AlertDialogContent({
   className,
   size = "default",
+  onBackdropClick,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm";
+  // Base UI's AlertDialog never dismisses on an outside press (it's meant for
+  // "you must decide" confirmations). Opt-in for prompts where backing out is
+  // harmless, e.g. a rating picker -- destructive confirms leave this unset.
+  onBackdropClick?: () => void;
 }) {
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay onClick={onBackdropClick} />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         data-size={size}

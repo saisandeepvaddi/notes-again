@@ -2,26 +2,18 @@ import { browser, type Browser } from "wxt/browser";
 import { defineBackground } from "wxt/utils/define-background";
 import { createCaptureApi } from "../lib/api";
 import { CaptureError, serializeError } from "../lib/api/types";
-import { signInWithPassword } from "../lib/auth/firebase";
-import { createAuthHeaderProvider } from "../lib/auth/headers";
 import type { OpenDialogMessage, PendingWindowContext } from "../lib/capture/types";
 import {
   type BackgroundRequest,
   type BackgroundResponse,
   type LookupsResult,
   type SaveResult,
-  type SignInResult,
 } from "../lib/messaging";
-import { loadSettings, saveSettings, sessionStore } from "../lib/settings";
+import { loadSettings, saveSettings } from "../lib/settings";
 import { cleanUrl, hostPermissionPattern, noteUrl, normalizeBaseUrl } from "../lib/url";
 
 const MENU_PAGE = "nl-save-page";
 const MENU_SELECTION = "nl-save-selection";
-
-const getAuthHeaders = createAuthHeaderProvider({
-  getApiKey: async () => (await loadSettings()).firebaseApiKey,
-  store: sessionStore,
-});
 
 async function getApi() {
   const settings = await loadSettings();
@@ -34,7 +26,7 @@ async function getApi() {
   if (!(await browser.permissions.contains({ origins: [hostPermissionPattern(baseUrl)] }))) {
     throw new CaptureError("config", `The extension doesn't have access to ${baseUrl} yet. Open the options and save the server URL to grant it.`);
   }
-  return { api: createCaptureApi({ baseUrl, getAuthHeaders }), settings, baseUrl };
+  return { api: createCaptureApi({ baseUrl, token: settings.apiToken.trim() }), settings, baseUrl };
 }
 
 async function handle(request: BackgroundRequest): Promise<unknown> {
@@ -53,18 +45,6 @@ async function handle(request: BackgroundRequest): Promise<unknown> {
         openUrl: noteUrl(settings.appUrl, baseUrl, saved.id),
       } satisfies SaveResult;
     }
-    case "sign-in": {
-      const settings = await loadSettings();
-      if (!settings.firebaseApiKey.trim()) {
-        throw new CaptureError("config", "Add the Firebase API key first (or leave sign-in off if the server has auth disabled).");
-      }
-      const session = await signInWithPassword({ apiKey: settings.firebaseApiKey.trim() }, request.email.trim(), request.password);
-      await sessionStore.set(session);
-      return { email: session.email } satisfies SignInResult;
-    }
-    case "sign-out":
-      await sessionStore.set(null);
-      return null;
     case "open-options":
       await browser.runtime.openOptionsPage();
       return null;

@@ -1,5 +1,5 @@
 import { defineConfig } from "wxt";
-import { FIREBASE_ORIGINS, hostPermissionPattern } from "./lib/url";
+import { hostPermissionPattern } from "./lib/url";
 
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
@@ -18,8 +18,6 @@ export default defineConfig({
       // Local dev backend. Match patterns ignore the port.
       "http://localhost/*",
       "http://127.0.0.1/*",
-      // Firebase email/password sign-in and token refresh (REST).
-      ...FIREBASE_ORIGINS,
       // A build pre-configured with WXT_SERVER_URL is granted its server up front.
       ...(process.env.WXT_SERVER_URL ? [hostPermissionPattern(process.env.WXT_SERVER_URL)] : []),
     ],
@@ -42,7 +40,7 @@ export default defineConfig({
           id: "note-and-learn-capture@saisandeepvaddi",
           strict_min_version: "140.0",
           // Review before publishing to AMO. Declared honestly: text the user chooses to save
-          // goes to the server they configure, and their login goes to Firebase.
+          // goes to the server they configure, along with the API token they paste in.
           data_collection_permissions: { required: ["websiteContent", "authenticationInfo"] },
         },
       },

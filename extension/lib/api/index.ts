@@ -1,9 +1,10 @@
-import { createExistingRoutesApi, type AuthHeaders } from "./existingRoutes";
+import { createExistingRoutesApi } from "./existingRoutes";
 import type { CaptureApi } from "./types";
 
 export interface CaptureApiConfig {
   baseUrl: string;
-  getAuthHeaders: AuthHeaders;
+  /** Personal API token; empty when the server has auth disabled. */
+  token: string;
 }
 
 /**

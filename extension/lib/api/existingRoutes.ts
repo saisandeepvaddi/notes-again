@@ -1,11 +1,10 @@
 import { CaptureError, type CaptureApi, type Lookups, type NoteDraft, type SavedNote } from "./types";
 
-export type AuthHeaders = (opts?: { forceRefresh?: boolean }) => Promise<Record<string, string>>;
-
 export interface ExistingRoutesOptions {
   /** Server origin, no trailing slash. */
   baseUrl: string;
-  getAuthHeaders: AuthHeaders;
+  /** Personal API token, sent as a Bearer credential. Empty = send none (server with auth disabled). */
+  token: string;
   fetch?: typeof fetch;
 }
 
@@ -64,16 +63,20 @@ async function errorDetail(response: Response): Promise<string | null> {
  * no source-URL dedupe; both go away with a dedicated import endpoint.
  */
 export function createExistingRoutesApi(options: ExistingRoutesOptions): CaptureApi {
-  const { baseUrl, getAuthHeaders } = options;
+  const { baseUrl, token } = options;
   const doFetch = options.fetch ?? fetch;
 
-  async function send(method: string, path: string, body: unknown, forceRefresh: boolean): Promise<Response> {
-    const headers = new Headers(await getAuthHeaders({ forceRefresh }));
+  async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers = new Headers();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
     if (body !== undefined) {
       headers.set("Content-Type", "application/json");
     }
+    let response: Response;
     try {
-      return await doFetch(`${baseUrl}${path}`, {
+      response = await doFetch(`${baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -84,16 +87,17 @@ export function createExistingRoutesApi(options: ExistingRoutesOptions): Capture
         `Can't reach ${baseUrl}. Check the server URL in the extension options and that the server is running.`,
       );
     }
-  }
-
-  async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    let response = await send(method, path, body, false);
     if (response.status === 401) {
-      // The cached token may have just expired server-side; refresh once and retry.
-      response = await send(method, path, body, true);
+      throw new CaptureError(
+        "auth",
+        token
+          ? "The server rejected your API token. It may have expired or been revoked: create a new one in the web app under Settings > API tokens."
+          : "This server needs an API token. Create one in the web app under Settings > API tokens and paste it in the extension options.",
+        401,
+      );
     }
-    if (response.status === 401) {
-      throw new CaptureError("auth", "The server rejected your sign-in. Sign in again from the extension options.", 401);
+    if (response.status === 403) {
+      throw new CaptureError("auth", (await errorDetail(response)) ?? "Not allowed.", 403);
     }
     if (!response.ok) {
       const detail = await errorDetail(response);

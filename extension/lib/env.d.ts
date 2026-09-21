@@ -1,6 +1,4 @@
 interface ImportMetaEnv {
-  /** Firebase web API key baked in at build time (optional; can be set in Options instead). */
-  readonly WXT_FIREBASE_API_KEY?: string;
   /** Default API origin baked into this build (e.g. your production URL). */
   readonly WXT_SERVER_URL?: string;
   /** Default web-app origin, only when it differs from the API's (local dev). */

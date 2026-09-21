@@ -25,11 +25,14 @@ Load unpacked: Chrome `chrome://extensions` > Developer mode > Load unpacked > `
 
 ## Set up
 
-Open the extension's options page:
+1. In the web app open **Settings > API tokens > Create token**, and copy the token (it's shown once).
+2. Open the extension's options page and fill in:
+   - **Server URL**: the API origin, e.g. `http://localhost:8000`. Saving asks the browser for access to that origin.
+   - **API token**: paste the token. Leave it empty only if the server runs with `AUTH_DISABLED=1` (local dev).
+   - **App URL** (local dev only): see below.
+3. **Test connection**, then save something.
 
-1. **Server URL**: the API origin, e.g. `http://localhost:8000`. Saving asks the browser for access to that origin.
-2. **App URL** (local dev only): where the web app is served if it isn't the API, e.g. `http://localhost:5273`. Used for "Open in Note and Learn".
-3. **Firebase web API key + sign in**: same key as `VITE_FIREBASE_API_KEY` in the frontend. Leave empty if the server runs with `AUTH_DISABLED=1`. Only the refresh token is stored, never the password.
+The token can only save notes: list and create projects/tags and create notes. It can't read, edit or delete anything, and you can revoke it from Settings at any time (the extension will then say so).
 
 ## Where the links point ("Open in Note and Learn")
 
@@ -52,7 +55,6 @@ Two ways, pick either:
   ```bash
   WXT_SERVER_URL=https://notes.example.com   # required for a branded build
   WXT_APP_URL=                               # only if the web app lives elsewhere
-  WXT_FIREBASE_API_KEY=...                   # same key as VITE_FIREBASE_API_KEY
   ```
 
   `pnpm build` / `pnpm build:firefox` then ships with those as the defaults, and Chrome grants access to `WXT_SERVER_URL` up front. Users can still change them in the options page.
@@ -67,11 +69,11 @@ Known gaps of the existing-routes approach: three round-trips per save, and no s
 
 ## Security model
 
-- **The extension holds no secret.** Access is decided by the server: every `/api` request needs a Firebase ID token that the backend verifies against *its own* Firebase project. A token from anyone else's project is rejected, so pointing the extension at someone else's deployment just gets a 401. The Firebase web API key is public client config (it's in the web app's bundle too); never put a service-account key or any real secret in a `WXT_*` variable.
-- **Your login goes only to Google.** Email and password are sent to Firebase's sign-in endpoint and never stored; only the refresh token is kept, in the extension's own storage (not readable by web pages). Sign out clears it.
-- **The token goes only to the server you configured**, and only after the browser has asked you to allow that origin.
+- **The extension holds no long-lived secret of its own.** Access is decided by the server: every `/api` request needs a valid credential. The token you paste is a personal API token, scoped to saving notes, stored hashed on the server and revocable from Settings. Pointing the extension at someone else's deployment just gets a 401.
+- **Never bake a token into a build.** `WXT_*` values end up in the published bundle; only put non-secret defaults (server and app URLs) there.
+- **The token goes only to the server you configured**, and only after the browser has asked you to allow that origin. It's kept in the extension's own storage, which web pages can't read.
 - **https is required** for any server that isn't this machine or a private network (localhost, 127.x, 10.x, 172.16-31.x, 192.168.x, `*.local`), because the token travels on every request.
-- **Real access control is on the server.** Any valid account in your Firebase project can read all notes (data is single-user, `user_id = 1`). So keep **Authentication > Settings > User actions > "Enable create (sign-up)"** off in the Firebase console, so only users you add can get a token.
+- **Server side** (see `DEPLOY.md`): keep Firebase "Enable create (sign-up)" off and consider `ALLOWED_EMAILS`, since any account in your Firebase project can read all notes.
 
 ## Known limitations
 

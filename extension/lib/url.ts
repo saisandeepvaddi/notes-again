@@ -19,7 +19,7 @@ export function cleanUrl(raw: string): string {
 /**
  * Hosts where plain http:// is acceptable: this machine and private networks
  * (local dev, a home server on the LAN). Anything else must use https, since
- * the Firebase ID token rides along on every request.
+ * the API token rides along on every request.
  */
 export function isPrivateHost(hostname: string): boolean {
   const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
@@ -60,7 +60,7 @@ export function normalizeBaseUrl(input: string): string {
     throw new Error("Only http:// and https:// URLs are supported.");
   }
   if (url.protocol === "http:" && !isPrivateHost(url.hostname)) {
-    throw new Error(`Use https:// for ${url.hostname}. Your sign-in token would otherwise be sent unencrypted.`);
+    throw new Error(`Use https:// for ${url.hostname}. Your API token would otherwise be sent unencrypted.`);
   }
   return url.origin;
 }
@@ -79,10 +79,3 @@ export function noteUrl(appUrl: string, serverUrl: string, noteId: number): stri
   const base = appUrl.trim() || serverUrl;
   return `${base.replace(/\/+$/, "")}/notes/${noteId}`;
 }
-
-/**
- * Origins the extension talks to for sign-in. Chrome grants these at install;
- * Firefox MV3 treats every host permission as opt-in, so they're requested
- * alongside the server's when the user saves settings.
- */
-export const FIREBASE_ORIGINS = ["https://identitytoolkit.googleapis.com/*", "https://securetoken.googleapis.com/*"];

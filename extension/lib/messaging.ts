@@ -5,8 +5,6 @@ import { deserializeError, type Lookups, type NoteDraft, type SerializedError } 
 export type BackgroundRequest =
   | { type: "lookups" }
   | { type: "save"; draft: NoteDraft }
-  | { type: "sign-in"; email: string; password: string }
-  | { type: "sign-out" }
   | { type: "open-options" };
 
 export interface LookupsResult extends Lookups {
@@ -18,10 +16,6 @@ export interface SaveResult {
   name: string;
   /** Deep link into the web app. */
   openUrl: string;
-}
-
-export interface SignInResult {
-  email: string;
 }
 
 export type BackgroundResponse<T> = { ok: true; data: T } | { ok: false; error: SerializedError };

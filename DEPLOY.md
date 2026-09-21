@@ -100,6 +100,10 @@ user-management surface.
    `FIREBASE_CREDENTIALS_FILE` points at.
 6. **Authentication → Settings → Authorized domains** — add your production
    hostname (e.g. `notes.example.com`).
+7. **Authentication → Settings → User actions** — turn **off** "Enable create
+   (sign-up)". Firebase's web API key is public (it ships in the SPA), and with
+   sign-up on, anyone can use it to create an account and get a token the
+   backend will accept. With it off, only users you add in step 3 can sign in.
 
 ### Behavior
 
@@ -116,7 +120,24 @@ VS Code debug config already does) and leave `VITE_FIREBASE_*` unset. Never set
 `AUTH_DISABLED` in the container.
 
 Data is still single-user (`user_id` hardcoded to 1) — Firebase just controls
-who gets in.
+who gets in, and **any** account in your Firebase project can read all notes.
+As a second lock, set `ALLOWED_EMAILS` (comma-separated). When set, only those
+addresses are accepted even if sign-up is ever re-enabled by mistake. Leave it
+unset for no extra restriction.
+
+### API tokens (browser extension and other tools)
+
+Tools that can't sign in interactively, such as the browser extension, use a
+personal API token instead of a Firebase login. Create one in **Settings → API
+tokens**; it is shown once, so copy it straight into the tool.
+
+- A token can only save notes: list projects/tags, create projects/tags, create
+  notes. It can't read, edit or delete notes, use import, or manage tokens.
+- Only a hash is stored. Revoke a token in Settings and it stops working
+  immediately; tokens can also expire.
+- If you set `ALLOWED_EMAILS`, tokens minted by an address that is later
+  removed from it stop working too.
+- Tokens are bearer credentials: serve the API over HTTPS.
 
 ## Restoring a backup manually
 

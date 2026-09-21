@@ -120,3 +120,26 @@ class Settings(SQLModel, table=True):
     __tablename__ = "settings"  # type: ignore
     id: int = Field(default=1, primary_key=True)
     default_algorithm: str = Field(default="fsrs")  # Literal["sm2", "fsrs"]
+
+
+class ApiToken(SQLModel, table=True):
+    """A personal access token for clients that can't do an interactive
+    sign-in (the browser extension). Only the SHA-256 of the token is stored,
+    so a database leak or backup can't be replayed as a credential; the
+    plaintext is shown once, when the token is created."""
+
+    __tablename__ = "api_tokens"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    token_hash: str = Field(unique=True, index=True)
+    # Non-secret leading characters, so a token can be recognised in the list.
+    prefix: str
+    # What the token may do; see tokens.service.SCOPE_ROUTES.
+    scope: str = Field(default="capture")
+    # Who minted it. If that account is later removed from ALLOWED_EMAILS,
+    # its tokens stop working too.
+    created_by: str | None = Field(default=None)
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    last_used_at: datetime.datetime | None = Field(default=None)
+    expires_at: datetime.datetime | None = Field(default=None)
+    revoked_at: datetime.datetime | None = Field(default=None)

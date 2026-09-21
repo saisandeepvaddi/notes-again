@@ -1,0 +1,16 @@
+import { createExistingRoutesApi, type AuthHeaders } from "./existingRoutes";
+import type { CaptureApi } from "./types";
+
+export interface CaptureApiConfig {
+  baseUrl: string;
+  getAuthHeaders: AuthHeaders;
+}
+
+/**
+ * THE swap point. When a purpose-built import endpoint lands on the backend,
+ * implement CaptureApi against it in a sibling file and return that here;
+ * nothing else in the extension needs to change.
+ */
+export function createCaptureApi(config: CaptureApiConfig): CaptureApi {
+  return createExistingRoutesApi(config);
+}

@@ -9,6 +9,7 @@ from sqlmodel import Session, col, select
 
 from db.models import Note, NoteTag, Project, Reminder, Settings, Tag, utcnow
 from db.setup import SessionDep
+from notes.bulk import MAX_BULK_IDS
 from notes.factory import build_note
 from notes.scheduling import (
     Algorithm,
@@ -126,19 +127,16 @@ def _notes_page(
     return NotePage(items=list(session.exec(statement).all()), total=total)
 
 
-@router.get("/list", response_model=NotePage)
-def get_notes(
-    session: SessionDep,
-    start: datetime.datetime | None = None,
-    end: datetime.datetime | None = None,
-    tag_id: int | None = None,
-    project_id: int | None = None,
-    deleted: bool = False,
-    sort: NoteSort = "due",
-    order: Literal["asc", "desc"] = "asc",
-    limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
-    offset: int = Query(0, ge=0),
-):
+def _list_conditions(
+    *,
+    start: datetime.datetime | None,
+    end: datetime.datetime | None,
+    tag_id: int | None,
+    project_id: int | None,
+    deleted: bool,
+) -> list:
+    """The WHERE conditions shared by /list and /ids, so "select all N
+    matching" selects exactly the notes the list is showing."""
     conditions: list = [
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
     ]
@@ -175,7 +173,61 @@ def get_notes(
         )
     if project_id is not None:
         conditions.append(col(Note.project_id) == project_id)
+    return conditions
+
+
+@router.get("/list", response_model=NotePage)
+def get_notes(
+    session: SessionDep,
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
+    tag_id: int | None = None,
+    project_id: int | None = None,
+    deleted: bool = False,
+    sort: NoteSort = "due",
+    order: Literal["asc", "desc"] = "asc",
+    limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
+):
+    conditions = _list_conditions(
+        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted
+    )
     return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
+
+
+class NoteIds(BaseModel):
+    ids: list[int]
+    total: int
+
+
+@router.get("/ids", response_model=NoteIds)
+def get_note_ids(
+    session: SessionDep,
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
+    tag_id: int | None = None,
+    project_id: int | None = None,
+    deleted: bool = False,
+    sort: NoteSort = "due",
+    order: Literal["asc", "desc"] = "asc",
+):
+    """Just the ids of every note /list would return for the same filters (in
+    the same order), for "select all N matching" -- the list is paged, so the
+    client can't know the ids it hasn't loaded. Capped at MAX_BULK_IDS: `ids`
+    is shorter than `total` when there are more than that."""
+    conditions = _list_conditions(
+        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted
+    )
+    total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
+    key = _sort_key(sort)
+    direction = key.asc() if order == "asc" else key.desc()
+    ids = session.exec(
+        select(Note.id)
+        .where(*conditions)
+        .order_by(direction.nulls_last(), col(Note.id).asc())
+        .limit(MAX_BULK_IDS)
+    ).all()
+    return NoteIds(ids=list(ids), total=total)
 
 
 @router.get("/due", response_model=NotePage)

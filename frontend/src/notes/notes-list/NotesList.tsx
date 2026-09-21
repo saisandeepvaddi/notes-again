@@ -7,9 +7,14 @@ import { isNone } from "@/utils/general";
 import { useNavigate } from "@tanstack/react-router";
 import { format, isToday } from "date-fns";
 import { FolderIcon, LayoutGridIcon, TableIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { toast } from "@/components/ui/toast";
+import { useEffect, useState } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { NoteCard } from "../NoteCard";
+import { fetchNoteIds } from "../selection/fetchNoteIds";
+import { NotesSelectionActions } from "../selection/NotesSelectionActions";
+import { SelectionBar } from "../selection/SelectionBar";
+import { useNoteSelection } from "../selection/useNoteSelection";
 import { TagFilterBar } from "../TagFilterBar";
 import { VirtualNoteGrid } from "../VirtualNoteGrid";
 import { NotesTable } from "./NotesTable";
@@ -91,6 +96,22 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
     order: sort.order,
   });
   const paging = { hasNextPage, isFetchingNextPage, fetchNextPage };
+  const selection = useNoteSelection(notes.map((note) => note.id));
+  // A selection is about the notes on screen: a different filter is a
+  // different set of notes, so don't carry ticks (some now off-screen) over.
+  const { clear: clearSelection } = selection;
+  useEffect(() => {
+    clearSelection();
+  }, [tagId, projectId, noteDate]);
+  const selectAll = async () => {
+    const { ids, total: matching } = await fetchNoteIds({ date: noteDate, tagId, projectId });
+    selection.replace(ids);
+    if (ids.length < matching) {
+      toast.add({
+        description: `Selected the first ${ids.length.toLocaleString()} of ${matching.toLocaleString()} notes`,
+      });
+    }
+  };
   const onSortChange = (key: NotesSort) =>
     setSort((current) =>
       current.key === key
@@ -150,17 +171,41 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
                 sort={sort.key}
                 order={sort.order}
                 onSortChange={onSortChange}
+                selection={selection}
                 {...paging}
               />
             ) : (
               <VirtualNoteGrid
                 items={notes}
-                renderItem={(note) => <NoteCard note={note} />}
+                renderItem={(note) => (
+                  <NoteCard
+                    note={note}
+                    select={{
+                      selected: selection.isSelected(note.id),
+                      selecting: selection.selectionMode,
+                      onToggle: (range) => selection.toggle(note.id, range),
+                    }}
+                  />
+                )}
                 {...paging}
               />
             )}
           </div>
         </>
+      )}
+      {selection.selectionMode && (
+        <SelectionBar
+          count={selection.count}
+          total={total}
+          onSelectAll={selectAll}
+          onClear={selection.clear}
+        >
+          <NotesSelectionActions
+            ids={selection.ids}
+            count={selection.count}
+            onDone={selection.clear}
+          />
+        </SelectionBar>
       )}
     </div>
   );

@@ -80,6 +80,9 @@ export const NotePageSchema = z.object({
   total: z.number(),
 });
 export type NotePage = z.infer<typeof NotePageSchema>;
+
+// Every id matching a list's filters (capped server-side) -- for "select all".
+export const NoteIdsSchema = z.object({ ids: z.array(z.number()), total: z.number() });
 export type NoteBase = z.infer<typeof NoteBaseSchema>;
 
 export const NewNoteBodySchema = NoteBaseSchema.extend({

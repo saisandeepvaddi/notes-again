@@ -9,17 +9,26 @@ import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
+import { SelectCheckbox, selectionClickCapture } from "./selection/SelectCheckbox";
 
 const MAX_VISIBLE_TAGS = 2;
 
+export interface CardSelection {
+  selected: boolean;
+  // Anything (not just this note) is selected, so clicks toggle rather than open.
+  selecting: boolean;
+  onToggle: (range: boolean) => void;
+}
+
 interface NoteCardProps {
   note: NoteItem;
+  select?: CardSelection;
 }
 
 // Read-only by design -- no inline "add a tag"/"add a project" controls
 // here. Changing a note's tags/project/difficulty happens on its own page
 // (which reuses the note form), not from the grid.
-export function NoteCard({ note }: NoteCardProps) {
+export function NoteCard({ note, select }: NoteCardProps) {
   const navigate = useNavigate();
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId: note.id });
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
@@ -31,8 +40,25 @@ export function NoteCard({ note }: NoteCardProps) {
   const goToProject = (proj: Project) => navigate({ to: "/notes", search: { projectId: proj.id } });
 
   return (
-    <Card className="group/card h-fit">
+    <Card
+      className={cn(
+        "group/card h-fit",
+        select?.selected && "bg-primary/5 ring-2 ring-primary",
+        select?.selecting && "cursor-pointer",
+      )}
+      data-selecting={select?.selecting ?? false}
+      onClickCapture={select && selectionClickCapture(select.selecting, select.onToggle)}
+    >
       <CardHeader className="relative flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {select && (
+            <SelectCheckbox
+              revealOnHover
+              label={`Select ${note.name}`}
+              checked={select.selected}
+              onToggle={select.onToggle}
+            />
+          )}
         <h2 className="truncate font-serif font-semibold text-sm">
           {/* Stretched-link pattern: the ::after pseudo-element covers the
               whole header (relative to it), so the entire bar is clickable,
@@ -48,6 +74,7 @@ export function NoteCard({ note }: NoteCardProps) {
             {note.name}
           </Link>
         </h2>
+        </div>
         <Button
           size="icon-xs"
           onClick={() => deleteNote()}

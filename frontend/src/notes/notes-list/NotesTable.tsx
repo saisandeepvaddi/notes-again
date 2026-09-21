@@ -26,6 +26,8 @@ import { useDeleteNote } from "../hooks/useDeleteNote";
 import { markdownExcerpt } from "../markdownExcerpt";
 import { NoteReminderList } from "../NoteReminderList";
 import type { NoteItem, Project } from "../new-note-form/types";
+import { SelectCheckbox, selectionClickCapture } from "../selection/SelectCheckbox";
+import type { NoteSelection } from "../selection/useNoteSelection";
 import type { NotesSort, NotesSortOrder } from "./useInfiniteNotes";
 
 const columnHelper = createColumnHelper<NoteItem>();
@@ -180,6 +182,7 @@ interface NotesTableProps {
   sort: NotesSort;
   order: NotesSortOrder;
   onSortChange: (sort: NotesSort) => void;
+  selection: NoteSelection;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
@@ -190,6 +193,7 @@ export function NotesTable({
   sort,
   order,
   onSortChange,
+  selection,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -211,6 +215,7 @@ export function NotesTable({
     getCoreRowModel: getCoreRowModel(),
   });
   const rows = table.getRowModel().rows;
+  const allLoadedSelected = notes.length > 0 && notes.every((note) => selection.isSelected(note.id));
 
   const bodyRef = useRef<HTMLTableSectionElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -248,6 +253,16 @@ export function NotesTable({
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <TableHead className="w-10">
+                <SelectCheckbox
+                  label="Select all loaded notes"
+                  checked={allLoadedSelected}
+                  indeterminate={selection.count > 0 && !allLoadedSelected}
+                  onToggle={() =>
+                    selection.count > 0 ? selection.clear() : selection.replace(notes.map((n) => n.id))
+                  }
+                />
+              </TableHead>
               {headerGroup.headers.map((header) => {
                 const sortable = header.column.getCanSort();
                 const sortDirection = header.column.getIsSorted();
@@ -280,13 +295,30 @@ export function NotesTable({
         <TableBody ref={bodyRef}>
           {paddingTop > 0 && (
             <tr aria-hidden>
-              <td colSpan={columns.length} style={{ height: paddingTop }} />
+              <td colSpan={columns.length + 1} style={{ height: paddingTop }} />
             </tr>
           )}
           {virtualRows.map((virtualRow) => {
             const row = rows[virtualRow.index];
+            const noteId = row.original.id;
+            const selected = selection.isSelected(noteId);
+            const toggle = (range: boolean) => selection.toggle(noteId, range);
             return (
-              <TableRow key={row.id} data-index={virtualRow.index} ref={virtualizer.measureElement}>
+              <TableRow
+                key={row.id}
+                data-index={virtualRow.index}
+                data-state={selected ? "selected" : undefined}
+                className={cn(selection.selectionMode && "cursor-pointer")}
+                onClickCapture={selectionClickCapture(selection.selectionMode, toggle)}
+                ref={virtualizer.measureElement}
+              >
+                <TableCell>
+                  <SelectCheckbox
+                    label={`Select ${row.original.name}`}
+                    checked={selected}
+                    onToggle={toggle}
+                  />
+                </TableCell>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -297,7 +329,7 @@ export function NotesTable({
           })}
           {paddingBottom > 0 && (
             <tr aria-hidden>
-              <td colSpan={columns.length} style={{ height: paddingBottom }} />
+              <td colSpan={columns.length + 1} style={{ height: paddingBottom }} />
             </tr>
           )}
         </TableBody>

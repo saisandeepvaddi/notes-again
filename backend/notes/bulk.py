@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.sql.elements import ColumnElement
@@ -25,3 +27,15 @@ def trash_notes(session: Session, *conditions: ColumnElement[bool]) -> int:
         .values(deleted_at=utcnow())
     )
     return result.rowcount
+
+
+# One bulk request's ceiling. Also the most "select all matching" will ever
+# grab, so the UI can say so instead of silently acting on a partial set.
+MAX_BULK_IDS = 10_000
+# SQLite's bound-parameter limit is per statement, so big id sets go in chunks.
+_CHUNK = 900
+
+
+def chunked(ids: list[int]) -> Iterator[list[int]]:
+    for i in range(0, len(ids), _CHUNK):
+        yield ids[i : i + _CHUNK]

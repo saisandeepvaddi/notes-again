@@ -16,6 +16,27 @@ export interface UseInfiniteNotesArgs {
   order?: NotesSortOrder;
 }
 
+// The filter half of the list's query string, shared by /notes/list and
+// /notes/ids so "select all" selects exactly what the list is showing.
+export function notesFilterParams({
+  date,
+  tagId,
+  projectId,
+  deleted = false,
+}: Pick<UseInfiniteNotesArgs, "date" | "tagId" | "projectId" | "deleted">) {
+  const params = new URLSearchParams();
+  if (date) {
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    params.set("start", start.toISOString());
+    params.set("end", end.toISOString());
+  }
+  if (tagId != null) params.set("tag_id", String(tagId));
+  if (projectId != null) params.set("project_id", String(projectId));
+  if (deleted) params.set("deleted", "true");
+  return params;
+}
+
 // Server-paged list of notes, loaded a page at a time as the user scrolls.
 // `keyPrefix` decides which cache family the query lives in, so existing
 // invalidations (["notes"], ["trashed-notes"]) keep hitting the right lists.
@@ -46,19 +67,11 @@ export function useInfiniteNotes(
     ],
     initialPageParam: 0,
     queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams({
-        limit: String(NOTES_PAGE_SIZE),
-        offset: String(pageParam),
-        sort,
-        order,
-      });
-      if (dateRange) {
-        params.set("start", dateRange.start.toISOString());
-        params.set("end", dateRange.end.toISOString());
-      }
-      if (tagId != null) params.set("tag_id", String(tagId));
-      if (projectId != null) params.set("project_id", String(projectId));
-      if (deleted) params.set("deleted", "true");
+      const params = notesFilterParams({ date, tagId, projectId, deleted });
+      params.set("limit", String(NOTES_PAGE_SIZE));
+      params.set("offset", String(pageParam));
+      params.set("sort", sort);
+      params.set("order", order);
       return getFetcher(`/notes/list?${params}`)()
         .then((page) => NotePageSchema.parse(page))
         .catch((error) => {

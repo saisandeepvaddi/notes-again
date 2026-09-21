@@ -16,6 +16,10 @@ import { toast } from "@/components/ui/toast";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useEmptyTrash } from "../hooks/useEmptyTrash";
+import { fetchNoteIds } from "../selection/fetchNoteIds";
+import { SelectionBar } from "../selection/SelectionBar";
+import { TrashSelectionActions } from "../selection/TrashSelectionActions";
+import { useNoteSelection } from "../selection/useNoteSelection";
 import { VirtualNoteGrid } from "../VirtualNoteGrid";
 import { TrashedNoteCard } from "./TrashedNoteCard";
 import { useTrashedNotes } from "./useTrashedNotes";
@@ -25,6 +29,11 @@ export function TrashList() {
     useTrashedNotes();
   const { mutateAsync: emptyTrash, isPending: isEmptying } = useEmptyTrash();
   const [open, setOpen] = useState(false);
+  const selection = useNoteSelection(notes.map((note) => note.id));
+  const selectAll = async () => {
+    const { ids } = await fetchNoteIds({ deleted: true });
+    selection.replace(ids);
+  };
 
   const clearAll = async () => {
     try {
@@ -87,11 +96,34 @@ export function TrashList() {
       </div>
       <VirtualNoteGrid
         items={notes}
-        renderItem={(note) => <TrashedNoteCard note={note} />}
+        renderItem={(note) => (
+          <TrashedNoteCard
+            note={note}
+            select={{
+              selected: selection.isSelected(note.id),
+              selecting: selection.selectionMode,
+              onToggle: (range) => selection.toggle(note.id, range),
+            }}
+          />
+        )}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={fetchNextPage}
       />
+      {selection.selectionMode && (
+        <SelectionBar
+          count={selection.count}
+          total={total}
+          onSelectAll={selectAll}
+          onClear={selection.clear}
+        >
+          <TrashSelectionActions
+            ids={selection.ids}
+            count={selection.count}
+            onDone={selection.clear}
+          />
+        </SelectionBar>
+      )}
     </div>
   );
 }

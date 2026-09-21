@@ -13,18 +13,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { Trash2Icon, UndoIcon } from "lucide-react";
 import { useState } from "react";
 import { usePermanentDeleteNote } from "../hooks/usePermanentDeleteNote";
 import { useRestoreNote } from "../hooks/useRestoreNote";
 import type { NoteItem } from "../new-note-form/types";
+import type { CardSelection } from "../NoteCard";
 import { NoteContent } from "../NoteContent";
+import { SelectCheckbox, selectionClickCapture } from "../selection/SelectCheckbox";
 
 interface TrashedNoteCardProps {
   note: NoteItem;
+  select?: CardSelection;
 }
 
-export function TrashedNoteCard({ note }: TrashedNoteCardProps) {
+export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
   const { mutateAsync: restoreNote, isPending: isRestoring } = useRestoreNote({
     noteId: note.id,
   });
@@ -54,8 +58,24 @@ export function TrashedNoteCard({ note }: TrashedNoteCardProps) {
   };
 
   return (
-    <Card className="h-fit">
-      <CardHeader>
+    <Card
+      className={cn(
+        "h-fit",
+        select?.selected && "bg-primary/5 ring-2 ring-primary",
+        select?.selecting && "cursor-pointer",
+      )}
+      data-selecting={select?.selecting ?? false}
+      onClickCapture={select && selectionClickCapture(select.selecting, select.onToggle)}
+    >
+      <CardHeader className="flex items-center gap-2">
+        {select && (
+          <SelectCheckbox
+            revealOnHover
+            label={`Select ${note.name}`}
+            checked={select.selected}
+            onToggle={select.onToggle}
+          />
+        )}
         <h2 className="truncate font-semibold text-sm">{note.name}</h2>
       </CardHeader>
       <CardContent>

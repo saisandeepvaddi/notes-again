@@ -31,6 +31,32 @@ Open the extension's options page:
 2. **App URL** (local dev only): where the web app is served if it isn't the API, e.g. `http://localhost:5273`. Used for "Open in Note and Learn".
 3. **Firebase web API key + sign in**: same key as `VITE_FIREBASE_API_KEY` in the frontend. Leave empty if the server runs with `AUTH_DISABLED=1`. Only the refresh token is stored, never the password.
 
+## Where the links point ("Open in Note and Learn")
+
+Two addresses, because they are two different things:
+
+| Setting | Meaning | Production | Local dev |
+| --- | --- | --- | --- |
+| Server URL | The API the extension saves to | `https://notes.example.com` | `http://localhost:8000` |
+| App URL | The web app the "Open" link goes to | leave empty | `http://localhost:5173` (or `5273`) |
+
+In production the API serves the web app from the same origin, so leaving App URL empty makes the link use the Server URL. In local dev the web app runs on Vite's own port, so set App URL. The options page suggests the usual dev ports when the server is on localhost and App URL is empty.
+
+### Running your own deployment
+
+Two ways, pick either:
+
+- **At runtime:** each user opens the options page and enters their Server URL (and App URL if needed). Saving asks the browser for access to that origin.
+- **At build time:** bake in your own defaults so users configure nothing. Create `extension/.env` (git-ignored) and build:
+
+  ```bash
+  WXT_SERVER_URL=https://notes.example.com   # required for a branded build
+  WXT_APP_URL=                               # only if the web app lives elsewhere
+  WXT_FIREBASE_API_KEY=...                   # same key as VITE_FIREBASE_API_KEY
+  ```
+
+  `pnpm build` / `pnpm build:firefox` then ships with those as the defaults, and Chrome grants access to `WXT_SERVER_URL` up front. Users can still change them in the options page.
+
 ## How it talks to the backend
 
 All requests come from the background script, so backend CORS needs no change and https pages can reach an http server.

@@ -345,3 +345,12 @@
 .nl-options .nl-status.is-error {
   color: var(--danger);
 }
+.nl-options .nl-link {
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

@@ -14,8 +14,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  serverUrl: "http://localhost:8000",
-  appUrl: "",
+  serverUrl: import.meta.env.WXT_SERVER_URL || "http://localhost:8000",
+  appUrl: import.meta.env.WXT_APP_URL ?? "",
   firebaseApiKey: import.meta.env.WXT_FIREBASE_API_KEY ?? "",
   lastProject: "",
 };

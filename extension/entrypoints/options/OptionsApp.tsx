@@ -10,6 +10,16 @@ interface Status {
   error?: boolean;
 }
 
+const LOCAL_DEV_APP_URLS = ["http://localhost:5173", "http://localhost:5273"];
+
+function isLocalHost(input: string): boolean {
+  try {
+    return ["localhost", "127.0.0.1"].includes(new URL(normalizeBaseUrl(input)).hostname);
+  } catch {
+    return false;
+  }
+}
+
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 export function OptionsApp() {
@@ -112,7 +122,24 @@ export function OptionsApp() {
               App URL (optional)
             </label>
             <input id="app-url" className="nl-input" value={appUrl} placeholder="Same as server URL" onChange={(e) => setAppUrl(e.target.value)} />
-            <p className="nl-help">Only needed in local dev, where the web app (e.g. http://localhost:5273) isn't served by the API.</p>
+            <p className="nl-help">
+              Where "Open in Note and Learn" goes. Leave empty in production, where the API serves the web app from the same
+              address. It's only needed when the web app lives elsewhere, as in local dev.
+            </p>
+            {!appUrl.trim() && isLocalHost(serverUrl) && (
+              <p className="nl-help">
+                Running locally? The web app is usually on its own port. Use{" "}
+                {LOCAL_DEV_APP_URLS.map((url, i) => (
+                  <span key={url}>
+                    {i > 0 && " or "}
+                    <button type="button" className="nl-link" onClick={() => setAppUrl(url)}>
+                      {url}
+                    </button>
+                  </span>
+                ))}
+                , then Save.
+              </p>
+            )}
           </div>
           <div className="nl-field">
             <label className="nl-label" htmlFor="api-key">

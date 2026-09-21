@@ -6,7 +6,7 @@ exactly the same logic -- the preview is what actually gets written.
 """
 
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from sqlalchemy import func
@@ -61,11 +61,28 @@ def _parse_tags(raw: Any) -> list[str] | None:
     return [t.strip() for t in raw if t.strip()]
 
 
-def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue]]:
+@dataclass
+class FileRates:
+    """How many of each group's notes become due per day, as the file set them.
+    A deck's own `per_day` beats the file-level one; anything unset falls back
+    to the default chosen at import time."""
+
+    default: int | None = None
+    by_deck: dict[str, int] = field(default_factory=dict)  # lowercase deck name -> per_day
+
+
+def _parse_per_day(value: Any, where: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= MAX_PER_DAY:
+        raise ImportFileError(f'"per_day" {where} must be a whole number from 0 to {MAX_PER_DAY}.')
+    return value
+
+
+def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
     """Flattens the file into ordered rows. Structural problems raise
     ImportFileError; problems with an individual note become issues and that
     note is skipped."""
     entries: list[tuple[str | None, Any]] = []  # (enclosing deck, raw note)
+    rates = FileRates()
 
     if isinstance(payload, list):
         entries = [(None, item) for item in payload]
@@ -74,6 +91,8 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue]]:
             raise ImportFileError(
                 'Expected a list of notes, or an object with a "decks" and/or "notes" list.'
             )
+        if "per_day" in payload:
+            rates.default = _parse_per_day(payload["per_day"], "at the top of the file")
         decks = payload.get("decks", [])
         if not isinstance(decks, list):
             raise ImportFileError('"decks" must be a list.')
@@ -83,6 +102,10 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue]]:
             deck_name = _text(deck.get("name"))
             if deck_name is None:
                 raise ImportFileError(f'Deck #{i} is missing a "name".')
+            if "per_day" in deck:
+                rates.by_deck.setdefault(
+                    _key(deck_name), _parse_per_day(deck["per_day"], f'in deck "{deck_name}"')
+                )
             deck_notes = deck.get("notes", [])
             if not isinstance(deck_notes, list):
                 raise ImportFileError(f'"notes" in deck "{deck_name}" must be a list.')
@@ -147,7 +170,7 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue]]:
                 difficulty=difficulty,  # type: ignore[arg-type]
             )
         )
-    return rows, issues
+    return rows, issues, rates
 
 
 @dataclass
@@ -156,6 +179,7 @@ class PlannedNote:
     deck_key: str | None
     tag_keys: list[str]
     remind_at: datetime.datetime
+    day: int  # 0 = due now
 
 
 @dataclass
@@ -182,6 +206,7 @@ def plan_import(
     session: Session,
     rows: list[Row],
     issues: list[ImportIssue],
+    rates: FileRates,
     *,
     per_day: int,
     default_deck: str | None,
@@ -207,6 +232,13 @@ def plan_import(
         else:
             taken.add((deck_key_by_id.get(project_id, f"#{project_id}"), name))
 
+    file_default = rates.default if rates.default is not None else per_day
+
+    def rate_for(deck_key: str | None) -> int:
+        if deck_key is None:
+            return file_default
+        return rates.by_deck.get(deck_key, file_default)
+
     fallback_deck = _text(default_deck)
     new_decks: dict[str, str] = {}
     new_tags: dict[str, str] = {}
@@ -221,6 +253,7 @@ def plan_import(
             per_deck[deck_key] = ImportDeckSummary(
                 name=display,
                 is_new=deck_key is not None and deck_key not in existing_decks,
+                per_day=rate_for(deck_key),
                 to_create=0,
                 skipped=0,
             )
@@ -270,22 +303,33 @@ def plan_import(
         deck_summary.to_create += 1
         kept_rows.append((row, deck_key, tag_keys))
 
-    # Stagger first reviews: day k = i // per_day. Day 0 is due now; later
-    # days start at the user's local midnight. The millisecond tie-break keeps
-    # file order in the review queue (which sorts by remind_at); the "now"
-    # base sits a minute in the past so it never lands in the future.
+    # Stagger first reviews, per deck: a deck's Nth kept note (in file order)
+    # falls on day N // its per_day. Day 0 is due now; later days start at the
+    # user's local midnight. Notes with no deck form their own group. The
+    # millisecond tie-break keeps file order in the review queue (which sorts
+    # by remind_at); the "now" base sits a minute in the past so it never lands
+    # in the future.
     now = utcnow()
     today_start = _today_start_utc(tz_offset_minutes)
+    position_in_group: dict[str | None, int] = {}
     kept: list[PlannedNote] = []
     for i, (row, deck_key, tag_keys) in enumerate(kept_rows):
-        day = i // per_day if per_day > 0 else 0
-        base = now - datetime.timedelta(minutes=1) if day == 0 else today_start + datetime.timedelta(days=day)
+        rate = rate_for(deck_key)
+        position = position_in_group.get(deck_key, 0)
+        position_in_group[deck_key] = position + 1
+        day = position // rate if rate > 0 else 0
+        base = (
+            now - datetime.timedelta(minutes=1)
+            if day == 0
+            else today_start + datetime.timedelta(days=day)
+        )
         kept.append(
             PlannedNote(
                 row=row,
                 deck_key=deck_key,
                 tag_keys=tag_keys,
                 remind_at=base + datetime.timedelta(milliseconds=i),
+                day=day,
             )
         )
 
@@ -305,7 +349,8 @@ def plan_import(
         decks=list(per_deck.values()),
         first_due=min((p.remind_at for p in kept), default=None),
         last_due=max((p.remind_at for p in kept), default=None),
-        days_span=(len(kept) - 1) // per_day + 1 if kept and per_day > 0 else (1 if kept else 0),
+        due_today=sum(1 for planned in kept if planned.day == 0),
+        days_span=max((planned.day for planned in kept), default=-1) + 1,
         issues=all_issues[:MAX_ISSUES],
         issues_truncated=len(all_issues) > MAX_ISSUES,
         warnings=warnings,

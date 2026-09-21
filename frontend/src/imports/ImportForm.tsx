@@ -12,7 +12,7 @@ import { ImportSummary } from "./ImportSummary";
 import { EXAMPLE_IMPORT, type ImportResult } from "./types";
 import { useImportNotes } from "./useImportNotes";
 
-const DEFAULT_PER_DAY = "20";
+const DEFAULT_PER_DAY = "10";
 
 function FormatHelp() {
   const copy = async () => {
@@ -38,6 +38,11 @@ function FormatHelp() {
           <li>Decks and tags are created if they don't exist, matched ignoring case.</li>
           <li>A note with the same name in the same deck is skipped, so re-importing is safe.</li>
           <li>Tags named Easy / Medium / Hard are ignored; use difficulty instead.</li>
+          <li>
+            <code>per_day</code> sets how many notes become due each day: at the top of the file,
+            and/or on a deck (a deck's own value wins). <code>0</code> makes them all due now.
+            Each deck is spread out on its own. Without it, the default below (10) is used.
+          </li>
         </ul>
         <div className="relative">
           <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
@@ -132,7 +137,7 @@ export function ImportForm() {
             {done.notes_created.toLocaleString()} note{done.notes_created === 1 ? "" : "s"} added.
           </AlertDescription>
         </Alert>
-        <ImportSummary result={done} perDay={perDayNumber} />
+        <ImportSummary result={done} />
         <div className="flex flex-wrap gap-2">
           <Button nativeButton={false} render={<Link to="/notes">View notes</Link>} />
           <Button variant="outline" onClick={reset}>
@@ -178,7 +183,7 @@ export function ImportForm() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium">New notes per day</span>
+          <span className="font-medium">Default new notes per day</span>
           <Input
             type="number"
             inputMode="numeric"
@@ -192,8 +197,8 @@ export function ImportForm() {
             aria-invalid={!perDayValid}
           />
           <span className="text-xs text-muted-foreground">
-            First reviews are spread out this many per day, so you don't get a huge backlog. 0 makes
-            everything due now.
+            Used wherever the file doesn't set <code>per_day</code>. First reviews are spread out
+            this many per day so you don't get a huge backlog; 0 makes everything due now.
           </span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -219,7 +224,7 @@ export function ImportForm() {
       {preview && (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
           <p className="text-sm font-medium">Preview — nothing has been imported yet</p>
-          <ImportSummary result={preview} perDay={perDayNumber} />
+          <ImportSummary result={preview} />
         </div>
       )}
 

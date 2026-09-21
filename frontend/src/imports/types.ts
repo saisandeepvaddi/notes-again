@@ -11,12 +11,14 @@ export const ImportResultSchema = z.object({
     z.object({
       name: z.string().nullable(),
       is_new: z.boolean(),
+      per_day: z.number(),
       to_create: z.number(),
       skipped: z.number(),
     }),
   ),
   first_due: z.coerce.date().nullable(),
   last_due: z.coerce.date().nullable(),
+  due_today: z.number(),
   days_span: z.number(),
   issues: z.array(
     z.object({
@@ -33,9 +35,11 @@ export const ImportResultSchema = z.object({
 export type ImportResult = z.infer<typeof ImportResultSchema>;
 
 export const EXAMPLE_IMPORT = `{
+  "per_day": 10,
   "decks": [
     {
       "name": "Leetcode",
+      "per_day": 5,
       "notes": [
         {
           "name": "Segment tree",

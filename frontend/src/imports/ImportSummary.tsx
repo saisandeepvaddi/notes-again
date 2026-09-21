@@ -25,7 +25,7 @@ function dayLabel(date: Date) {
 
 // Used for both the preview (dry run) and the final result -- same numbers
 // either way, since the server runs the same logic for both.
-export function ImportSummary({ result, perDay }: { result: ImportResult; perDay: number }) {
+export function ImportSummary({ result }: { result: ImportResult }) {
   const verb = result.dry_run ? "to import" : "imported";
   return (
     <div className="flex flex-col gap-4">
@@ -38,14 +38,13 @@ export function ImportSummary({ result, perDay }: { result: ImportResult; perDay
 
       {result.first_due && result.last_due && (
         <p className="text-sm text-muted-foreground">
-          {perDay > 0 ? (
-            <>
-              Reviews are spread over {result.days_span} day{result.days_span === 1 ? "" : "s"},{" "}
-              {perDay} new per day (from {dayLabel(result.first_due)} to{" "}
-              {dayLabel(result.last_due)}).
-            </>
-          ) : (
+          {result.due_today === result.notes_created ? (
             <>Every imported note is due for review right away.</>
+          ) : (
+            <>
+              {result.due_today.toLocaleString()} due today; the rest are spread over up to{" "}
+              {result.days_span} days (the last batch is due {dayLabel(result.last_due)}).
+            </>
           )}
         </p>
       )}
@@ -64,6 +63,7 @@ export function ImportSummary({ result, perDay }: { result: ImportResult; perDay
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead>Deck</TableHead>
+                <TableHead className="text-right">Per day</TableHead>
                 <TableHead className="text-right">{result.dry_run ? "To import" : "Imported"}</TableHead>
                 <TableHead className="text-right">Skipped</TableHead>
               </TableRow>
@@ -78,6 +78,9 @@ export function ImportSummary({ result, perDay }: { result: ImportResult; perDay
                         new
                       </Badge>
                     )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {deck.per_day === 0 ? "all now" : deck.per_day}
                   </TableCell>
                   <TableCell className="text-right">{deck.to_create.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{deck.skipped.toLocaleString()}</TableCell>

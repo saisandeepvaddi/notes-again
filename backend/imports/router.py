@@ -23,7 +23,7 @@ def import_notes(body: ImportRequest, session: SessionDep):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid timezone offset.")
 
     try:
-        rows, issues = normalize(body.payload)
+        rows, issues, rates = normalize(body.payload)
     except ImportFileError as error:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
 
@@ -31,6 +31,7 @@ def import_notes(body: ImportRequest, session: SessionDep):
         session,
         rows,
         issues,
+        rates,
         per_day=body.per_day,
         default_deck=body.default_deck,
         tz_offset_minutes=body.tz_offset_minutes,

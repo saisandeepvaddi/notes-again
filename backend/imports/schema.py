@@ -10,7 +10,8 @@ class ImportRequest(BaseModel):
     # hand in service.normalize so problems come back as plain-string 400s
     # the frontend can show, rather than pydantic's 422 arrays.
     payload: Any
-    per_day: int = 20
+    # Fallback for anything the file doesn't set itself (file-level or per-deck `per_day`).
+    per_day: int = 10
     default_deck: str | None = None
     tz_offset_minutes: int = 0
     dry_run: bool = False
@@ -19,6 +20,7 @@ class ImportRequest(BaseModel):
 class ImportDeckSummary(BaseModel):
     name: str | None  # None = notes with no deck
     is_new: bool
+    per_day: int  # how many of this deck's notes become due per day (0 = all now)
     to_create: int
     skipped: int
 
@@ -41,6 +43,7 @@ class ImportResult(BaseModel):
     decks: list[ImportDeckSummary]
     first_due: UTCDateTime | None = None
     last_due: UTCDateTime | None = None
+    due_today: int = 0
     days_span: int = 0
     issues: list[ImportIssue]
     issues_truncated: bool = False

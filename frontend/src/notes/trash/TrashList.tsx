@@ -11,16 +11,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useEmptyTrash } from "../hooks/useEmptyTrash";
-import { NoteGrid } from "../NoteGrid";
+import { VirtualNoteGrid } from "../VirtualNoteGrid";
 import { TrashedNoteCard } from "./TrashedNoteCard";
 import { useTrashedNotes } from "./useTrashedNotes";
 
 export function TrashList() {
-  const { data: notes } = useTrashedNotes();
+  const { notes, total, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useTrashedNotes();
   const { mutateAsync: emptyTrash, isPending: isEmptying } = useEmptyTrash();
   const [open, setOpen] = useState(false);
 
@@ -35,7 +37,15 @@ export function TrashList() {
     }
   };
 
-  if (notes.length === 0) {
+  if (isPending) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Spinner /> Loading...
+      </div>
+    );
+  }
+
+  if (total === 0) {
     return <p className="text-muted-foreground">Trash is empty.</p>;
   }
 
@@ -43,7 +53,7 @@ export function TrashList() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          {notes.length} note{notes.length === 1 ? "" : "s"} in trash
+          {total.toLocaleString()} note{total === 1 ? "" : "s"} in trash
         </p>
         <AlertDialog open={open}>
           <AlertDialogTrigger
@@ -60,8 +70,8 @@ export function TrashList() {
               </AlertDialogMedia>
               <AlertDialogTitle>Empty trash?</AlertDialogTitle>
               <AlertDialogDescription>
-                This permanently deletes all {notes.length} note{notes.length === 1 ? "" : "s"} in
-                the trash and their review history. This can't be undone.
+                This permanently deletes all {total.toLocaleString()} note{total === 1 ? "" : "s"}{" "}
+                in the trash and their review history. This can't be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -75,11 +85,13 @@ export function TrashList() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-      <NoteGrid>
-        {notes.map((note) => (
-          <TrashedNoteCard key={note.id} note={note} />
-        ))}
-      </NoteGrid>
+      <VirtualNoteGrid
+        items={notes}
+        renderItem={(note) => <TrashedNoteCard note={note} />}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+      />
     </div>
   );
 }

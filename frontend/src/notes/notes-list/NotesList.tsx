@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
@@ -9,10 +10,10 @@ import { FolderIcon, LayoutGridIcon, TableIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { NoteCard } from "../NoteCard";
-import { NoteGrid } from "../NoteGrid";
 import { TagFilterBar } from "../TagFilterBar";
+import { VirtualNoteGrid } from "../VirtualNoteGrid";
 import { NotesTable } from "./NotesTable";
-import { useNotes } from "./useNotes";
+import { useInfiniteNotes, type NotesSort, type NotesSortOrder } from "./useInfiniteNotes";
 import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 
 interface NotesListProps {
@@ -66,11 +67,36 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
   const { data: projects = [] } = useProjects();
   const navigate = useNavigate();
   const activeProject = projects.find((project) => project.id === projectId);
-  const { data: notes } = useNotes({
+  // Sorting happens on the server (the list is paged, so a client-side sort
+  // would only reorder whatever pages happen to be loaded). Both views share
+  // it; the grid just has no headers to change it from.
+  const [sort, setSort] = useState<{ key: NotesSort; order: NotesSortOrder }>({
+    key: "due",
+    order: "asc",
+  });
+  const {
+    notes,
+    total,
+    isPending,
+    isError,
+    isPlaceholderData,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteNotes("notes", {
     date: noteDate,
     tagId,
     projectId,
+    sort: sort.key,
+    order: sort.order,
   });
+  const paging = { hasNextPage, isFetchingNextPage, fetchNextPage };
+  const onSortChange = (key: NotesSort) =>
+    setSort((current) =>
+      current.key === key
+        ? { key, order: current.order === "asc" ? "desc" : "asc" }
+        : { key, order: "asc" },
+    );
   return (
     <div className="flex flex-col gap-4">
       {activeProject && (
@@ -101,16 +127,40 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
           {!isMobile && <ViewModeToggle mode={mode} onChange={setMode} />}
         </div>
       </div>
-      {notes.length === 0 ? (
+      {isPending ? (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Spinner /> Loading notes...
+        </div>
+      ) : isError ? (
+        <p className="text-destructive">Couldn't load notes.</p>
+      ) : notes.length === 0 ? (
         <p className="text-muted-foreground">No notes yet.</p>
-      ) : effectiveMode === "table" ? (
-        <NotesTable notes={notes} />
       ) : (
-        <NoteGrid>
-          {notes.map((note) => (
-            <NoteCard key={note.id} note={note} />
-          ))}
-        </NoteGrid>
+        <>
+          <p className="text-xs text-muted-foreground">
+            {notes.length < total
+              ? `Showing ${notes.length.toLocaleString()} of ${total.toLocaleString()} notes`
+              : `${total.toLocaleString()} note${total === 1 ? "" : "s"}`}
+          </p>
+          {/* Dimmed (not blanked) while a new filter/sort loads over the old rows. */}
+          <div className={cn("transition-opacity", isPlaceholderData && "opacity-60")}>
+            {effectiveMode === "table" ? (
+              <NotesTable
+                notes={notes}
+                sort={sort.key}
+                order={sort.order}
+                onSortChange={onSortChange}
+                {...paging}
+              />
+            ) : (
+              <VirtualNoteGrid
+                items={notes}
+                renderItem={(note) => <NoteCard note={note} />}
+                {...paging}
+              />
+            )}
+          </div>
+        </>
       )}
     </div>
   );

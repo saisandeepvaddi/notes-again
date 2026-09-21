@@ -88,6 +88,25 @@ def add_missing_columns(engine: Engine) -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}"))
 
 
+def ensure_indexes(engine: Engine) -> None:
+    """Indexes for the paginated/sorted notes queries. create_all() only adds
+    indexes when it creates a table, so like add_missing_columns this has to be
+    an idempotent patch for databases that already exist. Without these, "next
+    due" (a per-note subquery over reminders) is a full table scan per note.
+    """
+    statements = [
+        (
+            "CREATE INDEX IF NOT EXISTS ix_reminders_note_pending "
+            "ON reminders (note_id, reviewed_at, deleted_at, remind_at)"
+        ),
+        "CREATE INDEX IF NOT EXISTS ix_notes_deleted_project ON notes (deleted_at, project_id)",
+        "CREATE INDEX IF NOT EXISTS ix_note_tags_tag_id ON note_tags (tag_id)",
+    ]
+    with engine.begin() as conn:
+        for statement in statements:
+            conn.execute(text(statement))
+
+
 def collapse_legacy_pending_reminders(engine: Engine) -> None:
     """Data cleanup for notes created under the old fixed-schedule model.
 
@@ -176,6 +195,7 @@ def seed_settings(engine: Engine) -> None:
 def create_db_and_tables(engine: Engine) -> None:
     add_missing_columns(engine)
     SQLModel.metadata.create_all(engine)
+    ensure_indexes(engine)
     collapse_legacy_pending_reminders(engine)
     seed_difficulty_tags(engine)
     backfill_note_difficulty(engine)

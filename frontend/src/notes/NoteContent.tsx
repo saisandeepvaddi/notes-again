@@ -14,26 +14,50 @@ md.use(
   }),
 );
 
+// Virtualized lists unmount cards as they scroll away and remount them when
+// scrolled back. Without this every remount would blank and re-run the full
+// markdown + syntax-highlight render; keep the most recent results instead.
+const HTML_CACHE_LIMIT = 300;
+const htmlCache = new Map<string, string>();
+
+function cacheHtml(markdown: string, html: string) {
+  htmlCache.delete(markdown);
+  htmlCache.set(markdown, html);
+  if (htmlCache.size > HTML_CACHE_LIMIT) {
+    htmlCache.delete(htmlCache.keys().next().value as string);
+  }
+}
+
 interface NoteContentProps {
   markdown: string;
   className?: string;
 }
 
 export function NoteContent({ markdown, className }: NoteContentProps) {
-  const [content, setContent] = useState<string>("");
+  const [content, setContent] = useState<string>(() => htmlCache.get(markdown) ?? "");
   useEffect(() => {
     if (markdown.length === 0) {
-      console.warn("No content provided");
+      setContent("");
       return;
     }
+    const cached = htmlCache.get(markdown);
+    if (cached !== undefined) {
+      setContent(cached);
+      return;
+    }
+    let cancelled = false;
     (async () => {
       try {
         const html = await md.renderAsync(markdown);
-        setContent(html);
+        cacheHtml(markdown, html);
+        if (!cancelled) setContent(html);
       } catch (e) {
         console.error("Error parsing markdown. Check if valid content.", e);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [markdown]);
   return (
     <div

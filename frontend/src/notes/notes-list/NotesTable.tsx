@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -13,18 +14,19 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
   type SortingState,
 } from "@tanstack/react-table";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, FolderIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { markdownExcerpt } from "../markdownExcerpt";
 import { NoteReminderList } from "../NoteReminderList";
 import type { NoteItem, Project } from "../new-note-form/types";
+import type { NotesSort, NotesSortOrder } from "./useInfiniteNotes";
 
 const columnHelper = createColumnHelper<NoteItem>();
 
@@ -78,7 +80,6 @@ function DeleteRowButton({ noteId }: { noteId: number }) {
 const columns = [
   columnHelper.accessor("name", {
     header: "Note",
-    sortingFn: "text",
     cell: (info) => (
       // Stretched-link pattern: the ::after pseudo-element covers the whole
       // cell (relative to this wrapper), so clicking anywhere in the Note
@@ -110,7 +111,6 @@ const columns = [
   columnHelper.accessor((note) => note.project?.name ?? "", {
     id: "project",
     header: "Project",
-    sortingFn: "text",
     cell: (info) => <ProjectCell project={info.row.original.project} />,
   }),
   columnHelper.display({
@@ -154,25 +154,97 @@ const columns = [
   }),
 ];
 
+// Column id -> the server-side sort key it maps to.
+const SORT_KEYS: Record<string, NotesSort> = {
+  name: "name",
+  project: "project",
+  reminders: "due",
+};
+
+// Fixed layout + explicit widths: with virtualization only the rows near the
+// viewport exist, so auto layout would resize columns as different rows
+// scroll into view.
+const COLUMN_WIDTHS: Record<string, string> = {
+  name: "w-[20%]",
+  preview: "w-[22%]",
+  project: "w-[12%]",
+  tags: "w-[16%]",
+  reminders: "w-[26%]",
+  actions: "w-10",
+};
+
+const ESTIMATED_ROW_HEIGHT = 57;
+
 interface NotesTableProps {
   notes: NoteItem[];
+  sort: NotesSort;
+  order: NotesSortOrder;
+  onSortChange: (sort: NotesSort) => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
 }
 
-export function NotesTable({ notes }: NotesTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([{ id: "reminders", desc: false }]);
+export function NotesTable({
+  notes,
+  sort,
+  order,
+  onSortChange,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+}: NotesTableProps) {
+  // See VirtualNoteGrid: the React Compiler breaks TanStack Virtual (and
+  // TanStack Table's mutable instance) -- opt this component out.
+  "use no memo";
+  // Sorting is done by the server (the list is paged), so the table only
+  // *displays* the current sort rather than performing it.
+  const sorting: SortingState = Object.entries(SORT_KEYS)
+    .filter(([, key]) => key === sort)
+    .map(([id]) => ({ id, desc: order === "desc" }));
 
   const table = useReactTable({
     data: notes,
     columns,
     state: { sorting },
-    onSortingChange: setSorting,
+    manualSorting: true,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
+  const rows = table.getRowModel().rows;
+
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useLayoutEffect(() => {
+    const element = bodyRef.current;
+    if (!element) return;
+    const top = element.getBoundingClientRect().top + window.scrollY;
+    if (Math.abs(top - scrollMargin) > 0.5) setScrollMargin(top);
+  });
+
+  const virtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    overscan: 8,
+    scrollMargin,
+    getItemKey: (index) => rows[index]?.id ?? index,
+  });
+  const virtualRows = virtualizer.getVirtualItems();
+  // Spacer rows stand in for everything that isn't mounted.
+  const paddingTop = virtualRows.length ? virtualRows[0].start - scrollMargin : 0;
+  const paddingBottom = virtualRows.length
+    ? virtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1].end - scrollMargin)
+    : 0;
+
+  const lastRow = virtualRows[virtualRows.length - 1]?.index ?? -1;
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && lastRow >= rows.length - 5) {
+      fetchNextPage();
+    }
+  }, [lastRow, rows.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="overflow-hidden rounded-lg ring-1 ring-foreground/10">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -180,12 +252,12 @@ export function NotesTable({ notes }: NotesTableProps) {
                 const sortable = header.column.getCanSort();
                 const sortDirection = header.column.getIsSorted();
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={COLUMN_WIDTHS[header.column.id]}>
                     {header.isPlaceholder ? null : sortable ? (
                       <button
                         type="button"
                         className="flex items-center gap-1 hover:text-foreground"
-                        onClick={header.column.getToggleSortingHandler()}
+                        onClick={() => onSortChange(SORT_KEYS[header.column.id])}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {sortDirection === "asc" ? (
@@ -205,18 +277,36 @@ export function NotesTable({ notes }: NotesTableProps) {
             </TableRow>
           ))}
         </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+        <TableBody ref={bodyRef}>
+          {paddingTop > 0 && (
+            <tr aria-hidden>
+              <td colSpan={columns.length} style={{ height: paddingTop }} />
+            </tr>
+          )}
+          {virtualRows.map((virtualRow) => {
+            const row = rows[virtualRow.index];
+            return (
+              <TableRow key={row.id} data-index={virtualRow.index} ref={virtualizer.measureElement}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })}
+          {paddingBottom > 0 && (
+            <tr aria-hidden>
+              <td colSpan={columns.length} style={{ height: paddingBottom }} />
+            </tr>
+          )}
         </TableBody>
       </Table>
+      {isFetchingNextPage && (
+        <div className="flex justify-center border-t py-3 text-muted-foreground">
+          <Spinner />
+        </div>
+      )}
     </div>
   );
 }

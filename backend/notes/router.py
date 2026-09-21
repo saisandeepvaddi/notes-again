@@ -1,7 +1,7 @@
 import datetime
 from typing import Any, Literal, cast
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import selectinload
@@ -9,10 +9,10 @@ from sqlmodel import Session, col, select
 
 from db.models import Note, NoteTag, Project, Reminder, Settings, Tag, utcnow
 from db.setup import SessionDep
+from notes.factory import build_note
 from notes.scheduling import (
     Algorithm,
     Rating,
-    new_note_scheduling_state,
     restore_from_snapshot,
     review_note,
     snapshot_for_new_reminder,
@@ -20,7 +20,7 @@ from notes.scheduling import (
 from notes.utils import to_utc
 from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
-from .schema import NoteResponse
+from .schema import NotePage, NoteResponse
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -58,7 +58,75 @@ def get_default_algorithm(session: Session) -> Algorithm:
     return cast(Algorithm, algorithm)
 
 
-@router.get("/list", response_model=list[NoteResponse])
+NoteSort = Literal["due", "name", "project", "created"]
+
+MAX_PAGE_SIZE = 200
+
+
+def _next_due():
+    """Correlated subquery: when this note's pending reminder is due."""
+    return (
+        select(func.min(Reminder.remind_at))
+        .where(
+            col(Reminder.note_id) == col(Note.id),
+            col(Reminder.reviewed_at).is_(None),
+            col(Reminder.deleted_at).is_(None),
+        )
+        .correlate(Note)
+        .scalar_subquery()
+    )
+
+
+def _sort_key(sort: NoteSort):
+    if sort == "name":
+        return func.lower(Note.name)
+    if sort == "project":
+        return (
+            select(func.lower(Project.name))
+            .where(col(Project.id) == col(Note.project_id))
+            .correlate(Note)
+            .scalar_subquery()
+        )
+    if sort == "created":
+        return col(Note.created_at)
+    return _next_due()
+
+
+def _notes_page(
+    session: Session,
+    conditions: list,
+    *,
+    sort: NoteSort,
+    order: Literal["asc", "desc"],
+    limit: int,
+    offset: int,
+) -> NotePage:
+    """One page of notes matching `conditions`, plus the total match count.
+
+    Every filter is an EXISTS/IN predicate on Note itself (never a join that
+    can fan out to several rows per note), so LIMIT/OFFSET and the count are
+    exact, and reminders/tags/project are eager-loaded (no per-note queries).
+    """
+    total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
+    key = _sort_key(sort)
+    direction = key.asc() if order == "asc" else key.desc()
+    statement = (
+        select(Note)
+        .where(*conditions)
+        # notes with no value (no pending reminder / no project) always last
+        .order_by(direction.nulls_last(), col(Note.id).asc())
+        .limit(limit)
+        .offset(offset)
+        .options(
+            selectinload(cast(Any, Note.reminders)),
+            selectinload(cast(Any, Note.tags)),
+            selectinload(cast(Any, Note.project)),
+        )
+    )
+    return NotePage(items=list(session.exec(statement).all()), total=total)
+
+
+@router.get("/list", response_model=NotePage)
 def get_notes(
     session: SessionDep,
     start: datetime.datetime | None = None,
@@ -66,10 +134,14 @@ def get_notes(
     tag_id: int | None = None,
     project_id: int | None = None,
     deleted: bool = False,
+    sort: NoteSort = "due",
+    order: Literal["asc", "desc"] = "asc",
+    limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
 ):
-    deleted_filter = (
+    conditions: list = [
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
-    )
+    ]
 
     if start is not None and end is not None:
         start_utc = to_utc(start).replace(tzinfo=None)
@@ -88,74 +160,45 @@ def get_notes(
             )
         else:
             remind_at_filter = in_range
-
-        statement = (
-            select(Reminder)
-            .join(Note, col(Reminder.note_id) == col(Note.id))
+        conditions.append(
+            select(Reminder.id)
             .where(
-                remind_at_filter,
-                deleted_filter,
+                col(Reminder.note_id) == col(Note.id),
                 col(Reminder.deleted_at).is_(None),
+                remind_at_filter,
             )
+            .exists()
         )
-        if tag_id is not None:
-            statement = statement.join(
-                NoteTag, col(NoteTag.note_id) == col(Note.id)
-            ).where(col(NoteTag.tag_id) == tag_id)
-        if project_id is not None:
-            statement = statement.where(col(Note.project_id) == project_id)
-        reminders = session.exec(statement).all()
-        seen = set()
-        notes: list[Note] = []
-        for reminder in reminders:
-            if reminder.note is not None and reminder.note.id not in seen:
-                notes.append(reminder.note)
-                seen.add(reminder.note.id)
-        return notes
-
-    statement = (
-        select(Note)
-        .where(deleted_filter)
-        .options(
-            selectinload(cast(Any, Note.reminders)),
-            selectinload(cast(Any, Note.tags)),
-            selectinload(cast(Any, Note.project)),
-        )
-    )
     if tag_id is not None:
-        statement = statement.join(NoteTag, col(NoteTag.note_id) == col(Note.id)).where(
-            col(NoteTag.tag_id) == tag_id
+        conditions.append(
+            col(Note.id).in_(select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id))
         )
     if project_id is not None:
-        statement = statement.where(col(Note.project_id) == project_id)
-    notes = list(session.exec(statement=statement).all())
-    return notes
+        conditions.append(col(Note.project_id) == project_id)
+    return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
 
 
-@router.get("/due", response_model=list[NoteResponse])
-def get_due_notes(session: SessionDep):
-    # Joined via Reminder (not a plain Note select) and deduped below: notes
-    # created under the old fixed-schedule model can still have more than one
-    # pending reminder due at once until they've gone through one review.
-    statement = (
-        select(Reminder)
-        .join(Note, col(Reminder.note_id) == col(Note.id))
+@router.get("/due", response_model=NotePage)
+def get_due_notes(
+    session: SessionDep,
+    limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
+):
+    """Notes whose pending reminder is due now, oldest-due first. Paged: after
+    a bulk import thousands can be due at once, and the review flow only ever
+    needs the next few."""
+    conditions: list = [
+        col(Note.deleted_at).is_(None),
+        select(Reminder.id)
         .where(
-            col(Note.deleted_at).is_(None),
+            col(Reminder.note_id) == col(Note.id),
             col(Reminder.deleted_at).is_(None),
             col(Reminder.reviewed_at).is_(None),
             col(Reminder.remind_at) <= utcnow(),
         )
-        .order_by(col(Reminder.remind_at).asc())
-    )
-    reminders = session.exec(statement).all()
-    seen: set[int] = set()
-    notes: list[Note] = []
-    for reminder in reminders:
-        if reminder.note is not None and reminder.note.id not in seen:
-            notes.append(reminder.note)
-            seen.add(cast(int, reminder.note.id))
-    return notes
+        .exists(),
+    ]
+    return _notes_page(session, conditions, sort="due", order="asc", limit=limit, offset=offset)
 
 
 class CalendarDay(BaseModel):
@@ -275,16 +318,15 @@ def create_note(body: NewNoteBody, session: SessionDep):
     # difficulty is sticky and applied separately, never via arbitrary tag_ids
     tags = [tag for tag in tags if not tag.is_difficulty]
 
-    algorithm = get_default_algorithm(session)
-    note = Note(name=body.name, content=body.content, tags=tags, user_id=1, algorithm=algorithm)
-    apply_difficulty(session, note, body.difficulty)
-    for field, value in new_note_scheduling_state(algorithm).items():
-        setattr(note, field, value)
-    if body.project_id is not None:
-        note.project = get_project(session, body.project_id)
-    note.reminders = [
-        Reminder(remind_at=to_utc(body.first_reminder_at), **snapshot_for_new_reminder(note))
-    ]
+    note = build_note(
+        name=body.name,
+        content=body.content,
+        algorithm=get_default_algorithm(session),
+        difficulty_tag=get_difficulty_tag(session, body.difficulty),
+        tags=tags,
+        project=get_project(session, body.project_id) if body.project_id is not None else None,
+        first_reminder_at=to_utc(body.first_reminder_at),
+    )
     session.add(note)
     session.commit()
     session.refresh(note)

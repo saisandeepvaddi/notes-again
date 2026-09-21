@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { ImportButton } from "@/notes/ImportButton";
 import { NewNoteButton } from "@/notes/NewNoteButton";
 import { NotesListContainer } from "@/notes/notes-list/NotesListContainer";
 import { createFileRoute } from "@tanstack/react-router";
@@ -19,7 +20,12 @@ function AllNotes() {
   const { tagId, projectId, date } = Route.useSearch();
   return (
     <div>
-      <PageHeader title="All Notes" actions={<NewNoteButton />} />
+      <PageHeader title="All Notes" actions={
+          <>
+            <ImportButton />
+            <NewNoteButton />
+          </>
+        } />
       <NotesListContainer tagId={tagId} projectId={projectId} initialDate={date} />
     </div>
   );

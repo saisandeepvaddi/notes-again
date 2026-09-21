@@ -68,6 +68,14 @@ export const NoteItemSchema = NoteBaseSchema.extend({
 });
 
 export type NoteItem = z.infer<typeof NoteItemSchema>;
+
+// One server page of notes plus how many match in total (for "N notes" and
+// for knowing when to stop fetching more).
+export const NotePageSchema = z.object({
+  items: z.array(NoteItemSchema),
+  total: z.number(),
+});
+export type NotePage = z.infer<typeof NotePageSchema>;
 export type NoteBase = z.infer<typeof NoteBaseSchema>;
 
 export const NewNoteBodySchema = NoteBaseSchema.extend({

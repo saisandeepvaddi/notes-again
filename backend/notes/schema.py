@@ -31,3 +31,8 @@ class NoteResponse(SQLModel):
     reminders: list[ReminderResponse] = []
     tags: list[TagResponse] = []
     project: ProjectResponse | None = None
+
+
+class NotePage(SQLModel):
+    items: list[NoteResponse]
+    total: int

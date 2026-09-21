@@ -10,6 +10,7 @@ import {
   RepeatIcon,
   SettingsIcon,
   Trash2Icon,
+  UploadIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Home", icon: HomeIcon },
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
+  { to: "/import", label: "Import", icon: UploadIcon },
   { to: "/trash", label: "Trash", icon: Trash2Icon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;

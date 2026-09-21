@@ -17,6 +17,24 @@ export function cleanUrl(raw: string): string {
 }
 
 /**
+ * Hosts where plain http:// is acceptable: this machine and private networks
+ * (local dev, a home server on the LAN). Anything else must use https, since
+ * the Firebase ID token rides along on every request.
+ */
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host === "::1") {
+    return true;
+  }
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (!m) {
+    return false;
+  }
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+}
+
+/**
  * Validates and normalises a user-entered server URL to `scheme://host[:port]`
  * (no path, no trailing slash). A bare `localhost:8000` gets `http://`.
  */
@@ -25,15 +43,24 @@ export function normalizeBaseUrl(input: string): string {
   if (!trimmed) {
     throw new Error("Enter a URL.");
   }
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
-  let url: URL;
-  try {
-    url = new URL(withScheme);
-  } catch {
-    throw new Error(`"${input}" is not a valid URL.`);
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+  const parse = (value: string) => {
+    try {
+      return new URL(value);
+    } catch {
+      throw new Error(`"${input}" is not a valid URL.`);
+    }
+  };
+  // A bare host gets https, except on this machine / a private network where dev servers are plain http.
+  let url = parse(hasScheme ? trimmed : `https://${trimmed}`);
+  if (!hasScheme && isPrivateHost(url.hostname)) {
+    url = parse(`http://${trimmed}`);
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("Only http:// and https:// URLs are supported.");
+  }
+  if (url.protocol === "http:" && !isPrivateHost(url.hostname)) {
+    throw new Error(`Use https:// for ${url.hostname}. Your sign-in token would otherwise be sent unencrypted.`);
   }
   return url.origin;
 }

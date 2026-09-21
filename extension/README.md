@@ -65,6 +65,14 @@ All requests come from the background script, so backend CORS needs no change an
 
 Known gaps of the existing-routes approach: three round-trips per save, and no server-side dedupe by URL (the backend has no source-URL column).
 
+## Security model
+
+- **The extension holds no secret.** Access is decided by the server: every `/api` request needs a Firebase ID token that the backend verifies against *its own* Firebase project. A token from anyone else's project is rejected, so pointing the extension at someone else's deployment just gets a 401. The Firebase web API key is public client config (it's in the web app's bundle too); never put a service-account key or any real secret in a `WXT_*` variable.
+- **Your login goes only to Google.** Email and password are sent to Firebase's sign-in endpoint and never stored; only the refresh token is kept, in the extension's own storage (not readable by web pages). Sign out clears it.
+- **The token goes only to the server you configured**, and only after the browser has asked you to allow that origin.
+- **https is required** for any server that isn't this machine or a private network (localhost, 127.x, 10.x, 172.16-31.x, 192.168.x, `*.local`), because the token travels on every request.
+- **Real access control is on the server.** Any valid account in your Firebase project can read all notes (data is single-user, `user_id = 1`). So keep **Authentication > Settings > User actions > "Enable create (sign-up)"** off in the Firebase console, so only users you add can get a token.
+
 ## Known limitations
 
 - A page listener on `document` in the **capture** phase still sees keystrokes typed into the dialog. Normal bubble-phase page shortcuts don't.

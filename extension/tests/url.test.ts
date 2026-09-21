@@ -23,6 +23,13 @@ describe("normalizeBaseUrl", () => {
     ["localhost:8000", "http://localhost:8000"],
     ["https://notes.example.com/some/path?q=1", "https://notes.example.com"],
     ["  https://notes.example.com  ", "https://notes.example.com"],
+    ["notes.example.com", "https://notes.example.com"],
+    ["127.0.0.1:8765", "http://127.0.0.1:8765"],
+    ["http://192.168.1.11:8000", "http://192.168.1.11:8000"],
+    ["http://10.0.0.5", "http://10.0.0.5"],
+    ["http://172.20.0.1:8000", "http://172.20.0.1:8000"],
+    ["http://nas.local:8000", "http://nas.local:8000"],
+    ["http://[::1]:8000", "http://[::1]:8000"],
   ])("%s -> %s", (input, expected) => {
     expect(normalizeBaseUrl(input)).toBe(expected);
   });
@@ -31,6 +38,13 @@ describe("normalizeBaseUrl", () => {
     expect(() => normalizeBaseUrl("  ")).toThrow(/Enter a URL/);
     expect(() => normalizeBaseUrl("ftp://example.com")).toThrow(/http/);
     expect(() => normalizeBaseUrl("http://")).toThrow(/not a valid URL/);
+  });
+
+  it("refuses plain http to a public host, since the sign-in token would travel unencrypted", () => {
+    expect(() => normalizeBaseUrl("http://notes.example.com")).toThrow(/Use https/);
+    expect(() => normalizeBaseUrl("http://8.8.8.8")).toThrow(/Use https/);
+    expect(() => normalizeBaseUrl("http://172.32.0.1")).toThrow(/Use https/); // just outside 172.16/12
+    expect(() => normalizeBaseUrl("http://192.169.1.1")).toThrow(/Use https/);
   });
 });
 

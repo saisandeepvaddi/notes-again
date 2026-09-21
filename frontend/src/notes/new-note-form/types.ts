@@ -27,6 +27,10 @@ export const ProjectSchema = z.object({
 
 export type Project = z.infer<typeof ProjectSchema>;
 
+// The list endpoints also say how many live (not trashed) notes each has.
+export const ProjectListItemSchema = ProjectSchema.extend({ note_count: z.number() });
+export const TagListItemSchema = TagSchema.extend({ note_count: z.number() });
+
 export const ReminderBaseSchema = z.object({
   remind_at: z.coerce.date(),
 });

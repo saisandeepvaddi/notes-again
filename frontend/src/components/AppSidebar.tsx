@@ -5,6 +5,7 @@ import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   HomeIcon,
+  ListTreeIcon,
   LogOutIcon,
   NotebookIcon,
   RepeatIcon,
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
   { to: "/import", label: "Import", icon: UploadIcon },
+  { to: "/organize", label: "Organize", icon: ListTreeIcon },
   { to: "/trash", label: "Trash", icon: Trash2Icon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;

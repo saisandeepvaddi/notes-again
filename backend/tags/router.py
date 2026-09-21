@@ -1,19 +1,32 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from sqlmodel import func, select
+from sqlalchemy import delete
+from sqlmodel import col, func, select
 
-from db.models import Tag
+from db.models import Note, NoteTag, Tag
 from db.setup import SessionDep
+from notes.bulk import GroupDeleteResult, trash_notes
 
-from .schema import TagResponse
+from .schema import TagListItem, TagResponse
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
-@router.get("/list", response_model=list[TagResponse])
+@router.get("/list", response_model=list[TagListItem])
 def get_tags(session: SessionDep):
-    statement = select(Tag).order_by(func.lower(Tag.name))
-    return session.exec(statement).all()
+    tags = session.exec(select(Tag).order_by(func.lower(Tag.name))).all()
+    counts = dict(
+        session.exec(
+            select(NoteTag.tag_id, func.count())
+            .join(Note, col(Note.id) == col(NoteTag.note_id))
+            .where(col(Note.deleted_at).is_(None))
+            .group_by(NoteTag.tag_id)
+        ).all()
+    )
+    return [
+        TagListItem(id=t.id, name=t.name, is_difficulty=t.is_difficulty, note_count=counts.get(t.id, 0))
+        for t in tags
+    ]
 
 
 class NewTagBody(BaseModel):
@@ -38,10 +51,24 @@ def create_tag(body: NewTagBody, session: SessionDep):
     return tag
 
 
-@router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_tag(tag_id: int, session: SessionDep):
+@router.delete("/{tag_id}", response_model=GroupDeleteResult)
+def delete_tag(tag_id: int, session: SessionDep, delete_notes: bool = False):
+    """Deletes the tag, removing it from every note that had it. The notes are
+    kept unless `delete_notes`, which moves them to the trash instead."""
     tag = session.exec(select(Tag).where(Tag.id == tag_id)).one_or_none()
     if tag is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tag not found")
-    session.delete(tag)
+    if tag.is_difficulty:
+        # Every note carries exactly one; they set its starting ease factor.
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Difficulty tags can't be deleted")
+
+    tagged = col(Note.id).in_(select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id))
+    live_notes = session.exec(
+        select(func.count()).select_from(Note).where(tagged, col(Note.deleted_at).is_(None))
+    ).one()
+    trashed = trash_notes(session, tagged) if delete_notes else 0
+
+    session.exec(delete(NoteTag).where(col(NoteTag.tag_id) == tag_id))  # type: ignore[call-overload]
+    session.exec(delete(Tag).where(col(Tag.id) == tag_id))  # type: ignore[call-overload]
     session.commit()
+    return GroupDeleteResult(notes_trashed=trashed, notes_kept=live_notes - trashed)

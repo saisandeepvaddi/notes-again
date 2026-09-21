@@ -5,15 +5,17 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { FolderIcon, PlusIcon } from "lucide-react";
+import { FolderIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useCreateProject } from "../hooks/useCreateProject";
 import { useProjects } from "../hooks/useProjects";
+import { DeleteGroupDialog } from "../organize/DeleteGroupDialog";
 
 export function ProjectsSidebarSection() {
   const { data: projects = [] } = useProjects();
@@ -60,6 +62,17 @@ export function ProjectsSidebarSection() {
                 <FolderIcon />
                 <span>{project.name}</span>
               </SidebarMenuButton>
+              <DeleteGroupDialog
+                kind="project"
+                id={project.id}
+                name={project.name}
+                noteCount={project.note_count}
+                trigger={
+                  <SidebarMenuAction showOnHover title={`Delete ${project.name}`}>
+                    <Trash2Icon />
+                  </SidebarMenuAction>
+                }
+              />
             </SidebarMenuItem>
           ))}
           {creating && (

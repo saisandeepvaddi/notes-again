@@ -151,7 +151,9 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <ProjectPicker
             value={project}
             onChange={(next) => setProject(next?.id ?? null)}
-            onProjectClick={(proj) => navigate({ to: "/notes", search: { projectId: proj.id } })}
+            onProjectClick={(proj) =>
+              navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: proj.id }) })
+            }
             compact
           />
           <Separator orientation="vertical" className="h-4" />

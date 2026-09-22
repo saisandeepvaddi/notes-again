@@ -155,7 +155,15 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
       ) : isError ? (
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (
-        <p className="text-muted-foreground">No notes yet.</p>
+        <p className="text-muted-foreground">
+          {tagId != null || projectId != null || noteDate != null
+            ? // Distinct from the true-empty message below: zero matches for
+              // a filter doesn't mean the collection itself is empty, and
+              // saying so would send someone hunting for a "New Note" button
+              // to fix a problem that's actually just an active filter.
+              "No notes match this filter."
+            : "No notes yet — capture one with New Note above, or from the browser extension."}
+        </p>
       ) : (
         <>
           <p className="text-xs text-muted-foreground">

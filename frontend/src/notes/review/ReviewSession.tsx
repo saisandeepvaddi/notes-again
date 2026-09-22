@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2Icon } from "lucide-react";
 import { useState } from "react";
 import { NoteContent } from "../NoteContent";
 import { RatingButtons } from "../RatingButtons";
@@ -16,10 +17,15 @@ export function ReviewSession() {
   const { data: firstPage } = useDueNotes();
   const [queue, setQueue] = useState(firstPage.items);
   const [remaining, setRemaining] = useState(firstPage.total);
+  // Local to this session, not persisted -- just enough to tell "you finished
+  // a real batch" from "there was never anything due" at the end, so that
+  // moment can say something true instead of one generic line for both.
+  const [reviewedCount, setReviewedCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const current = queue[0];
 
   const advance = async () => {
+    setReviewedCount((count) => count + 1);
     const rest = queue.slice(1);
     const left = remaining - 1;
     setQueue(rest);
@@ -44,16 +50,36 @@ export function ReviewSession() {
     }
   };
 
+  // Same card shell as the main return below, so fetching the next batch
+  // doesn't blank the screen back to bare loading text -- the "N left" line
+  // and card boundary stay put, only the content inside changes.
   if (loadingMore) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Spinner /> Loading the next batch...
+      <div className="flex flex-col gap-4 w-full max-w-2xl">
+        <p className="text-muted-foreground">{remaining.toLocaleString()} left</p>
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
+            <Spinner /> Loading the next batch...
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!current) {
-    return <p className="text-muted-foreground">All caught up — nothing left to review.</p>;
+    return (
+      <Card className="w-full max-w-2xl items-center gap-2 px-6 py-12 text-center animate-in fade-in-0 zoom-in-95 duration-200">
+        <CheckCircle2Icon className="size-8 text-primary" aria-hidden="true" />
+        <p className="font-serif text-lg font-semibold">
+          {reviewedCount > 0 ? "Session complete" : "All caught up"}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {reviewedCount > 0
+            ? `Reviewed ${reviewedCount.toLocaleString()} note${reviewedCount === 1 ? "" : "s"} — nothing else due right now.`
+            : "Nothing's due right now — check back later."}
+        </p>
+      </Card>
+    );
   }
 
   const pendingReminder = current.reminders.find((reminder) => reminder.reviewed_at === null);
@@ -62,7 +88,7 @@ export function ReviewSession() {
     <div className="flex flex-col gap-4 w-full max-w-2xl">
       <p className="text-muted-foreground">{remaining.toLocaleString()} left</p>
       <Card>
-        <CardHeader className="font-semibold text-xl">{current.name}</CardHeader>
+        <CardHeader className="font-serif font-semibold text-xl">{current.name}</CardHeader>
         <CardContent>
           <NoteContent markdown={current.content} />
         </CardContent>

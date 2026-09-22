@@ -51,7 +51,9 @@ function ProjectCell({ project }: { project: Project | null | undefined }) {
       <FolderIcon className="size-3" />
       <button
         type="button"
-        onClick={() => navigate({ to: "/notes", search: { projectId: project.id } })}
+        onClick={() =>
+          navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: project.id }) })
+        }
         className="hover:underline"
       >
         {project.name}

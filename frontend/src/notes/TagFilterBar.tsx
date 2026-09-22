@@ -20,7 +20,9 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
   const difficultyTags = allTags.filter((tag) => tag.is_difficulty);
   const regularTags = allTags.filter((tag) => !tag.is_difficulty);
 
-  const goToTag = (tagId?: number) => navigate({ to: "/notes", search: tagId ? { tagId } : {} });
+  // Merge, not replace: a tag click shouldn't drop an active project/date filter.
+  const goToTag = (tagId?: number) =>
+    navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId }) });
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

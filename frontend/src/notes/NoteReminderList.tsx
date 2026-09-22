@@ -19,7 +19,7 @@ interface NoteReminderListProps {
 
 export function NoteReminderList({ noteId, reminders, compact = false }: NoteReminderListProps) {
   if (reminders.length === 0) {
-    return <>No Reminders</>;
+    return <span className="text-muted-foreground">No reminders</span>;
   }
 
   const pending = reminders.find((reminder) => reminder.reviewed_at === null);
@@ -52,7 +52,7 @@ export function NoteReminderList({ noteId, reminders, compact = false }: NoteRem
           <PopoverContent>
             <ul className="list-none flex flex-col gap-2">
               {reviewed.map((reminder) => (
-                <li key={reminder.id} className="text-zinc-700 flex items-center gap-2">
+                <li key={reminder.id} className="flex items-center gap-2">
                   <Badge variant="secondary">
                     {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}
                   </Badge>

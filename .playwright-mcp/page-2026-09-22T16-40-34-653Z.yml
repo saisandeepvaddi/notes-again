@@ -1,0 +1,39 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: Note and Learn
+    - generic [ref=e7]:
+      - list [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Home" [ref=e12] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e17]:
+          - link "All Notes" [ref=e18] [cursor=pointer]:
+            - /url: /notes
+        - listitem [ref=e22]:
+          - link "Review" [ref=e23] [cursor=pointer]:
+            - /url: /review
+        - listitem [ref=e30]:
+          - link "Import" [ref=e31] [cursor=pointer]:
+            - /url: /import
+        - listitem [ref=e36]:
+          - link "Organize" [ref=e37] [cursor=pointer]:
+            - /url: /organize
+        - listitem [ref=e42]:
+          - link "Trash" [ref=e43] [cursor=pointer]:
+            - /url: /trash
+        - listitem [ref=e48]:
+          - link "Settings" [ref=e49] [cursor=pointer]:
+            - /url: /settings
+      - separator [ref=e54]
+      - generic [ref=e55]:
+        - generic [ref=e56]: Projects
+        - button "New project" [ref=e57] [cursor=pointer]
+        - list [ref=e60]:
+          - paragraph [ref=e61]: No projects yet
+    - generic [ref=e63]:
+      - generic [ref=e64]: Theme
+      - radiogroup "Theme" [ref=e65]:
+        - radio "Light" [ref=e66] [cursor=pointer]
+        - radio "Dark" [ref=e67] [cursor=pointer]
+        - radio "System" [checked] [ref=e68] [cursor=pointer]
+  - main [ref=e70]

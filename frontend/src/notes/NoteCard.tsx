@@ -37,8 +37,12 @@ export function NoteCard({ note, select }: NoteCardProps) {
   const overflowTags = regularTags.length - visibleTags.length;
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
-  const goToTag = (tag: Tag) => navigate({ to: "/notes", search: { tagId: tag.id } });
-  const goToProject = (proj: Project) => navigate({ to: "/notes", search: { projectId: proj.id } });
+  // Merge, not replace: picking a tag/project here shouldn't drop the other
+  // active filter — see TagFilterBar's goToTag for the same fix.
+  const goToTag = (tag: Tag) =>
+    navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId: tag.id }) });
+  const goToProject = (proj: Project) =>
+    navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: proj.id }) });
 
   return (
     <Card

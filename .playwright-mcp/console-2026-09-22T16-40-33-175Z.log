@@ -1,0 +1,79 @@
+[    1461ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ http://localhost:5273/favicon.ico:0
+[    2377ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5273/node_modules/.vite/deps/react-dom_client.js?v=ca2e57d3:14335
+[    2435ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <AwaitInner promise={Promise}>
+      <RouterProvider router={{...}}>
+        <RouterContextProvider router={{...}}>
+          <QueryClientProvider client={{}}>
+            <Matches>
+              <Transitioner>
+              <SafeFragment fallback={null}>
+                <MatchesInner>
+                  <CatchBoundary getResetKey={function getResetKey} onCatch={function}>
+                    <MatchImpl routeId="__root__">
+                      <MatchView router={{...}} match={{id:"__root__/", ...}}>
+                        <RootDocument>
+                          <html
+                            lang="en"
+                            data-tsd-source="/src/routes/__root.tsx:45:5"
+-                           className="dark"
+                          >
+                            <head>
+                            ...
+                              <div className="flex items..." role="radiogroup" aria-label="Theme" ...>
+                                <Button>
+                                <Button type="button" size="icon-sm" variant="ghost" role="radio" aria-checked={true} ...>
+                                  <Button data-slot="button" className={"group/bu..."} type="button" role="radio" ...>
+                                    <button
+                                      type="button"
+                                      onClick={function}
+                                      onMouseDown={function}
+                                      onKeyDown={function}
+                                      onKeyUp={function}
+                                      onPointerDown={function}
+                                      tabIndex={0}
+                                      disabled={false}
+                                      data-slot="button"
+                                      role="radio"
++                                     aria-checked={true}
+-                                     aria-checked="false"
+                                      aria-label="Dark"
+                                      data-tsd-source="/src/theme/ThemeToggle.tsx:19:9"
+                                      ref={function}
++                                     className={"group/button inline-flex shrink-0 items-center justify-center round..."}
+-                                     className={"group/button inline-flex shrink-0 items-center justify-center round..."}
+                                    >
+                                <Button type="button" size="icon-sm" variant="ghost" role="radio" aria-checked={false} ...>
+                                  <Button data-slot="button" className={"group/bu..."} type="button" role="radio" ...>
+                                    <button
+                                      type="button"
+                                      onClick={function}
+                                      onMouseDown={function}
+                                      onKeyDown={function}
+                                      onKeyUp={function}
+                                      onPointerDown={function}
+                                      tabIndex={0}
+                                      disabled={false}
+                                      data-slot="button"
+                                      role="radio"
++                                     aria-checked={false}
+-                                     aria-checked="true"
+                                      aria-label="System"
+                                      data-tsd-source="/src/theme/ThemeToggle.tsx:19:9"
+                                      ref={function}
++                                     className={"group/button inline-flex shrink-0 items-center justify-center round..."}
+-                                     className={"group/button inline-flex shrink-0 items-center justify-center round..."}
+                                    >
+ @ http://localhost:5273/@vite/client:532

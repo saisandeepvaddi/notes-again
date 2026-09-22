@@ -15,6 +15,8 @@ class GroupDeleteResult(BaseModel):
     notes_trashed: int
     # live notes that were kept
     notes_kept: int
+    # tags removed because deleting the notes left them with none
+    tags_deleted: int = 0
 
 
 def trash_notes(session: Session, *conditions: ColumnElement[bool]) -> int:

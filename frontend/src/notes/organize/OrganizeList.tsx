@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
 import { DeleteGroupDialog } from "./DeleteGroupDialog";
+import { DeleteUnusedTagsButton } from "./DeleteUnusedTagsButton";
 import type { GroupKind } from "../hooks/useDeleteGroup";
 
 interface RowProps {
@@ -64,19 +65,24 @@ function Section({
   description,
   empty,
   isEmpty,
+  actions,
   children,
 }: {
   title: string;
   description: string;
   empty: string;
   isEmpty: boolean;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <div>
-        <h2 className="font-serif text-base font-semibold">{title}</h2>
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-base font-semibold">{title}</h2>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        {actions}
       </div>
       {isEmpty ? (
         <p className="text-sm text-muted-foreground">{empty}</p>
@@ -122,6 +128,13 @@ export function OrganizeList() {
         description="Deleting a tag removes it from its notes, which are kept unless you choose to delete them too."
         empty="No tags yet."
         isEmpty={!tags?.length}
+        actions={
+          <DeleteUnusedTagsButton
+            unusedTagNames={
+              tags?.filter((tag) => !tag.is_difficulty && tag.note_count === 0).map((tag) => tag.name) ?? []
+            }
+          />
+        }
       >
         {tags?.map((tag) => (
           <Row

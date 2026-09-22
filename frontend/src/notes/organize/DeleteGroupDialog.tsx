@@ -32,6 +32,7 @@ const plural = (count: number) => `${count.toLocaleString()} note${count === 1 ?
 export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: DeleteGroupDialogProps) {
   const [open, setOpen] = useState(false);
   const [deleteNotes, setDeleteNotes] = useState(false);
+  const [deleteUnusedTags, setDeleteUnusedTags] = useState(false);
   const { mutateAsync: deleteGroup, isPending } = useDeleteGroup(kind);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
     setOpen(next);
     if (next) {
       setDeleteNotes(false);
+      setDeleteUnusedTags(false);
       // The count shown is what "delete its notes" will act on, so make sure
       // it's current (notes are added/trashed elsewhere without touching it).
       void queryClient.invalidateQueries({ queryKey: [kind === "project" ? "projects" : "tags"] });
@@ -54,19 +56,24 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
 
   const confirm = async () => {
     try {
-      const result = await deleteGroup({ id, deleteNotes });
+      const result = await deleteGroup({
+        id,
+        deleteNotes,
+        deleteUnusedTags: deleteNotes && deleteUnusedTags,
+      });
       setOpen(false);
       if (isFiltered) {
         // The list being viewed is filtered by the thing that no longer exists.
         void navigate({ to: "/notes", search: (prev) => ({ ...prev, [searchKey]: undefined }) });
       }
-      toast.add({
-        type: "success",
-        description:
-          result.notes_trashed > 0
-            ? `Deleted ${kind} "${name}" and moved ${plural(result.notes_trashed)} to Trash`
-            : `Deleted ${kind} "${name}"`,
-      });
+      const parts = [`Deleted ${kind} "${name}"`];
+      if (result.notes_trashed > 0) {
+        parts.push(`moved ${plural(result.notes_trashed)} to Trash`);
+      }
+      if (result.tags_deleted > 0) {
+        parts.push(`deleted ${result.tags_deleted.toLocaleString()} unused tag${result.tags_deleted === 1 ? "" : "s"}`);
+      }
+      toast.add({ type: "success", description: parts.join(", ").replace(/, ([^,]*)$/, " and $1") });
     } catch (error) {
       setOpen(false);
       toast.add({
@@ -105,13 +112,34 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
               className="mt-0.5"
               checked={deleteNotes}
               disabled={isPending}
-              onCheckedChange={(checked) => setDeleteNotes(checked === true)}
+              onCheckedChange={(checked) => {
+                setDeleteNotes(checked === true);
+                if (checked !== true) setDeleteUnusedTags(false);
+              }}
             />
             <span className="flex flex-col gap-0.5">
               <span className="font-medium">Also delete its {plural(noteCount)}</span>
               <span className="text-xs text-muted-foreground">
                 They move to Trash, where you can restore them
                 {kind === "project" ? " (without a project)" : " (without this tag)"}.
+              </span>
+            </span>
+          </label>
+        )}
+        {kind === "project" && deleteNotes && noteCount > 0 && (
+          // Only meaningful once the notes are going: a tag left with no
+          // notes is what an import leaves behind when its deck is deleted.
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm">
+            <Checkbox
+              className="mt-0.5"
+              checked={deleteUnusedTags}
+              disabled={isPending}
+              onCheckedChange={(checked) => setDeleteUnusedTags(checked === true)}
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="font-medium">Also delete tags no other note uses</span>
+              <span className="text-xs text-muted-foreground">
+                Tags still on notes elsewhere are kept.
               </span>
             </span>
           </label>

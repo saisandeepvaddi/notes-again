@@ -8,6 +8,7 @@ from db.setup import SessionDep
 from notes.bulk import GroupDeleteResult, trash_notes
 
 from .schema import TagListItem, TagResponse
+from .unused import delete_unused_tags
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
@@ -49,6 +50,19 @@ def create_tag(body: NewTagBody, session: SessionDep):
     session.commit()
     session.refresh(tag)
     return tag
+
+
+class UnusedTagsResult(BaseModel):
+    tags_deleted: int
+
+
+@router.delete("/unused", response_model=UnusedTagsResult)
+def delete_all_unused_tags(session: SessionDep):
+    """Deletes every regular tag no live note carries (see delete_unused_tags).
+    Registered before DELETE /{tag_id} so "unused" isn't read as a tag_id."""
+    deleted = delete_unused_tags(session)
+    session.commit()
+    return UnusedTagsResult(tags_deleted=deleted)
 
 
 @router.delete("/{tag_id}", response_model=GroupDeleteResult)

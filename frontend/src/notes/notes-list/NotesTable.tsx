@@ -47,14 +47,18 @@ function ProjectCell({ project }: { project: Project | null | undefined }) {
     return <span className="text-muted-foreground">—</span>;
   }
   return (
-    <Badge variant="secondary" className="gap-1">
-      <FolderIcon className="size-3" />
+    // min-w-0 + shrink (overriding the base Badge's shrink-0/w-fit): without
+    // this a long project name never wraps or truncates, and in a
+    // table-fixed cell that means it paints straight over the Tags column
+    // next to it instead of stopping at the cell boundary.
+    <Badge variant="secondary" className="min-w-0 max-w-full shrink gap-1">
+      <FolderIcon className="size-3 shrink-0" />
       <button
         type="button"
         onClick={() =>
           navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: project.id }) })
         }
-        className="hover:underline"
+        className="min-w-0 truncate hover:underline"
       >
         {project.name}
       </button>

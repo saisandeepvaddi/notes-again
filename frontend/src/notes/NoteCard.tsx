@@ -3,10 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useExperiment } from "@/theme/ExperimentProvider";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FolderIcon, Trash2Icon } from "lucide-react";
 import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "./difficulty";
 import { useDeleteNote } from "./hooks/useDeleteNote";
+import {
+  getMasteryLabel,
+  getMasteryTier,
+  MASTERY_RING_CLASSES,
+  MASTERY_TIER_CLASSES,
+} from "./mastery";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
@@ -37,6 +44,10 @@ export function NoteCard({ note, select }: NoteCardProps) {
   const overflowTags = regularTags.length - visibleTags.length;
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
+  // EXPERIMENTAL (Rating Ladder direction, see mastery.ts): remove this and
+  // the ring/badge below once a direction ships.
+  const { experiment } = useExperiment();
+  const masteryTier = experiment === "rating-ladder" ? getMasteryTier(note) : null;
   // Merge, not replace: picking a tag/project here shouldn't drop the other
   // active filter — see TagFilterBar's goToTag for the same fix.
   const goToTag = (tag: Tag) =>
@@ -54,6 +65,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
         // clipped by the base Card's own overflow-hidden rather than
         // growing the card.
         "group/card h-72",
+        masteryTier && ["ring-2", MASTERY_RING_CLASSES[masteryTier]],
         select?.selected && "bg-primary/5 ring-2 ring-primary",
         select?.selecting && "cursor-pointer",
       )}
@@ -121,6 +133,14 @@ export function NoteCard({ note, select }: NoteCardProps) {
             keep growing until the card's own overflow-hidden hard-clipped
             them mid-badge instead of them truncating cleanly. */}
         <div className="flex w-full flex-nowrap items-center gap-1.5 overflow-hidden">
+          {masteryTier && (
+            <Badge
+              variant="outline"
+              className={cn("shrink-0", MASTERY_TIER_CLASSES[masteryTier])}
+            >
+              {getMasteryLabel(masteryTier)}
+            </Badge>
+          )}
           <Badge
             variant="outline"
             className={cn("shrink-0 capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}

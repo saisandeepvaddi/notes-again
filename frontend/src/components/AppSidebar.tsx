@@ -1,6 +1,9 @@
 import { useAuth } from "@/auth/AuthProvider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { firebaseEnabled } from "@/lib/firebase";
+import { EXPERIMENT_OPTIONS, type ExperimentId } from "@/lib/experiments";
 import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
+import { useExperiment } from "@/theme/ExperimentProvider";
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -60,6 +63,7 @@ function SignOutButton() {
 
 function AppSidebar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { experiment, setExperiment } = useExperiment();
   return (
     <Sidebar>
       <SidebarHeader className="font-semibold px-2">Note and Learn</SidebarHeader>
@@ -88,6 +92,28 @@ function AppSidebar() {
         <div className="flex items-center justify-between px-1">
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />
+        </div>
+        {/* Temporary: compares the Rating Ladder and Committed Canon visual
+            directions live. Remove this row (and ExperimentProvider) once
+            one is chosen or the default ships unchanged. */}
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-muted-foreground">Experiment</span>
+          <Select
+            items={EXPERIMENT_OPTIONS}
+            value={experiment}
+            onValueChange={(value) => value && setExperiment(value as ExperimentId)}
+          >
+            <SelectTrigger size="sm" className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EXPERIMENT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {firebaseEnabled ? <SignOutButton /> : null}
       </SidebarFooter>

@@ -12,7 +12,7 @@ Sai Sandeep Vaddi, the sole primary user — a personal, self-hosted tool built 
 
 ## Product Purpose
 
-A personal knowledge-retention system: capture technical/coding material (LeetCode and DSA problems, algorithms, concepts) as freeform markdown notes, organize them into projects and tags, and resurface them for review on a spaced-repetition schedule (FSRS/SM2) so the knowledge actually sticks instead of being written once and forgotten.
+A personal knowledge-retention system: capture anything worth remembering as freeform markdown notes, organize them into projects and tags, and resurface them for review on a spaced-repetition schedule (FSRS/SM2) so the knowledge actually sticks instead of being written once and forgotten. General-purpose, not domain-specific — the user's current heaviest use case is technical/coding material (LeetCode, DSA, algorithms), but that is a usage pattern, not a product constraint. Nothing in the design or copy should assume coding/technical content specifically.
 
 ## Positioning
 
@@ -20,7 +20,7 @@ Spaced repetition applied to freeform markdown notes rather than Anki-style flas
 
 ## Operating Context
 
-- Primary material is technical/coding knowledge: DSA problems, algorithms, and related concepts.
+- Material is whatever the user wants to remember; it is not domain-specific. Currently, in practice, that's heavily technical/coding knowledge (DSA problems, algorithms), but the product makes no assumption about content type — projects, tags, and difficulty are all user-defined and free-form.
 - Notes are organized into projects (decks) and tags; one tag axis doubles as a difficulty label (easy/medium/hard).
 - Review happens as a dedicated session with SM2/FSRS-scheduled cards, rated Again/Hard/Good/Easy (recall confidence — distinct from a note's own difficulty tag).
 - Capture happens outside the app via a browser extension (Chrome/Edge/Brave/Firefox) that saves a page or text selection using a scoped `capture`-only API token; notes are later organized inside the web app.

@@ -1,0 +1,356 @@
+/*
+ * Hand-written on purpose: the dialog renders inside a shadow root on
+ * arbitrary pages, and Tailwind v4's @property-based utilities don't work
+ * there. Everything is scoped under .nl-root.
+ */
+.nl-root,
+.nl-root * {
+  box-sizing: border-box;
+}
+
+.nl-root {
+  --bg: #ffffff;
+  --fg: #18181b;
+  --muted: #71717a;
+  --border: #d4d4d8;
+  --field: #ffffff;
+  --hover: #f4f4f5;
+  --accent: #4f46e5;
+  --accent-fg: #ffffff;
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+  --chip: #eef2ff;
+  --chip-fg: #3730a3;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .nl-root {
+    --bg: #18181b;
+    --fg: #f4f4f5;
+    --muted: #a1a1aa;
+    --border: #3f3f46;
+    --field: #202024;
+    --hover: #27272a;
+    --accent: #818cf8;
+    --accent-fg: #111827;
+    --danger: #f87171;
+    --danger-bg: #2a1616;
+    --chip: #312e81;
+    --chip-fg: #e0e7ff;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.nl-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8vh 16px 16px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.nl-window {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.nl-card {
+  width: min(480px, 100%);
+  max-height: 84vh;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.nl-window .nl-card {
+  width: 100%;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.nl-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.nl-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.nl-sub {
+  margin: 2px 0 0;
+  max-width: 380px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nl-icon-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.nl-icon-button:hover {
+  background: var(--hover);
+}
+
+.nl-field {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.nl-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nl-input,
+.nl-combo {
+  width: 100%;
+  color: var(--fg);
+  font: inherit;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.nl-input {
+  padding: 7px 10px;
+}
+
+.nl-textarea {
+  display: block;
+  min-height: 90px;
+  resize: vertical;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.nl-input:focus,
+.nl-combo:focus-within {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 0;
+}
+
+.nl-combo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 4px 6px;
+  cursor: text;
+}
+
+.nl-combo-input {
+  flex: 1;
+  min-width: 90px;
+  padding: 3px 4px;
+  color: inherit;
+  font: inherit;
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+.nl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  color: var(--chip-fg);
+  font-size: 13px;
+  background: var(--chip);
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+.nl-chip.is-new {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.nl-chip-badge {
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 999px;
+}
+.nl-chip-remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: inherit;
+  line-height: 1;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.nl-chip-remove:hover {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.nl-list {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  left: 0;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.nl-option {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.nl-option.is-active {
+  background: var(--hover);
+}
+
+.nl-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nl-footer {
+  margin-top: 16px;
+}
+.nl-hint {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.nl-button {
+  display: inline-block;
+  padding: 7px 14px;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.nl-button:hover:not(:disabled) {
+  background: var(--hover);
+}
+.nl-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.nl-primary {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.nl-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+.nl-banner,
+.nl-error {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 8px;
+}
+.nl-banner p,
+.nl-error {
+  margin: 0;
+}
+.nl-banner .nl-actions {
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+.nl-error {
+  margin-top: 12px;
+}
+
+.nl-saved {
+  padding: 8px 0 4px;
+}
+.nl-saved-title {
+  margin: 0 0 16px;
+  font-weight: 500;
+}
+.nl-saved .nl-actions {
+  justify-content: flex-start;
+}
+
+/* Options page */
+.nl-options {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+.nl-options h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+.nl-options section {
+  margin-top: 28px;
+}
+.nl-options h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.nl-options .nl-help {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.nl-options .nl-status {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+.nl-options .nl-status.is-error {
+  color: var(--danger);
+}
+.nl-options .nl-link {
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

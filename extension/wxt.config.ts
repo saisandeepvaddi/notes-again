@@ -2,6 +2,7 @@ import { defineConfig } from "wxt";
 import { hostPermissionPattern } from "./lib/url";
 
 export default defineConfig({
+  outDir: "dist",
   modules: ["@wxt-dev/module-react"],
   // WXT defaults Firefox to MV2, which lacks browser.action and optional_host_permissions; both are needed here.
   manifestVersion: 3,

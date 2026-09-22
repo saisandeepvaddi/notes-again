@@ -15,13 +15,15 @@ pnpm dev            # Chrome, with reload
 pnpm dev:firefox
 pnpm test           # unit tests (vitest)
 pnpm typecheck
-pnpm build          # .output/chrome-mv3
-pnpm build:firefox  # .output/firefox-mv3
+pnpm build          # dist/chrome-mv3
+pnpm build:firefox  # dist/firefox-mv3
 ```
 
 `extension/` is its own pnpm root (`pnpm-workspace.yaml`). Keep it that way: without it pnpm adopts the nearest ancestor workspace and installs into it.
 
-Load unpacked: Chrome `chrome://extensions` > Developer mode > Load unpacked > `.output/chrome-mv3`. Firefox `about:debugging` > This Firefox > Load Temporary Add-on > `.output/firefox-mv3/manifest.json`.
+Load unpacked: Chrome `chrome://extensions` > Developer mode > Load unpacked > `dist/chrome-mv3`. Firefox `about:debugging` > This Firefox > Load Temporary Add-on > `dist/firefox-mv3/manifest.json`.
+
+After a rebuild, reload the extension so the browser picks up the new files: Chrome shows a refresh icon on the extension's card in `chrome://extensions`; Firefox's temporary add-ons show a "Reload" button in `about:debugging`. Neither auto-reloads on `pnpm build`; use `pnpm dev` / `pnpm dev:firefox` instead if you want that.
 
 ## Set up
 

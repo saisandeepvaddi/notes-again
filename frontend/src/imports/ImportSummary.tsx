@@ -7,6 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { WARNING_TEXT_CLASSES } from "@/lib/statusColors";
+import { cn } from "@/lib/utils";
 import { format, isToday } from "date-fns";
 import type { ImportResult } from "./types";
 
@@ -50,7 +52,7 @@ export function ImportSummary({ result }: { result: ImportResult }) {
       )}
 
       {result.warnings.length > 0 && (
-        <ul className="list-disc space-y-1 pl-5 text-sm text-amber-700 dark:text-amber-400">
+        <ul className={cn("list-disc space-y-1 pl-5 text-sm", WARNING_TEXT_CLASSES)}>
           {result.warnings.map((warning) => (
             <li key={warning}>{warning}</li>
           ))}

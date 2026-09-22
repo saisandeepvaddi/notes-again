@@ -9,9 +9,29 @@ interface ThemeState {
 const ThemeContext = createContext<ThemeState | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getStoredTheme);
+  // Fixed initial value, not getStoredTheme(): that reads localStorage, which
+  // doesn't exist during SSR (server always falls back to "system") but does
+  // exist on the client's very first render -- the same render hydration
+  // diffs against the server's HTML. A visitor with a saved "light"/"dark"
+  // preference made every render disagree with the server on this value
+  // (visible as a hydration-mismatch error on ThemeToggle's aria-checked).
+  const [theme, setTheme] = useState<Theme>("system");
+  // Gates the effect below until the real preference has been read, so it
+  // never fires with the placeholder "system" first -- that would briefly
+  // call storeTheme("system"), overwriting a real saved "light"/"dark" value
+  // an instant before correcting it (and could flash the wrong theme, which
+  // THEME_INIT_SCRIPT already avoided pre-paint).
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setTheme(getStoredTheme());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
     applyTheme(theme);
     storeTheme(theme);
     if (theme !== "system") {
@@ -22,7 +42,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const onChange = () => applyTheme("system");
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
-  }, [theme]);
+  }, [theme, hydrated]);
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }

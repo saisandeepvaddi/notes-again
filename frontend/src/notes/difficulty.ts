@@ -1,3 +1,4 @@
+import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
 import type { Difficulty, Tag } from "./new-note-form/types";
 
 export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
@@ -7,8 +8,8 @@ export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
 ];
 
 export const DIFFICULTY_BADGE_CLASSES: Record<Difficulty, string> = {
-  easy: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  medium: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  easy: SUCCESS_TINT_CLASSES,
+  medium: WARNING_TINT_CLASSES,
   hard: "bg-red-500/15 text-red-700 dark:text-red-400",
 };
 

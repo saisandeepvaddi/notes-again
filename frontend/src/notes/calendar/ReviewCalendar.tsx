@@ -1,4 +1,5 @@
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
+import { SUCCESS_DOT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
@@ -32,18 +33,25 @@ function DayButtonWithInfo({
                     "rounded px-1 text-[0.625rem] font-medium",
                     info.overdue > 0
                       ? "bg-destructive/15 text-destructive"
-                      : "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+                      : WARNING_TINT_CLASSES,
                   )}
                 >
                   {totalToday}
                 </span>
               )
             : info.due > 0 && (
-                <span className="rounded bg-amber-500/15 px-1 text-[0.625rem] font-medium text-amber-700 dark:text-amber-400">
+                <span
+                  className={cn(
+                    "rounded px-1 text-[0.625rem] font-medium",
+                    WARNING_TINT_CLASSES,
+                  )}
+                >
                   {info.due}
                 </span>
               )}
-          {info.reviewed > 0 && <span className="size-1 rounded-full bg-emerald-500" />}
+          {info.reviewed > 0 && (
+            <span className={cn("size-1 rounded-full", SUCCESS_DOT_CLASSES)} />
+          )}
         </span>
       )}
     </CalendarDayButton>

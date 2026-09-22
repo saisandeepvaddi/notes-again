@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { SUCCESS_BUTTON_CLASSES } from "@/lib/statusColors";
 import { titleCase } from "@/utils/general";
 import { formatRelative } from "date-fns";
 import { useState } from "react";
@@ -52,7 +53,11 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
             size={"sm"}
             variant="outline"
             onClick={() => setOpen(true)}
-            className={"bg-green-300/20 outline-green-300/20 border-green-400"}
+            // Was a raw green-300/400 with no dark-mode variant, and an
+            // outline-green-300/20 utility that did nothing (Tailwind's
+            // outline-color has no effect without an outline-style) --
+            // unified to the app's one shared "success" recipe instead.
+            className={SUCCESS_BUTTON_CLASSES}
           >
             <CheckIcon />
             Rated {reminder.rating ? titleCase(reminder.rating) : "Reviewed"}

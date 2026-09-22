@@ -1,3 +1,4 @@
+import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
 import type { Rating } from "./new-note-form/types";
 
 // `caption` is plain-language recall wording: the labels alone (Again/Hard/
@@ -12,7 +13,7 @@ export const RATING_OPTIONS: { value: Rating; label: string; caption: string }[]
 
 export const RATING_BADGE_CLASSES: Record<Rating, string> = {
   again: "bg-red-500/15 text-red-700 dark:text-red-400",
-  hard: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  hard: WARNING_TINT_CLASSES,
   good: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  easy: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  easy: SUCCESS_TINT_CLASSES,
 };

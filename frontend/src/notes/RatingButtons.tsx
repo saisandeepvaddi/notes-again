@@ -45,7 +45,11 @@ export function RatingButtons({ reminderId, onRated, className }: RatingButtonsP
             className={cn("h-auto flex-col gap-0 py-1.5", RATING_BADGE_CLASSES[option.value])}
           >
             <span className="font-medium">{option.label}</span>
-            <span className="text-[10px] font-normal opacity-80">{option.caption}</span>
+            {/* No opacity-80 here: at 10px, layering 80% opacity on top of
+                the badge tint's own 15% opacity dropped every rating below
+                4.5:1 (measured as low as 3.22:1) -- full-strength text is
+                the only version of this color that clears AA at this size. */}
+            <span className="text-[10px] font-normal">{option.caption}</span>
           </Button>
         ))}
       </div>

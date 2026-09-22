@@ -172,6 +172,30 @@ body {
   }
 }
 
+/* Every motion in this app is a short, user-triggered micro-transition
+ * (dialog/popover open-close, sidebar collapse, toast slide) -- nothing
+ * large-scale or auto-playing -- so a blanket reduction is safe here. The
+ * one thing a blanket kill would wrongly take out is loading feedback
+ * (Spinner/Skeleton): "reduced motion" means no decorative motion, not no
+ * way to tell something is still working, so those two are carved back out
+ * to their normal animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin,
+  .animate-pulse {
+    animation-duration: revert !important;
+    animation-iteration-count: revert !important;
+  }
+}
+
 /* Shared markdown typography — used for both the MDXEditor content area and
  * the read-only rendered note (NoteContent). No Tailwind Typography plugin
  * here; these are hand-written rules against the theme tokens above, so they

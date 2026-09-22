@@ -4,7 +4,6 @@ import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection"
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  HomeIcon,
   ListTreeIcon,
   LogOutIcon,
   NotebookIcon,
@@ -27,7 +26,6 @@ import {
 } from "./ui/sidebar";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: HomeIcon },
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
   { to: "/import", label: "Import", icon: UploadIcon },
@@ -68,7 +66,7 @@ function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
-                const isActive = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                const isActive = pathname.startsWith(item.to);
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton isActive={isActive} render={<Link to={item.to} />}>

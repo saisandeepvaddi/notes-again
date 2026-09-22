@@ -1,15 +1,9 @@
-import { PageHeader } from "@/components/PageHeader";
-import { ReviewCalendarContainer } from "@/notes/calendar/ReviewCalendarContainer";
-import { NewNoteButton } from "@/notes/NewNoteButton";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({ component: Home });
-
-function Home() {
-  return (
-    <div className="flex h-full flex-col gap-4">
-      <PageHeader title="Home" description="What's due for review" actions={<NewNoteButton />} />
-      <ReviewCalendarContainer />
-    </div>
-  );
-}
+// All Notes is the app's actual daily-use home; there's no separate landing
+// page to render here.
+export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    throw redirect({ to: "/notes" });
+  },
+});

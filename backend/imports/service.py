@@ -194,8 +194,8 @@ class Plan:
 
 
 def _today_start_utc(tz_offset_minutes: int) -> datetime.datetime:
-    """Start of the user's local "today", as UTC. Same convention as
-    /notes/calendar: tz_offset_minutes is the browser's getTimezoneOffset()."""
+    """Start of the user's local "today", as UTC. tz_offset_minutes is the
+    browser's getTimezoneOffset()."""
     offset = datetime.timedelta(minutes=tz_offset_minutes)
     local_now = utcnow().replace(tzinfo=None) - offset
     local_midnight = datetime.datetime.combine(local_now.date(), datetime.time.min)

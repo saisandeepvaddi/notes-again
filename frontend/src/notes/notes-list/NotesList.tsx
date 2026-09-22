@@ -1,14 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
 import { useNavigate } from "@tanstack/react-router";
 import { format, isToday } from "date-fns";
-import { FolderIcon, LayoutGridIcon, TableIcon, XIcon } from "lucide-react";
+import { FolderIcon, LayoutGridIcon, SearchIcon, TableIcon, XIcon } from "lucide-react";
 import { toast } from "@/components/ui/toast";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { NoteCard } from "../NoteCard";
 import { fetchNoteIds } from "../selection/fetchNoteIds";
@@ -18,13 +19,24 @@ import { useNoteSelection } from "../selection/useNoteSelection";
 import { TagFilterBar } from "../TagFilterBar";
 import { VirtualNoteGrid } from "../VirtualNoteGrid";
 import { NotesTable } from "./NotesTable";
-import { useInfiniteNotes, type NotesSort, type NotesSortOrder } from "./useInfiniteNotes";
+import {
+  useInfiniteNotes,
+  usePagedNotes,
+  type NotesSort,
+  type NotesSortOrder,
+} from "./useInfiniteNotes";
 import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
+
+export const DEFAULT_PAGE_SIZE = 25;
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface NotesListProps {
   tagId?: number;
   projectId?: number;
   initialDate?: Date;
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 interface ViewModeToggleProps {
@@ -61,7 +73,14 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
   );
 }
 
-function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
+function NotesList({
+  tagId,
+  projectId,
+  initialDate,
+  search,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+}: NotesListProps) {
   const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
   const [mode, setMode] = useNotesViewMode();
   const isMobile = useIsMobile();
@@ -79,32 +98,75 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
     key: "due",
     order: "asc",
   });
-  const {
-    notes,
-    total,
-    isPending,
-    isError,
-    isPlaceholderData,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteNotes("notes", {
-    date: noteDate,
-    tagId,
-    projectId,
+
+  // The search box updates the URL (and thus the server query) debounced, so
+  // typing doesn't fire a request or a history entry per keystroke.
+  const [searchInput, setSearchInput] = useState(search ?? "");
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => setSearchInput(search ?? ""), [search]);
+  const onSearchInput = (value: string) => {
+    setSearchInput(value);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      navigate({
+        to: "/notes",
+        search: (prev) => ({ ...prev, q: value.trim() || undefined, page: undefined }),
+        replace: true,
+      });
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  const filters = { date: noteDate, tagId, projectId, search };
+  const infinite = useInfiniteNotes("notes", {
+    ...filters,
     sort: sort.key,
     order: sort.order,
+    enabled: effectiveMode !== "table",
   });
-  const paging = { hasNextPage, isFetchingNextPage, fetchNextPage };
+  const paged = usePagedNotes("notes", {
+    ...filters,
+    sort: sort.key,
+    order: sort.order,
+    page,
+    pageSize,
+    enabled: effectiveMode === "table",
+  });
+  const { notes, total, isPending, isError, isPlaceholderData } =
+    effectiveMode === "table" ? paged : infinite;
+  const paging = {
+    hasNextPage: infinite.hasNextPage,
+    isFetchingNextPage: infinite.isFetchingNextPage,
+    fetchNextPage: infinite.fetchNextPage,
+  };
+  const pagination = {
+    page,
+    pageSize,
+    total,
+    onPageChange: (nextPage: number) =>
+      navigate({ to: "/notes", search: (prev) => ({ ...prev, page: nextPage }) }),
+    onPageSizeChange: (nextSize: number) =>
+      navigate({
+        to: "/notes",
+        search: (prev) => ({ ...prev, pageSize: nextSize, page: undefined }),
+      }),
+  };
   const selection = useNoteSelection(notes.map((note) => note.id));
   // A selection is about the notes on screen: a different filter is a
   // different set of notes, so don't carry ticks (some now off-screen) over.
   const { clear: clearSelection } = selection;
   useEffect(() => {
     clearSelection();
-  }, [tagId, projectId, noteDate]);
+  }, [tagId, projectId, noteDate, search]);
+  // A changed filter can leave `page` pointing past the new, smaller result
+  // set -- land back on page 1 rather than showing an empty page.
+  useEffect(() => {
+    if (page > 1) {
+      navigate({ to: "/notes", search: (prev) => ({ ...prev, page: undefined }), replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagId, projectId, noteDate, search]);
   const selectAll = async () => {
-    const { ids, total: matching } = await fetchNoteIds({ date: noteDate, tagId, projectId });
+    const { ids, total: matching } = await fetchNoteIds({ date: noteDate, tagId, projectId, search });
     selection.replace(ids);
     if (ids.length < matching) {
       toast.add({
@@ -136,6 +198,16 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <TagFilterBar activeTagId={tagId} />
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => onSearchInput(e.target.value)}
+              placeholder="Search notes..."
+              className="h-8 w-40 pl-7 sm:w-56"
+              aria-label="Search notes"
+            />
+          </div>
           {isNone(noteDate) ? (
             <Button size="sm" variant="outline" onClick={() => setNoteDate(new Date())}>
               Show only today
@@ -156,7 +228,7 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (
         <p className="text-muted-foreground">
-          {tagId != null || projectId != null || noteDate != null
+          {tagId != null || projectId != null || noteDate != null || search
             ? // Distinct from the true-empty message below: zero matches for
               // a filter doesn't mean the collection itself is empty, and
               // saying so would send someone hunting for a "New Note" button
@@ -166,11 +238,13 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
         </p>
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">
-            {notes.length < total
-              ? `Showing ${notes.length.toLocaleString()} of ${total.toLocaleString()} notes`
-              : `${total.toLocaleString()} note${total === 1 ? "" : "s"}`}
-          </p>
+          {effectiveMode !== "table" && (
+            <p className="text-xs text-muted-foreground">
+              {notes.length < total
+                ? `Showing ${notes.length.toLocaleString()} of ${total.toLocaleString()} notes`
+                : `${total.toLocaleString()} note${total === 1 ? "" : "s"}`}
+            </p>
+          )}
           {/* Dimmed (not blanked) while a new filter/sort loads over the old rows. */}
           <div className={cn("transition-opacity", isPlaceholderData && "opacity-60")}>
             {effectiveMode === "table" ? (
@@ -180,7 +254,9 @@ function NotesList({ tagId, projectId, initialDate }: NotesListProps) {
                 order={sort.order}
                 onSortChange={onSortChange}
                 selection={selection}
-                {...paging}
+                pagination={pagination}
+                activeProjectId={projectId}
+                activeTagId={tagId}
               />
             ) : (
               <VirtualNoteGrid

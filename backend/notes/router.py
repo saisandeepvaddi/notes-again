@@ -134,12 +134,17 @@ def _list_conditions(
     tag_id: int | None,
     project_id: int | None,
     deleted: bool,
+    search: str | None = None,
 ) -> list:
     """The WHERE conditions shared by /list and /ids, so "select all N
     matching" selects exactly the notes the list is showing."""
     conditions: list = [
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
     ]
+
+    if search:
+        term = f"%{search.strip()}%"
+        conditions.append(or_(col(Note.name).ilike(term), col(Note.content).ilike(term)))
 
     if start is not None and end is not None:
         start_utc = to_utc(start).replace(tzinfo=None)
@@ -184,13 +189,14 @@ def get_notes(
     tag_id: int | None = None,
     project_id: int | None = None,
     deleted: bool = False,
+    search: str | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
     limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
 ):
     conditions = _list_conditions(
-        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted
+        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted, search=search
     )
     return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
 
@@ -208,6 +214,7 @@ def get_note_ids(
     tag_id: int | None = None,
     project_id: int | None = None,
     deleted: bool = False,
+    search: str | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
 ):
@@ -216,7 +223,7 @@ def get_note_ids(
     client can't know the ids it hasn't loaded. Capped at MAX_BULK_IDS: `ids`
     is shorter than `total` when there are more than that."""
     conditions = _list_conditions(
-        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted
+        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted, search=search
     )
     total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
     key = _sort_key(sort)

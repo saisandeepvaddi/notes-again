@@ -1,6 +1,17 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES } from "./difficulty";
 import { useTags } from "./hooks/useTags";
 import type { Difficulty } from "./new-note-form/types";
@@ -9,16 +20,36 @@ interface TagFilterBarProps {
   activeTagId?: number;
 }
 
+// How many regular tags show inline before the rest fold into "+N" -- past
+// this a growing tag list would push the view-mode toggle and date filter
+// off the row instead of just scrolling its own overflow away.
+const MAX_VISIBLE_TAGS = 8;
+
 export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
   const { data: allTags = [] } = useTags();
   const navigate = useNavigate();
+  const [overflowOpen, setOverflowOpen] = useState(false);
 
   if (allTags.length === 0) {
     return null;
   }
 
   const difficultyTags = allTags.filter((tag) => tag.is_difficulty);
-  const regularTags = allTags.filter((tag) => !tag.is_difficulty);
+  // Most-used first stands in for "recent" -- the tag list has no per-tag
+  // last-used timestamp, and note_count is the closest proxy the API has.
+  const regularTags = [...allTags]
+    .filter((tag) => !tag.is_difficulty)
+    .sort((a, b) => b.note_count - a.note_count);
+
+  const activeTag = regularTags.find((tag) => tag.id === activeTagId);
+  const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
+  // The active filter's tag must stay visible (so its own badge is there to
+  // click off) even if it fell outside the most-used cutoff.
+  if (activeTag && !visible.some((tag) => tag.id === activeTag.id)) {
+    visible[visible.length - 1] = activeTag;
+  }
+  const visibleIds = new Set(visible.map((tag) => tag.id));
+  const overflowTags = regularTags.filter((tag) => !visibleIds.has(tag.id));
 
   // Merge, not replace: a tag click shouldn't drop an active project/date filter.
   const goToTag = (tagId?: number) =>
@@ -48,7 +79,7 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
           {tag.name}
         </Badge>
       ))}
-      {regularTags.map((tag) => (
+      {visible.map((tag) => (
         <Badge
           key={tag.id}
           variant={activeTagId === tag.id ? "default" : "outline"}
@@ -58,6 +89,40 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
           {tag.name}
         </Badge>
       ))}
+      {overflowTags.length > 0 && (
+        <Popover open={overflowOpen} onOpenChange={setOverflowOpen}>
+          <PopoverTrigger
+            render={
+              <Button type="button" size="xs" variant="outline">
+                +{overflowTags.length}
+              </Button>
+            }
+          />
+          <PopoverContent className="w-56 p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Find a tag..." />
+              <CommandList>
+                <CommandEmpty>No matches</CommandEmpty>
+                <CommandGroup>
+                  {overflowTags.map((tag) => (
+                    <CommandItem
+                      key={tag.id}
+                      value={tag.name}
+                      data-checked={activeTagId === tag.id}
+                      onSelect={() => {
+                        goToTag(tag.id);
+                        setOverflowOpen(false);
+                      }}
+                    >
+                      {tag.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }

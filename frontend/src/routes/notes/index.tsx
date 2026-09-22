@@ -9,6 +9,9 @@ const notesSearchSchema = z.object({
   tagId: z.coerce.number().optional(),
   projectId: z.coerce.number().optional(),
   date: z.coerce.date().optional(),
+  q: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).optional(),
 });
 
 export const Route = createFileRoute("/notes/")({
@@ -17,7 +20,7 @@ export const Route = createFileRoute("/notes/")({
 });
 
 function AllNotes() {
-  const { tagId, projectId, date } = Route.useSearch();
+  const { tagId, projectId, date, q, page, pageSize } = Route.useSearch();
   return (
     <div>
       <PageHeader title="All Notes" actions={
@@ -26,7 +29,14 @@ function AllNotes() {
             <NewNoteButton />
           </>
         } />
-      <NotesListContainer tagId={tagId} projectId={projectId} initialDate={date} />
+      <NotesListContainer
+        tagId={tagId}
+        projectId={projectId}
+        initialDate={date}
+        search={q}
+        page={page}
+        pageSize={pageSize}
+      />
     </div>
   );
 }

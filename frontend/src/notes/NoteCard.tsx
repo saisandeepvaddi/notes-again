@@ -34,7 +34,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId: note.id });
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const visibleTags = regularTags.slice(0, MAX_VISIBLE_TAGS);
-  const overflowTags = regularTags.length - visibleTags.length;
+  const hiddenTags = regularTags.slice(MAX_VISIBLE_TAGS);
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
   // Merge, not replace: picking a tag/project here shouldn't drop the other
@@ -160,7 +160,18 @@ export function NoteCard({ note, select }: NoteCardProps) {
               <TooltipContent>{tag.name}</TooltipContent>
             </Tooltip>
           ))}
-          {overflowTags > 0 && <Badge variant="outline" className="shrink-0">+{overflowTags}</Badge>}
+          {hiddenTags.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Badge variant="outline" className="shrink-0 cursor-default">
+                    +{hiddenTags.length}
+                  </Badge>
+                }
+              />
+              <TooltipContent>{hiddenTags.map((tag) => tag.name).join(", ")}</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </CardFooter>
     </Card>

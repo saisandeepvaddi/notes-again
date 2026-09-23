@@ -59,7 +59,9 @@ function nextReviewTimestamp(note: NoteItem): number {
   return pending ? pending.remind_at.getTime() : Number.POSITIVE_INFINITY;
 }
 
-const MAX_VISIBLE_TAGS = 2;
+// One tag plus a "+N" overflow chip keeps every row single-line; difficulty
+// has its own column so it never competes with tags for this space.
+const MAX_VISIBLE_TAGS = 1;
 export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 function ProjectCell({ project }: { project: Project | null | undefined }) {
@@ -188,10 +190,11 @@ const SORT_KEYS: Record<string, NotesSort> = {
 
 const COLUMN_WIDTHS: Record<string, string> = {
   name: "w-[20%]",
-  preview: "w-[22%]",
+  preview: "w-[14%]",
+  difficulty: "w-[8%]",
   project: "w-[12%]",
-  tags: "w-[16%]",
-  reminders: "w-[26%]",
+  tags: "w-[14%]",
+  reminders: "w-[28%]",
   actions: "w-10",
 };
 
@@ -263,6 +266,19 @@ export function NotesTable({
         );
       },
     }),
+    columnHelper.display({
+      id: "difficulty",
+      header: "Difficulty",
+      enableSorting: false,
+      cell: (info) => {
+        const difficulty = getDifficulty(info.row.original.tags);
+        return (
+          <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
+            {difficulty}
+          </Badge>
+        );
+      },
+    }),
     columnHelper.accessor((note) => note.project?.name ?? "", {
       id: "project",
       header: "Project",
@@ -273,19 +289,25 @@ export function NotesTable({
       header: "Tags",
       enableSorting: false,
       cell: (info) => {
-        const note = info.row.original;
-        const difficulty = getDifficulty(note.tags);
-        const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
+        const regularTags = info.row.original.tags.filter((tag) => !tag.is_difficulty);
         const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
         const hidden = regularTags.slice(MAX_VISIBLE_TAGS);
+        if (regularTags.length === 0) {
+          return <span className="text-muted-foreground">—</span>;
+        }
         return (
-          <div className="flex flex-wrap items-center gap-1">
-            <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
-              {difficulty}
-            </Badge>
+          // nowrap + a shrinkable first chip (same min-w-0 override as
+          // ProjectCell): a long tag name truncates instead of wrapping the
+          // row onto a second line, while the "+N" chip keeps its size.
+          <div className="flex min-w-0 items-center gap-1">
             {visible.map((tag) => (
-              <Badge key={tag.id} variant="outline">
-                {tag.name}
+              <Badge
+                key={tag.id}
+                variant="outline"
+                className="min-w-0 max-w-full shrink justify-start"
+                title={tag.name}
+              >
+                <span className="truncate">{tag.name}</span>
               </Badge>
             ))}
             {hidden.length > 0 && (

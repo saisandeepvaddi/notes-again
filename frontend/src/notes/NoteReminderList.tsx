@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isToday } from "date-fns";
+import { HistoryIcon } from "lucide-react";
 import { MarkableReminder } from "./MarkableReminder";
 import { ReschedulePopover } from "./ReschedulePopover";
 import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
@@ -44,8 +45,17 @@ export function NoteReminderList({ noteId, reminders, compact = false }: NoteRem
         <Popover>
           <PopoverTrigger
             render={
-              <Button size="sm" variant={"outline"}>
-                {reviewed.length} reviewed
+              // Icon + count rather than "N reviewed": the full label was the
+              // piece that pushed table rows onto a second line.
+              <Button
+                size="sm"
+                variant={"outline"}
+                aria-label={`${reviewed.length} past review${reviewed.length === 1 ? "" : "s"}`}
+                title="Review history"
+                className="tabular-nums"
+              >
+                <HistoryIcon />
+                {reviewed.length}
               </Button>
             }
           />

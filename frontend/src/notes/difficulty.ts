@@ -1,4 +1,4 @@
-import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
+import { WARNING_TINT_CLASSES } from "@/lib/statusColors";
 import type { Difficulty, Tag } from "./new-note-form/types";
 
 export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
@@ -8,9 +8,12 @@ export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
 ];
 
 export const DIFFICULTY_BADGE_CLASSES: Record<Difficulty, string> = {
-  easy: SUCCESS_TINT_CLASSES,
+  // Teal, not the emerald success tint: green is the app's primary/action
+  // color, so an "Easy" chip in the same hue read as brand, not difficulty.
+  easy: "bg-teal-500/15 text-teal-800 dark:text-teal-400",
   medium: WARNING_TINT_CLASSES,
-  hard: "bg-red-500/15 text-red-700 dark:text-red-400",
+  // -800 to match the other two chips' weight (see statusColors.ts on -700).
+  hard: "bg-red-500/15 text-red-800 dark:text-red-400",
 };
 
 export function getDifficulty(tags: Tag[]): Difficulty {

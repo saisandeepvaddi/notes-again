@@ -37,7 +37,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
         render={
           <Button
             size="sm"
-            variant={isOverdue ? "destructive" : isUpcoming ? "secondary" : "outline"}
+            variant={isOverdue ? "destructive" : isUpcoming ? "secondary" : "ghost"}
             onClick={() => setOpen(true)}
           >
             {isOverdue ? (

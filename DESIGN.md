@@ -2,34 +2,34 @@
 name: Note and Learn
 description: A personal, self-hosted spaced-repetition tool for retaining technical notes
 colors:
-  background: "oklch(0.99 0.006 145)"
-  foreground: "oklch(0.22 0.02 150)"
-  card: "oklch(0.99 0.006 145)"
-  card-foreground: "oklch(0.22 0.02 150)"
-  popover: "oklch(0.99 0.006 145)"
-  popover-foreground: "oklch(0.22 0.02 150)"
-  primary: "oklch(0.5 0.1 150)"
-  primary-foreground: "oklch(0.99 0.01 140)"
-  secondary: "oklch(0.96 0.015 140)"
-  secondary-foreground: "oklch(0.32 0.03 150)"
-  muted: "oklch(0.96 0.015 140)"
-  muted-foreground: "oklch(0.53 0.03 150)"
-  accent: "oklch(0.96 0.015 140)"
-  accent-foreground: "oklch(0.32 0.03 150)"
+  background: "oklch(0.985 0.004 85)"
+  foreground: "oklch(0.21 0.012 60)"
+  card: "oklch(1 0 0)"
+  card-foreground: "oklch(0.21 0.012 60)"
+  popover: "oklch(1 0 0)"
+  popover-foreground: "oklch(0.21 0.012 60)"
+  primary: "oklch(0.52 0.12 152)"
+  primary-foreground: "oklch(0.99 0.005 85)"
+  secondary: "oklch(0.955 0.006 85)"
+  secondary-foreground: "oklch(0.3 0.012 60)"
+  muted: "oklch(0.955 0.006 85)"
+  muted-foreground: "oklch(0.52 0.012 70)"
+  accent: "oklch(0.945 0.008 85)"
+  accent-foreground: "oklch(0.21 0.012 60)"
   destructive: "oklch(0.577 0.245 27.325)"
-  border: "oklch(0.89 0.02 140)"
-  input: "oklch(0.89 0.02 140)"
-  ring: "oklch(0.62 0.09 150)"
-  sidebar: "oklch(0.99 0.006 145)"
-  sidebar-foreground: "oklch(0.22 0.02 150)"
-  sidebar-primary: "oklch(0.5 0.1 150)"
-  sidebar-accent: "oklch(0.96 0.015 140)"
-  sidebar-border: "oklch(0.89 0.02 140)"
-  chart-1: "oklch(0.88 0.011 106.6)"
-  chart-2: "oklch(0.58 0.031 107.3)"
-  chart-3: "oklch(0.466 0.025 107.3)"
-  chart-4: "oklch(0.394 0.023 107.4)"
-  chart-5: "oklch(0.286 0.016 107.4)"
+  border: "oklch(0.905 0.007 85)"
+  input: "oklch(0.905 0.007 85)"
+  ring: "oklch(0.62 0.11 152)"
+  sidebar: "oklch(0.97 0.006 85)"
+  sidebar-foreground: "oklch(0.21 0.012 60)"
+  sidebar-primary: "oklch(0.52 0.12 152)"
+  sidebar-accent: "oklch(0.935 0.008 85)"
+  sidebar-border: "oklch(0.905 0.007 85)"
+  chart-1: "oklch(0.85 0.07 152)"
+  chart-2: "oklch(0.72 0.11 152)"
+  chart-3: "oklch(0.6 0.12 152)"
+  chart-4: "oklch(0.48 0.1 152)"
+  chart-5: "oklch(0.36 0.07 152)"
 typography:
   serif:
     fontFamily: "Literata Variable, serif"
@@ -84,14 +84,14 @@ components:
 
 **Creative North Star: "The Field Notebook"**
 
-Note and Learn is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact, olive-and-paper working notebook rather than a SaaS dashboard. The neutral scale is never true gray — background, borders, and text all carry a faint moss tint from the same ~150° hue family that the primary accent lives in, so the whole interface feels like it was cut from one material instead of a gray shell with a brand color dropped on top. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).
+Note and Learn is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).
 
 Density is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually *reads as content* (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.
 
 This was extracted from the shipped implementation (shadcn "base-mira" style, "olive" base color, Tailwind v4 + OKLCH tokens), not designed as a seed. No visual rejections have been confirmed by the user beyond what the implementation already embodies.
 
 **Key Characteristics:**
-- One accent hue (~150°, moss/olive) carries primary, ring, and sidebar-primary; neutrals share its tint rather than being true gray.
+- One accent hue (~152°, green ink) carries primary, ring, active nav, links, and selection; neutrals are warm paper (~85°), never tinted with the accent.
 - Flat-by-default: hairline ring (`ring-1 ring-foreground/10`) defines containers; shadow is reserved for floating overlays.
 - Serif (Literata) for anything read as content; sans (Inter) for interactive chrome — never mixed within the same role.
 - Dense, compact control sizing (28px controls, 12px base text) suited to a power-user tool used many times a day.
@@ -99,26 +99,28 @@ This was extracted from the shipped implementation (shadcn "base-mira" style, "o
 
 ## Colors
 
-The palette is a single warm-olive hue family stretched across every role — there is no separate cool gray; borders, muted surfaces, and body text all sit in the same ~140–150° hue as the primary accent, just at different lightness/chroma.
+Two families with separate jobs: warm paper neutrals (~60–85°, very low chroma) for every surface, line, and text role, and one green ink (~152°) for everything that means "act here" or "you are here." The warm neutrals sit near the green's complement, so the accent looks livelier without extra saturation.
 
 ### Primary
-- **Moss Green** (`oklch(0.5 0.1 150)`, dark mode `oklch(0.68 0.13 150)`): the sole accent — primary buttons, active nav state, focus ring, links, checked states. Also drives the sidebar's active-item color via the same token.
+- **Green Ink** (`oklch(0.52 0.12 152)`, dark mode `oklch(0.72 0.13 152)`): the sole accent — primary buttons, active nav state (as a `primary/10` tint with `primary` text), focus ring, links, checked states, text selection, and the caret.
 
 ### Neutral
-- **Warm Paper** (`oklch(0.99 0.006 145)`, background/card/popover/sidebar; dark mode `oklch(0.16 0.018 150)`): the base surface. Card and popover share this value with background at rest — separation comes from the hairline ring, not a tonal shift.
-- **Near-Black Moss** (`oklch(0.22 0.02 150)`, foreground; dark mode `oklch(0.96 0.015 140)`): primary text.
-- **Pale Sage** (`oklch(0.96 0.015 140)`, secondary/muted/accent — all three share this exact value; dark mode `oklch(0.26 0.02 148)`): the one "quiet surface" token, used for secondary buttons, muted backgrounds (code chips, table headers), and hover/expanded states alike.
-- **Soft Sage Line** (`oklch(0.89 0.02 140)`, border/input; dark mode a translucent `oklch(1 0 0 / 12%)`): hairline dividers and form-control borders.
+- **Warm Paper** (`oklch(0.985 0.004 85)`, background; dark mode warm charcoal `oklch(0.17 0.006 70)`): the page canvas.
+- **Sheet** (`oklch(1 0 0)`, card/popover; dark mode `oklch(0.205 0.007 70)` card, `0.225` popover): content surfaces sit one step lighter than the canvas, so cards lift off the page with no shadow.
+- **Shelf** (`oklch(0.97 0.006 85)`, sidebar; dark mode `oklch(0.19 0.006 70)`): one step deeper than the canvas, so navigation recedes behind content.
+- **Ink** (`oklch(0.21 0.012 60)`, foreground; dark mode `oklch(0.95 0.006 85)`): primary text. Muted text is `oklch(0.52 0.012 70)` / dark `oklch(0.68 0.01 75)`.
+- **Quiet Fill** (`oklch(0.955 0.006 85)`, secondary/muted; dark mode `oklch(0.25 0.007 70)`): secondary buttons, code chips and blocks, table headers. Hover (`accent`) is a separate, slightly deeper step (`0.945 0.008 85`).
+- **Hairline** (`oklch(0.905 0.007 85)`, border/input; dark mode a translucent `oklch(1 0 0 / 10%)`): dividers and form-control borders.
 
 ### Semantic
-- **Clay Red** (`oklch(0.577 0.245 27.325)`, destructive; dark mode `oklch(0.704 0.191 22.216)`): the only hue that breaks from the moss family, reserved for destructive actions and invalid-state rings. Rendered at low opacity (`/10`, `/20`) as a background tint rather than a solid fill outside of badges.
-- **Difficulty/rating chips** (defined in code, not CSS tokens — `frontend/src/notes/difficulty.ts` and `rating.ts`): emerald for easy/"remembered", amber for medium/"struggled", red for hard/"forgot it", blue for "good". These are a separate, purpose-built palette layered on top of the base tokens specifically so recall-confidence and note-difficulty stay visually distinct from each other and from the primary accent.
+- **Clay Red** (`oklch(0.577 0.245 27.325)`, destructive; dark mode `oklch(0.704 0.191 22.216)`): the only non-green, non-paper UI hue, reserved for destructive actions and invalid-state rings. Rendered at low opacity (`/10`, `/20`) as a background tint rather than a solid fill outside of badges.
+- **Difficulty/rating chips** (defined in code, not CSS tokens — `frontend/src/notes/difficulty.ts` and `rating.ts`): difficulty is teal/amber/red (easy/medium/hard; teal rather than emerald so "Easy" isn't mistaken for the green brand accent), rating is emerald/amber/red/blue. These are a separate, purpose-built palette layered on top of the base tokens specifically so recall-confidence and note-difficulty stay visually distinct from each other and from the primary accent.
 
 ### Data (charts)
-- A five-step warm-neutral ramp at a distinct ~107° hue (`chart-1`…`chart-5`, light-to-dark), deliberately *not* sharing the ~150° UI hue — chart color is its own vocabulary, not a tint of the brand accent.
+- A five-step green ramp on the accent hue (~152°, `chart-1`…`chart-5`, light-to-dark in light mode, reversed in dark mode). Pair with labels; lightness, not hue, separates the steps.
 
 ### Named Rules
-**The One Hue Rule.** Every neutral and the primary accent share one hue family (~140–150°). A new UI color that isn't a deliberate semantic break (destructive red, difficulty/rating chips) should be a lightness/chroma step within that family, not a new hue.
+**The Paper and Ink Rule.** Surfaces, lines, and text are warm paper neutrals; green is ink and appears only where it means action, selection, or focus. Never tint a surface or neutral with the accent hue, and never spend green on decoration. A new color that isn't a deliberate semantic break (destructive red, difficulty/rating chips) is either a paper step or a green step.
 
 ## Typography
 
@@ -162,8 +164,8 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 
 ### Buttons
 - **Shape:** `md` radius (0.6rem), border-transparent by default (color communicated via fill, not stroke).
-- **Primary:** moss-green fill, primary-foreground text; hovers to 80% opacity rather than a darker shade.
-- **Secondary:** pale-sage fill; hover mixes 5% foreground into the surface color (`color-mix(in oklch, ...)`) rather than swapping to a fixed darker token.
+- **Primary:** green-ink fill, primary-foreground text; hovers to 80% opacity rather than a darker shade.
+- **Secondary:** quiet-fill; hover mixes 5% foreground into the surface color (`color-mix(in oklch, ...)`) rather than swapping to a fixed darker token.
 - **Outline / Ghost:** transparent at rest, filled with `input`/`muted` on hover; ghost has no border at all.
 - **Destructive:** low-opacity red fill (`/10` at rest, `/20` on hover) rather than a solid red button — the same restrained-semantic-color treatment as the badge system.
 - **Sizing:** eight sizes (`xs`/`sm`/`default`/`lg` plus an `icon` variant of each) all in the 20–32px range — every size sits below the 44px touch guidance by design; touch compensation happens at the `(pointer: coarse)` layer, not by growing the button itself.
@@ -175,7 +177,7 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 
 ### Cards
 - **Corner style:** `lg` radius (0.75rem).
-- **Background:** same token as page background (`card` ≡ `background` in light mode) — depth comes from the ring, not a tonal card surface.
+- **Background:** the `card` sheet, one step lighter than the page canvas; together with the ring that gives depth without a shadow.
 - **Shadow strategy:** none at rest (see Elevation & Depth); the ring alone defines the edge.
 - **Signature instance — `NoteCard`:** fixed `h-72` height regardless of content, a stretched-link header (the whole title bar is clickable via an `::after` pseudo-element, with the delete button raised above it via `z-10` so it stays independently clickable), and a bottom gradient fade (`bg-linear-to-t from-card to-transparent`) signaling clipped overflow instead of scrolling.
 
@@ -185,7 +187,7 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 - **Error:** border and ring shift to the destructive token at reduced opacity, mirroring the destructive button treatment.
 
 ### Navigation
-- **Sidebar:** icon+label items, active state fills with the sage `sidebar-accent` token and adds `font-medium`; collapses to icon-only with a smooth width/padding transition rather than disappearing. Nav is a flat list, not nested — this is a shallow, task-oriented app (Home, All Notes, Review, Import, Organize, Trash, Settings), not a deep IA.
+- **Sidebar:** icon+label items, active state takes a `primary/10` green tint with `primary` text and `font-medium` (hover stays on the neutral `sidebar-accent`, so only the current location is green); collapses to icon-only with a smooth width/padding transition rather than disappearing. Nav is a flat list, not nested — this is a shallow, task-oriented app (Home, All Notes, Review, Import, Organize, Trash, Settings), not a deep IA.
 
 ### Markdown / Reading Surface
 - **`.markdown-content`:** the shared rendering rules for both the editor's content area and read-only note display — serif body text, a compact heading scale (h1–h6 all `mt`/`mb` in the 1–4 spacing range), muted-background code chips, and dual-theme syntax highlighting (Shiki) that only needs a dark-mode override since the light theme's inline colors already match.
@@ -196,11 +198,11 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 - **Do** keep every note-facing title (card, detail page, table row, page header) in Literata serif; keep every piece of surrounding interface chrome in Inter sans — see **The Reading Serif Rule**.
 - **Do** define container depth with a hairline ring (`ring-1 ring-foreground/10`) at rest; add `shadow-md` only when a surface floats above unrelated page content (popover, select, combobox) — see **The Flat-By-Default Rule**.
 - **Do** carry semantic status (difficulty, recall rating, tags) as badge fills, not colored text or full-color solid backgrounds elsewhere.
-- **Do** keep new UI colors within the existing ~140–150° hue family unless the need is a genuine semantic break like destructive red — see **The One Hue Rule**.
+- **Do** keep surfaces and neutrals on warm paper and spend green only on action, selection, and focus — see **The Paper and Ink Rule**.
 - **Do** compensate for the deliberately compact (20–32px) control sizing with the `(pointer: coarse)` media query rather than growing controls for every user.
 
 ### Don't:
-- **Don't** add a second UI accent hue; route new emphasis through moss-green at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.
+- **Don't** add a second UI accent hue; route new emphasis through green ink at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.
 - **Don't** put shadows on resting cards, dialogs, or the docked sidebar — that breaks the flat-by-default elevation model this system is built on.
 - **Don't** render note titles or page titles in the sans/heading font, or generic dialog/component chrome in serif — the two faces are role-locked, not a stylistic mix-and-match.
 - **Don't** treat this as a marketing/persuade surface (no hero imagery, no decorative illustration, no gradient-heavy visual language) — it's a personal utility tool and its restraint is intentional, not a placeholder waiting for "real" design.

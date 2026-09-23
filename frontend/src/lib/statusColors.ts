@@ -1,7 +1,8 @@
 // Shared amber "needs attention" / emerald "positive" tint recipes, reused
 // wherever the app signals a warning or a completed/positive state outside
 // the difficulty/rating badge system (which has its own per-value palette
-// but draws these same two shades for its "medium"/"hard" and "easy" states).
+// but draws these same shades for rating "hard"/"easy" and difficulty
+// "medium"; difficulty "easy" uses teal to stay clear of the primary green).
 //
 // Light-mode text is -800, not -700: composited over this module's own
 // 15%-opacity tint on the app's light background, -700 measured under WCAG

@@ -29,6 +29,7 @@ import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 
 export const DEFAULT_PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 300;
+const DEFAULT_SORT: { key: NotesSort; order: NotesSortOrder } = { key: "due", order: "asc" };
 
 interface NotesListProps {
   tagId?: number;
@@ -93,11 +94,12 @@ function NotesList({
   const activeProject = projects.find((project) => project.id === projectId);
   // Sorting happens on the server (the list is paged, so a client-side sort
   // would only reorder whatever pages happen to be loaded). Both views share
-  // it; the grid just has no headers to change it from.
-  const [sort, setSort] = useState<{ key: NotesSort; order: NotesSortOrder }>({
-    key: "due",
-    order: "asc",
-  });
+  // it; the grid just has no headers to change it from. null = no column
+  // sort chosen: the server's default (soonest review first), and no header
+  // shows an arrow.
+  const [sort, setSort] = useState<{ key: NotesSort; order: NotesSortOrder } | null>(null);
+  const sortKey = sort?.key ?? DEFAULT_SORT.key;
+  const sortOrder = sort?.order ?? DEFAULT_SORT.order;
 
   // The search box updates the URL (and thus the server query) debounced, so
   // typing doesn't fire a request or a history entry per keystroke.
@@ -119,14 +121,14 @@ function NotesList({
   const filters = { date: noteDate, tagId, projectId, search };
   const infinite = useInfiniteNotes("notes", {
     ...filters,
-    sort: sort.key,
-    order: sort.order,
+    sort: sortKey,
+    order: sortOrder,
     enabled: effectiveMode !== "table",
   });
   const paged = usePagedNotes("notes", {
     ...filters,
-    sort: sort.key,
-    order: sort.order,
+    sort: sortKey,
+    order: sortOrder,
     page,
     pageSize,
     enabled: effectiveMode === "table",
@@ -174,12 +176,12 @@ function NotesList({
       });
     }
   };
+  // Header clicks cycle asc -> desc -> unsorted (back to the default order).
   const onSortChange = (key: NotesSort) =>
-    setSort((current) =>
-      current.key === key
-        ? { key, order: current.order === "asc" ? "desc" : "asc" }
-        : { key, order: "asc" },
-    );
+    setSort((current) => {
+      if (current?.key !== key) return { key, order: "asc" };
+      return current.order === "asc" ? { key, order: "desc" } : null;
+    });
   return (
     <div className="flex flex-col gap-4">
       {activeProject && (
@@ -250,8 +252,8 @@ function NotesList({
             {effectiveMode === "table" ? (
               <NotesTable
                 notes={notes}
-                sort={sort.key}
-                order={sort.order}
+                sort={sort?.key}
+                order={sortOrder}
                 onSortChange={onSortChange}
                 selection={selection}
                 pagination={pagination}

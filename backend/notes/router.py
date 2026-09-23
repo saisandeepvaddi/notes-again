@@ -3,7 +3,7 @@ from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, case, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
@@ -59,7 +59,7 @@ def get_default_algorithm(session: Session) -> Algorithm:
     return cast(Algorithm, algorithm)
 
 
-NoteSort = Literal["due", "name", "project", "created"]
+NoteSort = Literal["due", "name", "project", "created", "difficulty"]
 
 MAX_PAGE_SIZE = 200
 
@@ -90,6 +90,20 @@ def _sort_key(sort: NoteSort):
         )
     if sort == "created":
         return col(Note.created_at)
+    if sort == "difficulty":
+        # Rank by DIFFICULTY_TAGS' declared order (easy < medium < hard), so
+        # "asc" reads easy-to-hard regardless of the tags' names or ids.
+        rank = case(
+            {defaults.name: i for i, defaults in enumerate(DIFFICULTY_TAGS.values())},
+            value=col(Tag.name),
+        )
+        return (
+            select(func.min(rank))
+            .join(NoteTag, col(NoteTag.tag_id) == col(Tag.id))
+            .where(col(NoteTag.note_id) == col(Note.id), col(Tag.is_difficulty).is_(True))
+            .correlate(Note)
+            .scalar_subquery()
+        )
     return _next_due()
 
 

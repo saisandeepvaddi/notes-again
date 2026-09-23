@@ -4,7 +4,7 @@ import { NotePageSchema, type NoteItem } from "../new-note-form/types";
 
 export const NOTES_PAGE_SIZE = 60;
 
-export type NotesSort = "due" | "name" | "project" | "created";
+export type NotesSort = "due" | "name" | "project" | "created" | "difficulty";
 export type NotesSortOrder = "asc" | "desc";
 
 export interface UseInfiniteNotesArgs {

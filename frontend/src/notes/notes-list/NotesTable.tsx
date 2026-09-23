@@ -39,7 +39,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
-import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "../difficulty";
+import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
@@ -184,17 +184,18 @@ function ColumnFilter({
 // Column id -> the server-side sort key it maps to.
 const SORT_KEYS: Record<string, NotesSort> = {
   name: "name",
+  difficulty: "difficulty",
   project: "project",
   reminders: "due",
 };
 
 const COLUMN_WIDTHS: Record<string, string> = {
   name: "w-[20%]",
-  preview: "w-[14%]",
-  difficulty: "w-[8%]",
+  preview: "w-[12%]",
+  difficulty: "w-[11%]",
   project: "w-[12%]",
   tags: "w-[14%]",
-  reminders: "w-[28%]",
+  reminders: "w-[27%]",
   actions: "w-10",
 };
 
@@ -208,7 +209,8 @@ interface NotesTablePagination {
 
 interface NotesTableProps {
   notes: NoteItem[];
-  sort: NotesSort;
+  // undefined = no column sort chosen (server default order, no arrow shown)
+  sort?: NotesSort;
   order: NotesSortOrder;
   onSortChange: (sort: NotesSort) => void;
   selection: NoteSelection;
@@ -234,6 +236,15 @@ export function NotesTable({
   const { data: projects = [] } = useProjects();
   const { data: allTags = [] } = useTags();
   const tagOptions = allTags.filter((tag) => !tag.is_difficulty);
+  // Difficulty is a tag under the hood (the chip bar above filters it the
+  // same way), so both header filters drive the one tagId search param --
+  // each lights up only when the active tag is one of its own options.
+  const difficultyOptions = DIFFICULTY_OPTIONS.flatMap(({ label }) => {
+    const tag = allTags.find((t) => t.is_difficulty && t.name.toLowerCase() === label.toLowerCase());
+    return tag ? [{ id: tag.id, name: label }] : [];
+  });
+  const difficultyFilterActive = difficultyOptions.some((option) => option.id === activeTagId);
+  const tagFilterActive = tagOptions.some((tag) => tag.id === activeTagId);
 
   const columns = [
     columnHelper.accessor("name", {
@@ -242,7 +253,7 @@ export function NotesTable({
         // Stretched-link pattern: the ::after pseudo-element covers the whole
         // cell (relative to this wrapper), so clicking anywhere in the Note
         // column opens the note, not just the text itself.
-        <div className="relative">
+        <div className="relative truncate" title={info.getValue()}>
           <Link
             to="/notes/$noteId"
             params={{ noteId: String(info.row.original.id) }}
@@ -266,10 +277,9 @@ export function NotesTable({
         );
       },
     }),
-    columnHelper.display({
+    columnHelper.accessor((note) => getDifficulty(note.tags), {
       id: "difficulty",
       header: "Difficulty",
-      enableSorting: false,
       cell: (info) => {
         const difficulty = getDifficulty(info.row.original.tags);
         return (
@@ -399,11 +409,22 @@ export function NotesTable({
                           navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: id }) })
                         }
                       />
+                    ) : header.column.id === "difficulty" ? (
+                      <ColumnFilter
+                        label="Difficulties"
+                        placeholder="Filter by difficulty..."
+                        active={difficultyFilterActive}
+                        selectedId={activeTagId}
+                        options={difficultyOptions}
+                        onSelect={(id) =>
+                          navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId: id }) })
+                        }
+                      />
                     ) : header.column.id === "tags" ? (
                       <ColumnFilter
                         label="Tags"
                         placeholder="Filter by tag..."
-                        active={activeTagId != null}
+                        active={tagFilterActive}
                         selectedId={activeTagId}
                         options={tagOptions}
                         onSelect={(id) =>

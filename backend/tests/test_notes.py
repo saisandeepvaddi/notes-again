@@ -94,6 +94,22 @@ def test_list_search_matches_name_or_content(client):
     assert ids == {match["id"], match_by_content["id"]}
 
 
+def test_list_sorts_by_difficulty_easy_to_hard(client):
+    create(client, "h", difficulty="hard")
+    create(client, "e", difficulty="easy")
+    create(client, "m", difficulty="medium")
+
+    def names(order: str) -> list[str]:
+        response = client.get(f"/api/notes/list?sort=difficulty&order={order}")
+        assert response.status_code == 200, response.text
+        return [n["name"] for n in response.json()["items"]]
+
+    assert names("asc") == ["e", "m", "h"]
+    assert names("desc") == ["h", "m", "e"]
+    ids = client.get("/api/notes/ids?sort=difficulty&order=asc").json()["ids"]
+    assert len(ids) == 3
+
+
 def test_list_excludes_deleted_notes_unless_asked(client):
     note = create(client)
     client.delete(f"/api/notes/{note['id']}")

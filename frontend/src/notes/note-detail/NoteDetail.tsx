@@ -137,7 +137,12 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="h-auto border-transparent bg-transparent px-0 font-serif text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20"
+        aria-label="Note title"
+        // Reads as a plain title until hovered/focused, when it shows the
+        // field. Inset like the ghost buttons below so the text never touches
+        // the field's edge, and md: overrides because Input's own
+        // md:text-xs/dark:bg-input would otherwise win at those breakpoints.
+        className="h-auto border-transparent bg-transparent px-2 py-1 font-serif text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20 md:text-lg dark:bg-transparent dark:hover:bg-input/30 dark:focus-visible:bg-input/30"
       />
 
       <div className="flex flex-col gap-3">
@@ -159,7 +164,10 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <Separator orientation="vertical" className="h-4" />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
           <Separator orientation="vertical" className="h-4" />
-          <Badge variant="outline" className="text-[10px] tracking-wide text-muted-foreground uppercase">
+          <Badge
+            variant="outline"
+            className="text-[10px] tracking-wide text-muted-foreground uppercase"
+          >
             {note.algorithm}
           </Badge>
         </div>

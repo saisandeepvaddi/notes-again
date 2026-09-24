@@ -57,7 +57,7 @@ export function MarkdownEditor({
             codeBlockLanguages: {
               js: "JavaScript",
               css: "CSS",
-              txt: "text",
+              txt: "Plain text",
               tsx: "TypeScript",
               py: "Python",
               rs: "Rust",

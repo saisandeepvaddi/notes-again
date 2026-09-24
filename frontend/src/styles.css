@@ -462,3 +462,160 @@ body {
     }
   }
 }
+
+/* MDXEditor paints its own chrome (code-block toolbar, language select,
+ * table/link tools, dropdowns) from a private Radix-style palette -- cool
+ * slate neutrals and a blue accent, pinned to light mode -- which is why that
+ * chrome showed up as white boxes on warm paper and as a white bar in dark
+ * mode. Point its tokens at ours once, on both the editor root and the
+ * popup container it portals into, so every piece of it follows the theme.
+ * `[class]` lifts specificity above the bundled `._editorRoot_*` rule that
+ * declares the originals, independent of stylesheet order. */
+.mdxeditor[class],
+.mdxeditor-popup-container[class] {
+  --basePageBg: var(--popover);
+  --baseBase: var(--popover);
+  --baseBgSubtle: var(--muted);
+  --baseBg: var(--accent);
+  --baseBgHover: var(--accent);
+  --baseBgActive: var(--accent);
+  --baseLine: var(--border);
+  --baseBorder: var(--border);
+  --baseBorderHover: var(--muted-foreground);
+  --baseSolid: var(--muted-foreground);
+  --baseSolidHover: var(--foreground);
+  --baseText: var(--muted-foreground);
+  --baseTextContrast: var(--foreground);
+
+  --accentBase: color-mix(in oklch, var(--primary) 6%, transparent);
+  --accentBgSubtle: color-mix(in oklch, var(--primary) 8%, transparent);
+  --accentBg: color-mix(in oklch, var(--primary) 10%, transparent);
+  --accentBgHover: color-mix(in oklch, var(--primary) 14%, transparent);
+  --accentBgActive: color-mix(in oklch, var(--primary) 18%, transparent);
+  --accentLine: color-mix(in oklch, var(--primary) 30%, transparent);
+  --accentBorder: color-mix(in oklch, var(--primary) 40%, transparent);
+  --accentBorderHover: color-mix(in oklch, var(--primary) 55%, transparent);
+  --accentSolid: var(--primary);
+  --accentSolidHover: color-mix(in oklch, var(--primary) 80%, transparent);
+  --accentText: var(--primary);
+  --accentTextContrast: var(--foreground);
+}
+
+/* Code blocks: one quiet-fill block with a slim header row, instead of a
+ * bordered frame around a second filled box with the language select
+ * floating over the first line of code (it covered the code outright at
+ * phone widths). The toolbar joins the flow as a right-aligned row, and its
+ * controls use the same compact sans chrome as the rest of the app. MDXEditor
+ * only exposes hashed module classes here, so match on their stable prefix. */
+.mdxeditor [class*="_codeMirrorWrapper_"] {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0.5rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: var(--muted);
+}
+
+.mdxeditor [class*="_codeMirrorToolbar_"] {
+  position: static;
+  align-self: flex-end;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+
+  & [class*="_selectTrigger_"] {
+    width: auto;
+    height: 1.5rem;
+    gap: 0.125rem;
+    margin: 0;
+    padding: 0 0.25rem 0 0.5rem;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    cursor: pointer;
+
+    &:hover,
+    &[data-state="open"] {
+      background-color: var(--accent);
+      color: var(--foreground);
+      filter: none;
+      border-radius: var(--radius-sm);
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in oklch, var(--ring) 50%, transparent);
+    }
+
+    & svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  & [class*="_iconButton_"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--muted-foreground);
+    cursor: pointer;
+
+    &:hover {
+      background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+      color: var(--destructive);
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in oklch, var(--ring) 50%, transparent);
+    }
+
+    & svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+/* The language dropdown: our popover surface (ring + floating shadow, per
+ * the elevation rules) instead of MDXEditor's drop-shadowed sheet. `[class]`
+ * outranks its equally specific, later-loaded `._selectContainer_*` rule. */
+.mdxeditor-select-content[class] {
+  width: auto;
+  min-width: 8rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  filter: none;
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  & [class*="_selectItem_"] {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &[data-highlighted] {
+      background-color: var(--accent);
+    }
+
+    &[data-state="checked"] {
+      background-color: transparent;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    &[data-state="checked"][data-highlighted] {
+      background-color: var(--accent);
+    }
+  }
+}

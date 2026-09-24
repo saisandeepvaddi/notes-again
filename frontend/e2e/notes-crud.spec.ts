@@ -6,13 +6,11 @@ import { createNote, uniqueName } from "./support/api";
 const contentEditor = (page: import("@playwright/test").Page) =>
   page.getByRole("textbox", { name: "editable markdown" });
 
-// The note-detail name field has no placeholder/label to key off (unlike the
-// new-note form's), and routes are code-split -- the URL updates before the
-// route's own chunk/component finishes mounting, so a plain `input().first()`
-// right after a URL assertion can still catch the previous page's own first
-// input mid-transition. Its font-serif styling is otherwise unique to it.
+// Keyed by its label rather than position: routes are code-split, so right
+// after a URL assertion a plain `input().first()` can still catch the
+// previous page's own first input mid-transition.
 const noteDetailNameInput = (page: import("@playwright/test").Page) =>
-  page.locator('input[class*="font-serif"]');
+  page.getByLabel("Note title");
 
 test.describe("note lifecycle", () => {
   test("create, edit, delete, restore, and permanently delete a note", async ({ page }) => {

@@ -7,8 +7,9 @@ import { EditorView } from "@codemirror/view";
 // variables so it tracks whichever theme is active instead of always
 // rendering a white box.
 export const codeMirrorTheme = EditorView.theme({
+  // Transparent: the code block wrapper (styles.css) owns the fill.
   "&": {
-    backgroundColor: "var(--muted)",
+    backgroundColor: "transparent",
     color: "var(--foreground)",
   },
   ".cm-content": {

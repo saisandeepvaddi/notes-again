@@ -6,6 +6,7 @@ import {
   directivesPlugin,
   frontmatterPlugin,
   headingsPlugin,
+  linkDialogPlugin,
   linkPlugin,
   listsPlugin,
   markdownShortcutPlugin,
@@ -16,6 +17,7 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { codeMirrorTheme } from "./codeMirrorTheme";
+import { LinkPopover } from "./LinkPopover";
 
 interface MarkdownEditorProps {
   markdown: string;
@@ -46,6 +48,7 @@ export function MarkdownEditor({
           quotePlugin(),
           headingsPlugin(),
           linkPlugin(),
+          linkDialogPlugin({ LinkDialog: LinkPopover }),
           tablePlugin(),
           thematicBreakPlugin(),
           frontmatterPlugin(),

@@ -1,3 +1,4 @@
+import { NoteGridSkeleton } from "@/components/PageSkeletons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +12,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -47,11 +47,7 @@ export function TrashList() {
   };
 
   if (isPending) {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Spinner /> Loading...
-      </div>
-    );
+    return <NoteGridSkeleton label="Loading trash" />;
   }
 
   if (total === 0) {

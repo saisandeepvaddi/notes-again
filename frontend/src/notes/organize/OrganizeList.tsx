@@ -1,6 +1,6 @@
+import { OrganizeSkeleton } from "@/components/PageSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { Link } from "@tanstack/react-router";
 import { FolderIcon, LockIcon, TagIcon, Trash2Icon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -98,11 +98,7 @@ export function OrganizeList() {
   const { data: tags, isPending: tagsPending } = useTags();
 
   if (projectsPending || tagsPending) {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Spinner /> Loading...
-      </div>
-    );
+    return <OrganizeSkeleton />;
   }
 
   return (
@@ -131,7 +127,9 @@ export function OrganizeList() {
         actions={
           <DeleteUnusedTagsButton
             unusedTagNames={
-              tags?.filter((tag) => !tag.is_difficulty && tag.note_count === 0).map((tag) => tag.name) ?? []
+              tags
+                ?.filter((tag) => !tag.is_difficulty && tag.note_count === 0)
+                .map((tag) => tag.name) ?? []
             }
           />
         }

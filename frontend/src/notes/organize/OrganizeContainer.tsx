@@ -1,15 +1,16 @@
+import { OrganizeSkeleton } from "@/components/PageSkeletons";
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { OrganizeList } from "./OrganizeList";
 
 export function OrganizeContainer() {
   return (
-    <Suspense fallback={<>Loading...</>}>
-      <div className="py-2 w-full max-w-3xl">
+    <div className="py-2 w-full max-w-3xl">
+      <Suspense fallback={<OrganizeSkeleton />}>
         <ClientOnly>
           <OrganizeList />
         </ClientOnly>
-      </div>
-    </Suspense>
+      </Suspense>
+    </div>
   );
 }

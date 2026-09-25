@@ -4,12 +4,12 @@ import { ImportForm } from "./ImportForm";
 
 export function ImportContainer() {
   return (
-    <Suspense fallback={<>Loading...</>}>
-      <div className="py-2 w-full h-full">
+    <div className="py-2 w-full h-full">
+      <Suspense fallback={null}>
         <ClientOnly>
           <ImportForm />
         </ClientOnly>
-      </div>
-    </Suspense>
+      </Suspense>
+    </div>
   );
 }

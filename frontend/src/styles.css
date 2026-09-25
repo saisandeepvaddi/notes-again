@@ -619,3 +619,21 @@ body {
     }
   }
 }
+
+/* Loading skeletons (LoadingState) hold back for 300ms, then ease in: a fast
+ * load never flashes a placeholder, and a slow one fades up rather than
+ * popping. `both` keeps it invisible through the delay. Under reduced motion
+ * the blanket rule above shortens the fade to an instant switch but leaves
+ * the delay, which is what actually prevents the flash. */
+@keyframes loading-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-reveal {
+  animation: loading-reveal 240ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+}

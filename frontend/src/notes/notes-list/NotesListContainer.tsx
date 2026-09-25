@@ -1,3 +1,4 @@
+import { NoteGridSkeleton } from "@/components/PageSkeletons";
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import NotesList from "./NotesList";
@@ -20,8 +21,8 @@ export function NotesListContainer({
   pageSize,
 }: NotesListContainerProps) {
   return (
-    <Suspense fallback={<>Loading...</>}>
-      <div className="py-2 w-full h-full">
+    <div className="py-2 w-full h-full">
+      <Suspense fallback={<NoteGridSkeleton />}>
         <ClientOnly>
           <NotesList
             tagId={tagId}
@@ -32,7 +33,7 @@ export function NotesListContainer({
             pageSize={pageSize}
           />
         </ClientOnly>
-      </div>
-    </Suspense>
+      </Suspense>
+    </div>
   );
 }

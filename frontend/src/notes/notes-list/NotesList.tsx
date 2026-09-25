@@ -1,7 +1,7 @@
+import { NoteGridSkeleton, NoteTableSkeleton } from "@/components/PageSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
@@ -168,7 +168,12 @@ function NotesList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagId, projectId, noteDate, search]);
   const selectAll = async () => {
-    const { ids, total: matching } = await fetchNoteIds({ date: noteDate, tagId, projectId, search });
+    const { ids, total: matching } = await fetchNoteIds({
+      date: noteDate,
+      tagId,
+      projectId,
+      search,
+    });
     selection.replace(ids);
     if (ids.length < matching) {
       toast.add({
@@ -190,7 +195,9 @@ function NotesList({
           {activeProject.name}
           <button
             type="button"
-            onClick={() => navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: undefined }) })}
+            onClick={() =>
+              navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: undefined }) })
+            }
             className="opacity-60 hover:opacity-100"
           >
             <XIcon className="size-2.5" />
@@ -223,9 +230,11 @@ function NotesList({
         </div>
       </div>
       {isPending ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Spinner /> Loading notes...
-        </div>
+        effectiveMode === "table" ? (
+          <NoteTableSkeleton />
+        ) : (
+          <NoteGridSkeleton />
+        )
       ) : isError ? (
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (

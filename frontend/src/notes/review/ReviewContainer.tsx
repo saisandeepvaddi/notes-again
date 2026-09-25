@@ -1,15 +1,16 @@
+import { ReviewSkeleton } from "@/components/PageSkeletons";
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { ReviewSession } from "./ReviewSession";
 
 export function ReviewContainer() {
   return (
-    <Suspense fallback={<>Loading...</>}>
-      <div className="py-2 w-full h-full">
+    <div className="py-2 w-full h-full">
+      <Suspense fallback={<ReviewSkeleton />}>
         <ClientOnly>
           <ReviewSession />
         </ClientOnly>
-      </div>
-    </Suspense>
+      </Suspense>
+    </div>
   );
 }

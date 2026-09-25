@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 5273 --host",
-    "build": "vite build && tsc --noEmit",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

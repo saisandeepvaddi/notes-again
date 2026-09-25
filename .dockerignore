@@ -6,6 +6,9 @@ frontend/dist
 frontend/.tanstack
 frontend/.vite-hooks
 frontend/.output
+frontend/e2e
+frontend/playwright-report
+frontend/test-results
 .tanstack
 .git
 .github

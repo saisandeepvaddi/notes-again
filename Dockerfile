@@ -16,8 +16,14 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
     VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID
 
+# Deps first (cached unless the lockfile changes); the pnpm store is a cache
+# mount so even a lockfile change only fetches the packages that are new.
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir /pnpm/store
+
 COPY frontend/ ./
-RUN pnpm install --frozen-lockfile && pnpm build
+RUN pnpm build
 # Output we care about: /app/frontend/dist/client (index.html + assets)
 
 # --- Stage 2: python runtime ---------------------------------------------------
@@ -38,8 +44,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Python deps first (cached unless pyproject/lock change).
+ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
 COPY backend/pyproject.toml backend/uv.lock ./backend/
-RUN cd backend && uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd backend && uv sync --frozen --no-dev
 ENV PATH="/app/backend/.venv/bin:$PATH"
 
 COPY backend/ ./backend/

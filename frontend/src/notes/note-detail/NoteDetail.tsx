@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, PauseIcon, PlayIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
@@ -13,6 +13,7 @@ import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
 import { useNote } from "../hooks/useNote";
+import { useSetNotePaused } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
@@ -38,6 +39,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
+  const { mutateAsync: setPaused, isPending: isPausing } = useSetNotePaused(noteId);
 
   const [name, setName] = useState(note.name);
   const [content, setContent] = useState(note.content);
@@ -100,6 +102,20 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
     }
   };
 
+  const isPaused = note.paused_at !== null;
+  const togglePaused = async () => {
+    try {
+      await setPaused(!isPaused);
+      toast.add({
+        type: "success",
+        description: isPaused ? "Resumed: back in review" : "Paused: kept out of review",
+      });
+    } catch (error) {
+      console.error("error:", error);
+      toast.add({ type: "error", priority: "high", description: "Failed to update note" });
+    }
+  };
+
   const remove = async () => {
     try {
       await deleteNote();
@@ -128,6 +144,9 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <span className="text-xs text-muted-foreground">
             {isSaving ? "Saving…" : justSaved ? "Saved" : ""}
           </span>
+          <Button size="sm" variant="outline" onClick={togglePaused} disabled={isPausing}>
+            {isPaused ? <PlayIcon /> : <PauseIcon />} {isPaused ? "Resume" : "Pause"}
+          </Button>
           <Button size="sm" variant="destructive" onClick={remove}>
             <Trash2Icon /> Delete
           </Button>
@@ -146,7 +165,13 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       />
 
       <div className="flex flex-col gap-3">
-        <NoteReminderList noteId={note.id} reminders={note.reminders} />
+        {isPaused && (
+          <p className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+            <PauseIcon className="size-3.5 shrink-0" />
+            Paused: kept as a note, not in review. Resume to bring it back on its schedule.
+          </p>
+        )}
+        <NoteReminderList noteId={note.id} reminders={note.reminders} paused={isPaused} />
 
         <Separator />
 

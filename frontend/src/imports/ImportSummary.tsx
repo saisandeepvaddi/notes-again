@@ -38,7 +38,12 @@ export function ImportSummary({ result }: { result: ImportResult }) {
         <Stat label="skipped" value={result.duplicates_skipped + result.invalid_skipped} />
       </div>
 
-      {result.first_due && result.last_due && (
+      {result.paused ? (
+        <p className="text-sm text-muted-foreground">
+          {result.dry_run ? "They'll be" : "They're"} paused: kept as notes, but not in review.
+          Resume them from Organize (per deck) or from a selection in Notes when you're ready.
+        </p>
+      ) : result.first_due && result.last_due && (
         <p className="text-sm text-muted-foreground">
           {result.due_today === result.notes_created ? (
             <>Every imported note is due for review right away.</>
@@ -65,7 +70,7 @@ export function ImportSummary({ result }: { result: ImportResult }) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead>Deck</TableHead>
-                <TableHead className="text-right">Per day</TableHead>
+                {!result.paused && <TableHead className="text-right">Per day</TableHead>}
                 <TableHead className="text-right">{result.dry_run ? "To import" : "Imported"}</TableHead>
                 <TableHead className="text-right">Skipped</TableHead>
               </TableRow>
@@ -81,9 +86,11 @@ export function ImportSummary({ result }: { result: ImportResult }) {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {deck.per_day === 0 ? "all now" : deck.per_day}
-                  </TableCell>
+                  {!result.paused && (
+                    <TableCell className="text-right">
+                      {deck.per_day === 0 ? "all now" : deck.per_day}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right">{deck.to_create.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{deck.skipped.toLocaleString()}</TableCell>
                 </TableRow>

@@ -1,6 +1,6 @@
 import datetime
 
-from db.models import Note, Project, Reminder, Tag
+from db.models import Note, Project, Reminder, Tag, utcnow
 from notes.scheduling import (
     Algorithm,
     new_note_scheduling_state,
@@ -17,6 +17,7 @@ def build_note(
     tags: list[Tag],
     project: Project | None,
     first_reminder_at: datetime.datetime,
+    paused: bool = False,
 ) -> Note:
     """Builds a fully-formed new Note (not yet added to a session): exactly one
     difficulty tag, ease factor seeded from it, algorithm-specific scheduling
@@ -31,6 +32,7 @@ def build_note(
         tags=[*tags, difficulty_tag],
         user_id=1,
         algorithm=algorithm,
+        paused_at=utcnow() if paused else None,
     )
     note.ease_factor = difficulty_tag.default_ease_factor or note.ease_factor
     for field, value in new_note_scheduling_state(algorithm).items():

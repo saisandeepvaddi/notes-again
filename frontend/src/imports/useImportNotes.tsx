@@ -7,13 +7,14 @@ interface ImportArgs {
   perDay: number;
   defaultDeck: string;
   dryRun: boolean;
+  paused: boolean;
 }
 
 // dryRun = the preview: same server-side logic as the real import, nothing written.
 export function useImportNotes() {
   return useMutation({
     mutationKey: ["import-notes"],
-    mutationFn: async ({ payload, perDay, defaultDeck, dryRun }: ImportArgs) => {
+    mutationFn: async ({ payload, perDay, defaultDeck, dryRun, paused }: ImportArgs) => {
       const fetcher = postFetcher("/import/notes");
       const result = await fetcher(
         JSON.stringify({
@@ -22,6 +23,7 @@ export function useImportNotes() {
           default_deck: defaultDeck.trim() || null,
           tz_offset_minutes: new Date().getTimezoneOffset(),
           dry_run: dryRun,
+          paused,
         }),
       );
       return ImportResultSchema.parse(result);

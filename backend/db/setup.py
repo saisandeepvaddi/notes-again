@@ -66,6 +66,10 @@ def add_missing_columns(engine: Engine) -> None:
             # created after this migration can be 'fsrs'
             ("algorithm", "TEXT NOT NULL DEFAULT 'sm2'"),
             ("fsrs_card", "TEXT"),
+            ("paused_at", "DATETIME"),
+        ],
+        "projects": [
+            ("paused", "BOOLEAN NOT NULL DEFAULT 0"),
         ],
         "reminders": [
             ("rating", "TEXT"),

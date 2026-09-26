@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
@@ -17,6 +18,9 @@ function NewNoteForm() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [project, setProject] = useState<Project | null>(null);
+  // null = follow the project's default; picking another project resets it
+  const [pausedChoice, setPausedChoice] = useState<boolean | null>(null);
+  const paused = pausedChoice ?? project?.paused ?? false;
   const toggleTag = (tag: Tag) => {
     setSelectedTags((current) =>
       current.some((selected) => selected.id === tag.id)
@@ -34,6 +38,7 @@ function NewNoteForm() {
         tag_ids: selectedTags.map((tag) => tag.id),
         difficulty,
         project_id: project?.id ?? null,
+        paused,
       });
       navigate({
         to: "/notes",
@@ -84,8 +89,29 @@ function NewNoteForm() {
           </Button>
         ))}
       </div>
-      <ProjectPicker value={project} onChange={setProject} />
+      <ProjectPicker
+        value={project}
+        onChange={(next) => {
+          setProject(next);
+          setPausedChoice(null);
+        }}
+      />
       <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
+      <label className="flex w-fit cursor-pointer items-start gap-2.5 text-sm">
+        <Checkbox
+          className="mt-0.5"
+          checked={paused}
+          onCheckedChange={(checked) => setPausedChoice(checked === true)}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">Paused</span>
+          <span className="text-xs text-muted-foreground">
+            {project?.paused && pausedChoice === null
+              ? `Checked because “${project.name}” is paused, so new notes in it start paused. Uncheck to review this one anyway.`
+              : "Keep it as a note without adding it to review. You can resume it any time."}
+          </span>
+        </span>
+      </label>
       <form.AppForm>
         <span>
           <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />

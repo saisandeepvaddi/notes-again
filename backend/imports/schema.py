@@ -15,6 +15,9 @@ class ImportRequest(BaseModel):
     default_deck: str | None = None
     tz_offset_minutes: int = 0
     dry_run: bool = False
+    # Keep the notes out of review for now (reference material, a deck for
+    # later); `per_day` pacing then applies when they're resumed instead.
+    paused: bool = False
 
 
 class ImportDeckSummary(BaseModel):
@@ -45,6 +48,7 @@ class ImportResult(BaseModel):
     last_due: UTCDateTime | None = None
     due_today: int = 0
     days_span: int = 0
+    paused: bool = False
     issues: list[ImportIssue]
     issues_truncated: bool = False
     warnings: list[str]

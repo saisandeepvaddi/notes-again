@@ -23,13 +23,22 @@ export type Tag = z.infer<typeof TagSchema>;
 export const ProjectSchema = z.object({
   id: z.number(),
   name: z.string(),
+  // New notes in it start paused (a default -- each note has its own state).
+  paused: z.boolean().default(false),
 });
 
 export type Project = z.infer<typeof ProjectSchema>;
 
-// The list endpoints also say how many live (not trashed) notes each has.
-export const ProjectListItemSchema = ProjectSchema.extend({ note_count: z.number() });
-export const TagListItemSchema = TagSchema.extend({ note_count: z.number() });
+// The list endpoints also say how many live (not trashed) notes each has,
+// and how many of those are paused.
+export const ProjectListItemSchema = ProjectSchema.extend({
+  note_count: z.number(),
+  paused_count: z.number().default(0),
+});
+export const TagListItemSchema = TagSchema.extend({
+  note_count: z.number(),
+  paused_count: z.number().default(0),
+});
 
 export const ReminderBaseSchema = z.object({
   remind_at: z.coerce.date(),
@@ -66,6 +75,8 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   ease_factor: z.number(),
   interval_days: z.number(),
   algorithm: AlgorithmSchema,
+  // Set while the note is kept out of review.
+  paused_at: z.coerce.date().nullable().optional().default(null),
   reminders: z.array(NoteReminderSchema).default([]),
   tags: z.array(TagSchema).default([]),
   project: ProjectSchema.nullable().optional().default(null),
@@ -90,6 +101,7 @@ export const NewNoteBodySchema = NoteBaseSchema.extend({
   tag_ids: z.array(z.number()).default([]),
   difficulty: DifficultySchema.default("medium"),
   project_id: z.number().nullable().optional(),
+  paused: z.boolean().optional(),
 });
 
 export type NewNoteBody = z.infer<typeof NewNoteBodySchema>;

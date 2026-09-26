@@ -6,6 +6,8 @@ export const NOTES_PAGE_SIZE = 60;
 
 export type NotesSort = "due" | "name" | "project" | "created" | "difficulty";
 export type NotesSortOrder = "asc" | "desc";
+// Which notes by review state; undefined = all of them.
+export type NotesStatus = "active" | "paused";
 
 export interface UseInfiniteNotesArgs {
   date?: Date;
@@ -13,6 +15,7 @@ export interface UseInfiniteNotesArgs {
   projectId?: number;
   deleted?: boolean;
   search?: string;
+  status?: NotesStatus;
   sort?: NotesSort;
   order?: NotesSortOrder;
   enabled?: boolean;
@@ -26,7 +29,8 @@ export function notesFilterParams({
   projectId,
   deleted = false,
   search,
-}: Pick<UseInfiniteNotesArgs, "date" | "tagId" | "projectId" | "deleted" | "search">) {
+  status,
+}: Pick<UseInfiniteNotesArgs, "date" | "tagId" | "projectId" | "deleted" | "search" | "status">) {
   const params = new URLSearchParams();
   if (date) {
     const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -38,6 +42,7 @@ export function notesFilterParams({
   if (projectId != null) params.set("project_id", String(projectId));
   if (deleted) params.set("deleted", "true");
   if (search?.trim()) params.set("search", search.trim());
+  if (status) params.set("paused", String(status === "paused"));
   return params;
 }
 
@@ -52,6 +57,7 @@ export function useInfiniteNotes(
     projectId,
     deleted = false,
     search,
+    status,
     sort = "due",
     order = "asc",
     enabled = true,
@@ -75,13 +81,14 @@ export function useInfiniteNotes(
         projectId,
         deleted,
         search,
+        status,
         sort,
         order,
       },
     ],
     initialPageParam: 0,
     queryFn: ({ pageParam }) => {
-      const params = notesFilterParams({ date, tagId, projectId, deleted, search });
+      const params = notesFilterParams({ date, tagId, projectId, deleted, search, status });
       params.set("limit", String(NOTES_PAGE_SIZE));
       params.set("offset", String(pageParam));
       params.set("sort", sort);
@@ -123,6 +130,7 @@ export function usePagedNotes(
     projectId,
     deleted = false,
     search,
+    status,
     sort = "due",
     order = "asc",
     page,
@@ -148,6 +156,7 @@ export function usePagedNotes(
         projectId,
         deleted,
         search,
+        status,
         sort,
         order,
         page,
@@ -155,7 +164,7 @@ export function usePagedNotes(
       },
     ],
     queryFn: () => {
-      const params = notesFilterParams({ date, tagId, projectId, deleted, search });
+      const params = notesFilterParams({ date, tagId, projectId, deleted, search, status });
       params.set("limit", String(pageSize));
       params.set("offset", String((page - 1) * pageSize));
       params.set("sort", sort);

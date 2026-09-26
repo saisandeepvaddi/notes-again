@@ -20,6 +20,7 @@ export const ImportResultSchema = z.object({
   last_due: z.coerce.date().nullable(),
   due_today: z.number(),
   days_span: z.number(),
+  paused: z.boolean().default(false),
   issues: z.array(
     z.object({
       row: z.number(),

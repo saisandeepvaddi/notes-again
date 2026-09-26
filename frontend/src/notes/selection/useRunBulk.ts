@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/toast";
-import { useBulkNotes, type BulkAction } from "../hooks/useBulkNotes";
+import { useBulkNotes, type BulkAction, type BulkResult } from "../hooks/useBulkNotes";
 
 export const notesLabel = (count: number) =>
   `${count.toLocaleString()} note${count === 1 ? "" : "s"}`;
@@ -10,11 +10,14 @@ export const notesLabel = (count: number) =>
 export function useRunBulk(ids: () => number[], onDone: () => void) {
   const { mutateAsync, isPending } = useBulkNotes();
 
-  const run = async (request: BulkAction, success: (affected: number) => string) => {
+  const run = async (
+    request: BulkAction,
+    success: (affected: number, result: BulkResult) => string,
+  ) => {
     try {
-      const { affected } = await mutateAsync({ noteIds: ids(), ...request });
+      const result = await mutateAsync({ noteIds: ids(), ...request });
       onDone();
-      toast.add({ type: "success", description: success(affected) });
+      toast.add({ type: "success", description: success(result.affected, result) });
     } catch (error) {
       toast.add({
         type: "error",

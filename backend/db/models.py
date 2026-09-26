@@ -49,6 +49,11 @@ class Project(SQLModel, table=True):
     created_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
+    # whether notes created in this project start paused -- only a default
+    # for new notes (pre-checked "Paused" box), never read by the review
+    # queue itself; Note.paused_at is the only source of truth for that
+    paused: bool = Field(default=False)
+
     notes: list["Note"] = Relationship(back_populates="project")
 
 
@@ -60,6 +65,11 @@ class Note(SQLModel, table=True):
     created_at: datetime.datetime = Field(default_factory=utcnow)
     updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
+
+    # set while the note is paused: kept as a note (reference material, a
+    # deck imported for later) but left out of review. Its reminder and
+    # scheduling state are untouched, so pausing is fully reversible.
+    paused_at: datetime.datetime | None = Field(default=None)
 
     # spaced-repetition state (SM-2-lite), advanced on each review
     ease_factor: float = Field(default=2.5)

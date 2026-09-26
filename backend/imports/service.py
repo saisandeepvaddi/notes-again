@@ -12,15 +12,15 @@ from typing import Any
 from sqlalchemy import func
 from sqlmodel import Session, col, select
 
-from db.models import Note, Project, Tag, utcnow
+from db.models import Note, Project, Tag
 from notes.factory import build_note
+from notes.pacing import MAX_PER_DAY, Pacer
 from notes.router import get_default_algorithm
 from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
 from .schema import ImportDeckSummary, ImportIssue, ImportResult
 
 MAX_NOTES = 10_000
-MAX_PER_DAY = 1_000
 MAX_ISSUES = 200
 DIFFICULTIES = ("easy", "medium", "hard")
 
@@ -191,15 +191,7 @@ class Plan:
     existing_decks: dict[str, Project]
     existing_tags: dict[str, Tag]
     result: ImportResult
-
-
-def _today_start_utc(tz_offset_minutes: int) -> datetime.datetime:
-    """Start of the user's local "today", as UTC. tz_offset_minutes is the
-    browser's getTimezoneOffset()."""
-    offset = datetime.timedelta(minutes=tz_offset_minutes)
-    local_now = utcnow().replace(tzinfo=None) - offset
-    local_midnight = datetime.datetime.combine(local_now.date(), datetime.time.min)
-    return (local_midnight + offset).replace(tzinfo=datetime.UTC)
+    paused: bool = False
 
 
 def plan_import(
@@ -212,6 +204,7 @@ def plan_import(
     default_deck: str | None,
     tz_offset_minutes: int,
     dry_run: bool,
+    paused: bool = False,
 ) -> Plan:
     existing_decks = {
         _key(p.name): p
@@ -304,31 +297,21 @@ def plan_import(
         kept_rows.append((row, deck_key, tag_keys))
 
     # Stagger first reviews, per deck: a deck's Nth kept note (in file order)
-    # falls on day N // its per_day. Day 0 is due now; later days start at the
-    # user's local midnight. Notes with no deck form their own group. The
-    # millisecond tie-break keeps file order in the review queue (which sorts
-    # by remind_at); the "now" base sits a minute in the past so it never lands
-    # in the future.
-    now = utcnow()
-    today_start = _today_start_utc(tz_offset_minutes)
+    # falls on day N // its per_day (see Pacer). Notes with no deck form their
+    # own group. A paused import isn't staggered -- it's paced when resumed.
+    pacer = Pacer(tz_offset_minutes)
     position_in_group: dict[str | None, int] = {}
     kept: list[PlannedNote] = []
-    for i, (row, deck_key, tag_keys) in enumerate(kept_rows):
-        rate = rate_for(deck_key)
+    for row, deck_key, tag_keys in kept_rows:
         position = position_in_group.get(deck_key, 0)
         position_in_group[deck_key] = position + 1
-        day = position // rate if rate > 0 else 0
-        base = (
-            now - datetime.timedelta(minutes=1)
-            if day == 0
-            else today_start + datetime.timedelta(days=day)
-        )
+        day = 0 if paused else pacer.day(position, rate_for(deck_key))
         kept.append(
             PlannedNote(
                 row=row,
                 deck_key=deck_key,
                 tag_keys=tag_keys,
-                remind_at=base + datetime.timedelta(milliseconds=i),
+                remind_at=pacer.due_at(day),
                 day=day,
             )
         )
@@ -349,20 +332,22 @@ def plan_import(
         decks=list(per_deck.values()),
         first_due=min((p.remind_at for p in kept), default=None),
         last_due=max((p.remind_at for p in kept), default=None),
-        due_today=sum(1 for planned in kept if planned.day == 0),
-        days_span=max((planned.day for planned in kept), default=-1) + 1,
+        due_today=0 if paused else sum(1 for planned in kept if planned.day == 0),
+        days_span=0 if paused else max((planned.day for planned in kept), default=-1) + 1,
+        paused=paused,
         issues=all_issues[:MAX_ISSUES],
         issues_truncated=len(all_issues) > MAX_ISSUES,
         warnings=warnings,
     )
-    return Plan(kept, new_decks, new_tags, existing_decks, existing_tags, result)
+    return Plan(kept, new_decks, new_tags, existing_decks, existing_tags, result, paused)
 
 
 def execute_plan(session: Session, plan: Plan) -> None:
     """Writes the plan in ONE transaction: all or nothing."""
     decks = dict(plan.existing_decks)
     for key, name in plan.new_decks.items():
-        project = Project(name=name)
+        # a deck brought in paused keeps new captures paused by default too
+        project = Project(name=name, paused=plan.paused)
         session.add(project)
         decks[key] = project
     tags = dict(plan.existing_tags)
@@ -385,6 +370,7 @@ def execute_plan(session: Session, plan: Plan) -> None:
             tags=[tags[key] for key in planned.tag_keys],
             project=decks[planned.deck_key] if planned.deck_key is not None else None,
             first_reminder_at=planned.remind_at,
+            paused=plan.paused,
         )
         for planned in plan.kept
     )

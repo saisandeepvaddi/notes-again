@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -69,6 +70,7 @@ export function ImportForm() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [perDay, setPerDay] = useState(DEFAULT_PER_DAY);
   const [defaultDeck, setDefaultDeck] = useState("");
+  const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<ImportResult | null>(null);
   const [done, setDone] = useState<ImportResult | null>(null);
@@ -103,7 +105,13 @@ export function ImportForm() {
     }
     setError(null);
     try {
-      const result = await mutateAsync({ payload, perDay: perDayNumber, defaultDeck, dryRun });
+      const result = await mutateAsync({
+        payload,
+        perDay: perDayNumber,
+        defaultDeck,
+        dryRun,
+        paused,
+      });
       if (dryRun) {
         setPreview(result);
       } else {
@@ -134,7 +142,8 @@ export function ImportForm() {
           <CheckCircle2Icon />
           <AlertTitle>Import complete</AlertTitle>
           <AlertDescription>
-            {done.notes_created.toLocaleString()} note{done.notes_created === 1 ? "" : "s"} added.
+            {done.notes_created.toLocaleString()} note{done.notes_created === 1 ? "" : "s"}{" "}
+            {done.paused ? "added, paused" : "added"}.
           </AlertDescription>
         </Alert>
         <ImportSummary result={done} />
@@ -181,6 +190,24 @@ export function ImportForm() {
         </TabsContent>
       </Tabs>
 
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm">
+        <Checkbox
+          className="mt-0.5"
+          checked={paused}
+          onCheckedChange={(checked) => {
+            edit();
+            setPaused(checked === true);
+          }}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">Import as paused</span>
+          <span className="text-xs text-muted-foreground">
+            Keep them as notes (reference material, a deck for later) without adding them to
+            review. New decks start paused too. Resume them from Organize when you're ready.
+          </span>
+        </span>
+      </label>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium">Default new notes per day</span>
@@ -195,10 +222,18 @@ export function ImportForm() {
               setPerDay(event.target.value);
             }}
             aria-invalid={!perDayValid}
+            disabled={paused}
           />
           <span className="text-xs text-muted-foreground">
-            Used wherever the file doesn't set <code>per_day</code>. First reviews are spread out
-            this many per day so you don't get a huge backlog; 0 makes everything due now.
+            {paused ? (
+              <>Not used for a paused import: you choose the pace when you resume.</>
+            ) : (
+              <>
+                Used wherever the file doesn't set <code>per_day</code>. First reviews are spread
+                out this many per day so you don't get a huge backlog; 0 makes everything due
+                now.
+              </>
+            )}
           </span>
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -231,7 +266,7 @@ export function ImportForm() {
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={preview ? "outline" : "default"}
-          disabled={isPending || !text.trim() || !perDayValid}
+          disabled={isPending || !text.trim() || (!paused && !perDayValid)}
           onClick={() => run(true)}
         >
           {isPending && !preview ? <Spinner /> : null} Preview

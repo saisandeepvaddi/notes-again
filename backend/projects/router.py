@@ -1,11 +1,18 @@
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import delete, update
-from sqlmodel import col, func, select
+from sqlmodel import Session, col, func, select
 
 from db.models import Note, NoteTag, Project
 from db.setup import SessionDep
-from notes.bulk import GroupDeleteResult, trash_notes
+from notes.bulk import (
+    GroupDeleteResult,
+    ResumeOptions,
+    ResumeResult,
+    pause_notes,
+    resume_notes,
+    trash_notes,
+)
 from tags.unused import delete_unused_tags
 
 from .schema import ProjectListItem, ProjectResponse
@@ -21,15 +28,23 @@ def get_projects(session: SessionDep):
         .order_by(func.lower(Project.name))
     )
     projects = session.exec(statement).all()
-    counts = dict(
-        session.exec(
-            select(Note.project_id, func.count())
+    counts = {
+        project_id: (total, paused or 0)
+        for project_id, total, paused in session.exec(
+            select(Note.project_id, func.count(), func.count(col(Note.paused_at)))
             .where(col(Note.deleted_at).is_(None), col(Note.project_id).is_not(None))
             .group_by(Note.project_id)
         ).all()
-    )
+    }
     return [
-        ProjectListItem(id=p.id, name=p.name, note_count=counts.get(p.id, 0)) for p in projects
+        ProjectListItem(
+            id=p.id,
+            name=p.name,
+            paused=p.paused,
+            note_count=counts.get(p.id, (0, 0))[0],
+            paused_count=counts.get(p.id, (0, 0))[1],
+        )
+        for p in projects
     ]
 
 
@@ -56,6 +71,48 @@ def create_project(body: NewProjectBody, session: SessionDep):
     session.commit()
     session.refresh(project)
     return project
+
+
+def _live_project(session: Session, project_id: int) -> Project:
+    project = session.exec(
+        select(Project).where(Project.id == project_id, col(Project.deleted_at).is_(None))
+    ).one_or_none()
+    if project is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    return project
+
+
+class PauseResult(BaseModel):
+    affected: int
+
+
+@router.post("/{project_id}/pause", response_model=PauseResult)
+def pause_project(project_id: int, session: SessionDep):
+    """Pauses every note in the project, and makes new notes created in it
+    start paused by default too."""
+    project = _live_project(session, project_id)
+    project.paused = True
+    session.add(project)
+    affected = pause_notes(session, col(Note.project_id) == project_id)
+    session.commit()
+    return PauseResult(affected=affected)
+
+
+@router.post("/{project_id}/resume", response_model=ResumeResult)
+def resume_project(project_id: int, body: ResumeOptions, session: SessionDep):
+    """Resumes every note in the project (see notes.bulk.resume_notes) and
+    turns its paused-by-default off."""
+    project = _live_project(session, project_id)
+    project.paused = False
+    session.add(project)
+    result = resume_notes(
+        session,
+        col(Note.project_id) == project_id,
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
 
 
 @router.delete("/{project_id}", response_model=GroupDeleteResult)

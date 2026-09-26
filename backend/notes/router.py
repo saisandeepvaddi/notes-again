@@ -149,6 +149,7 @@ def _list_conditions(
     project_id: int | None,
     deleted: bool,
     search: str | None = None,
+    paused: bool | None = None,
 ) -> list:
     """The WHERE conditions shared by /list and /ids, so "select all N
     matching" selects exactly the notes the list is showing."""
@@ -156,11 +157,18 @@ def _list_conditions(
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
     ]
 
+    if paused is not None:
+        conditions.append(
+            col(Note.paused_at).is_not(None) if paused else col(Note.paused_at).is_(None)
+        )
+
     if search:
         term = f"%{search.strip()}%"
         conditions.append(or_(col(Note.name).ilike(term), col(Note.content).ilike(term)))
 
     if start is not None and end is not None:
+        # a day's reviews: paused notes aren't reviewed, so they're never "due"
+        conditions.append(col(Note.paused_at).is_(None))
         start_utc = to_utc(start).replace(tzinfo=None)
         end_utc = to_utc(end).replace(tzinfo=None)
 
@@ -204,13 +212,20 @@ def get_notes(
     project_id: int | None = None,
     deleted: bool = False,
     search: str | None = None,
+    paused: bool | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
     limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
 ):
     conditions = _list_conditions(
-        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted, search=search
+        start=start,
+        end=end,
+        tag_id=tag_id,
+        project_id=project_id,
+        deleted=deleted,
+        search=search,
+        paused=paused,
     )
     return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
 
@@ -229,6 +244,7 @@ def get_note_ids(
     project_id: int | None = None,
     deleted: bool = False,
     search: str | None = None,
+    paused: bool | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
 ):
@@ -237,7 +253,13 @@ def get_note_ids(
     client can't know the ids it hasn't loaded. Capped at MAX_BULK_IDS: `ids`
     is shorter than `total` when there are more than that."""
     conditions = _list_conditions(
-        start=start, end=end, tag_id=tag_id, project_id=project_id, deleted=deleted, search=search
+        start=start,
+        end=end,
+        tag_id=tag_id,
+        project_id=project_id,
+        deleted=deleted,
+        search=search,
+        paused=paused,
     )
     total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
     key = _sort_key(sort)
@@ -257,11 +279,12 @@ def get_due_notes(
     limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
 ):
-    """Notes whose pending reminder is due now, oldest-due first. Paged: after
-    a bulk import thousands can be due at once, and the review flow only ever
-    needs the next few."""
+    """Active (not paused) notes whose pending reminder is due now, oldest-due
+    first. Paged: after a bulk import thousands can be due at once, and the
+    review flow only ever needs the next few."""
     conditions: list = [
         col(Note.deleted_at).is_(None),
+        col(Note.paused_at).is_(None),
         select(Reminder.id)
         .where(
             col(Reminder.note_id) == col(Note.id),
@@ -289,6 +312,9 @@ class NewNoteBody(BaseModel):
     tag_ids: list[int] = Field(default_factory=list)
     difficulty: Difficulty = "medium"
     project_id: int | None = None
+    # None = the project's default (Project.paused), so clients that don't
+    # know about pausing (the capture extension) still honor a paused project
+    paused: bool | None = None
 
 
 @router.post("/create", response_model=NoteResponse)
@@ -299,14 +325,17 @@ def create_note(body: NewNoteBody, session: SessionDep):
     # difficulty is sticky and applied separately, never via arbitrary tag_ids
     tags = [tag for tag in tags if not tag.is_difficulty]
 
+    project = get_project(session, body.project_id) if body.project_id is not None else None
+    paused = body.paused if body.paused is not None else project is not None and project.paused
     note = build_note(
         name=body.name,
         content=body.content,
         algorithm=get_default_algorithm(session),
         difficulty_tag=get_difficulty_tag(session, body.difficulty),
         tags=tags,
-        project=get_project(session, body.project_id) if body.project_id is not None else None,
+        project=project,
         first_reminder_at=to_utc(body.first_reminder_at),
+        paused=paused,
     )
     session.add(note)
     session.commit()
@@ -439,6 +468,26 @@ def set_note_project(note_id: int, body: SetProjectBody, session: SessionDep):
     session.add(note)
     session.commit()
     session.refresh(note)
+    return note
+
+
+class SetPausedBody(BaseModel):
+    paused: bool
+
+
+@router.patch("/{note_id}/paused", response_model=NoteResponse)
+def set_note_paused(note_id: int, body: SetPausedBody, session: SessionDep):
+    """Pauses (keeps out of review) or resumes a note. Its reminder and
+    scheduling state are untouched either way, so a resumed note that's
+    overdue is simply due now."""
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    if body.paused != (note.paused_at is not None):
+        note.paused_at = utcnow() if body.paused else None
+        session.add(note)
+        session.commit()
+        session.refresh(note)
     return note
 
 

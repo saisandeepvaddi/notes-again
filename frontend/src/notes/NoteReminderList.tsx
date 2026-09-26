@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isToday } from "date-fns";
-import { HistoryIcon } from "lucide-react";
+import { HistoryIcon, PauseIcon } from "lucide-react";
 import { MarkableReminder } from "./MarkableReminder";
 import { ReschedulePopover } from "./ReschedulePopover";
 import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
@@ -16,9 +16,16 @@ interface NoteReminderListProps {
   // controls (undo, reschedule, review history) -- those live on the note's
   // own page.
   compact?: boolean;
+  // Paused notes aren't in review, so there's nothing due to mark or move.
+  paused?: boolean;
 }
 
-export function NoteReminderList({ noteId, reminders, compact = false }: NoteReminderListProps) {
+export function NoteReminderList({
+  noteId,
+  reminders,
+  compact = false,
+  paused = false,
+}: NoteReminderListProps) {
   if (reminders.length === 0) {
     return <span className="text-muted-foreground">No reminders</span>;
   }
@@ -30,7 +37,13 @@ export function NoteReminderList({ noteId, reminders, compact = false }: NoteRem
   const lastReview = reviewed[0];
   const canUndoLastReview = lastReview?.reviewed_at != null && isToday(lastReview.reviewed_at);
 
-  const pendingBadge = pending && <MarkableReminder reminder={pending} />;
+  const pendingBadge = paused ? (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <PauseIcon className="size-2.5" /> Paused
+    </Badge>
+  ) : (
+    pending && <MarkableReminder reminder={pending} />
+  );
 
   if (compact) {
     return <div className="flex items-center gap-1.5">{pendingBadge}</div>;
@@ -40,7 +53,9 @@ export function NoteReminderList({ noteId, reminders, compact = false }: NoteRem
     <div className="flex flex-wrap items-center gap-1.5">
       {canUndoLastReview && <UndoMarkableReminder reminder={lastReview} />}
       {pendingBadge}
-      {pending && <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />}
+      {pending && !paused && (
+        <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />
+      )}
       {reviewed.length > 0 && (
         <Popover>
           <PopoverTrigger

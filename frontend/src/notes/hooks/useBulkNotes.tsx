@@ -3,7 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import type { Difficulty } from "../new-note-form/types";
 
-const BulkResultSchema = z.object({ affected: z.number() });
+// Resume also says how the notes were paced back in (see ResumeResultSchema).
+const BulkResultSchema = z.object({
+  affected: z.number(),
+  due_today: z.number().optional(),
+  days_span: z.number().optional(),
+});
+export type BulkResult = z.infer<typeof BulkResultSchema>;
 
 // One entry per POST /notes/bulk/<action>, with that action's extra fields.
 export type BulkAction =
@@ -13,7 +19,9 @@ export type BulkAction =
   | { action: "project"; project_id: number | null }
   | { action: "tags"; add_tag_ids?: number[]; remove_tag_ids?: number[] }
   | { action: "difficulty"; difficulty: Difficulty }
-  | { action: "reschedule"; remind_at: string };
+  | { action: "reschedule"; remind_at: string }
+  | { action: "pause" }
+  | { action: "resume"; per_day: number; tz_offset_minutes: number };
 
 export function useBulkNotes() {
   return useMutation({

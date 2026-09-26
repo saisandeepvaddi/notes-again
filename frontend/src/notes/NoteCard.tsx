@@ -114,7 +114,12 @@ export function NoteCard({ note, select }: NoteCardProps) {
         </Link>
       </CardContent>
       <CardFooter className="flex shrink-0 flex-col items-start gap-1.5 overflow-hidden">
-        <NoteReminderList noteId={note.id} reminders={note.reminders} compact />
+        <NoteReminderList
+          noteId={note.id}
+          reminders={note.reminders}
+          paused={note.paused_at !== null}
+          compact
+        />
         {/* w-full: CardFooter is items-start (cross-axis = width here, since
             it's a flex column), so without an explicit width this row would
             just size to its content and never shrink -- the badges would

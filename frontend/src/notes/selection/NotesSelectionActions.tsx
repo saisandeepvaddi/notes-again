@@ -28,6 +28,7 @@ import {
   CalendarClockIcon,
   FolderIcon,
   GaugeIcon,
+  PauseIcon,
   TagIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -35,8 +36,10 @@ import { useState, type ComponentProps, type ReactElement, type ReactNode } from
 import { DIFFICULTY_OPTIONS } from "../difficulty";
 import { useCreateProject } from "../hooks/useCreateProject";
 import { useCreateTag } from "../hooks/useCreateTag";
+import { resumeBody, resumeSummary } from "../hooks/usePausing";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
+import { ResumePacingForm } from "../ResumePacingForm";
 import { notesLabel, useRunBulk } from "./useRunBulk";
 
 interface NotesSelectionActionsProps {
@@ -93,7 +96,9 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
   // difficulty tags are changed with the Difficulty action, never as plain tags
   const tags = allTags.filter((tag) => !tag.is_difficulty);
 
-  const [open, setOpen] = useState<"project" | "tags" | "difficulty" | "reschedule" | null>(null);
+  const [open, setOpen] = useState<
+    "project" | "tags" | "difficulty" | "reschedule" | "review" | null
+  >(null);
   const [tagMode, setTagMode] = useState<"add" | "remove">("add");
   const [query, setQuery] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -288,6 +293,44 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
           Review today
         </Button>
         <Calendar mode="single" onSelect={reschedule} />
+      </ActionPopover>
+
+      <ActionPopover
+        open={open === "review"}
+        onOpenChange={openPopover("review")}
+        className="w-64 p-3"
+        trigger={<ActionButton icon={<PauseIcon />}>Pause</ActionButton>}
+      >
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={isPending}
+          onClick={async () => {
+            close();
+            await run(
+              { action: "pause" },
+              (n) => `Paused ${notesLabel(n)}: kept as notes, out of review`,
+            );
+          }}
+        >
+          <PauseIcon /> Pause (keep out of review)
+        </Button>
+        <div className="border-t pt-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Or resume paused notes</p>
+          <ResumePacingForm
+            isPending={isPending}
+            onResume={async (perDay) => {
+              close();
+              await run({ action: "resume", ...resumeBody(perDay) }, (n, result) =>
+                resumeSummary({
+                  affected: n,
+                  due_today: result.due_today ?? 0,
+                  days_span: result.days_span ?? 0,
+                }),
+              );
+            }}
+          />
+        </div>
       </ActionPopover>
 
       <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>

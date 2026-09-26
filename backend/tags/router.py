@@ -1,11 +1,18 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete
-from sqlmodel import col, func, select
+from sqlmodel import Session, col, func, select
 
 from db.models import Note, NoteTag, Tag
 from db.setup import SessionDep
-from notes.bulk import GroupDeleteResult, trash_notes
+from notes.bulk import (
+    GroupDeleteResult,
+    ResumeOptions,
+    ResumeResult,
+    pause_notes,
+    resume_notes,
+    trash_notes,
+)
 
 from .schema import TagListItem, TagResponse
 from .unused import delete_unused_tags
@@ -16,16 +23,23 @@ router = APIRouter(prefix="/tags", tags=["tags"])
 @router.get("/list", response_model=list[TagListItem])
 def get_tags(session: SessionDep):
     tags = session.exec(select(Tag).order_by(func.lower(Tag.name))).all()
-    counts = dict(
-        session.exec(
-            select(NoteTag.tag_id, func.count())
+    counts = {
+        tag_id: (total, paused or 0)
+        for tag_id, total, paused in session.exec(
+            select(NoteTag.tag_id, func.count(), func.count(col(Note.paused_at)))
             .join(Note, col(Note.id) == col(NoteTag.note_id))
             .where(col(Note.deleted_at).is_(None))
             .group_by(NoteTag.tag_id)
         ).all()
-    )
+    }
     return [
-        TagListItem(id=t.id, name=t.name, is_difficulty=t.is_difficulty, note_count=counts.get(t.id, 0))
+        TagListItem(
+            id=t.id,
+            name=t.name,
+            is_difficulty=t.is_difficulty,
+            note_count=counts.get(t.id, (0, 0))[0],
+            paused_count=counts.get(t.id, (0, 0))[1],
+        )
         for t in tags
     ]
 
@@ -63,6 +77,37 @@ def delete_all_unused_tags(session: SessionDep):
     deleted = delete_unused_tags(session)
     session.commit()
     return UnusedTagsResult(tags_deleted=deleted)
+
+
+def _tagged(session: Session, tag_id: int):
+    if session.exec(select(Tag.id).where(Tag.id == tag_id)).one_or_none() is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tag not found")
+    return col(Note.id).in_(select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id))
+
+
+class PauseResult(BaseModel):
+    affected: int
+
+
+@router.post("/{tag_id}/pause", response_model=PauseResult)
+def pause_tag(tag_id: int, session: SessionDep):
+    """Pauses every note carrying the tag. Unlike a project, a tag has no
+    paused-by-default: a note can carry many tags, so it'd be ambiguous."""
+    affected = pause_notes(session, _tagged(session, tag_id))
+    session.commit()
+    return PauseResult(affected=affected)
+
+
+@router.post("/{tag_id}/resume", response_model=ResumeResult)
+def resume_tag(tag_id: int, body: ResumeOptions, session: SessionDep):
+    result = resume_notes(
+        session,
+        _tagged(session, tag_id),
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
 
 
 @router.delete("/{tag_id}", response_model=GroupDeleteResult)

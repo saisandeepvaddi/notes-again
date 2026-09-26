@@ -1,10 +1,14 @@
 import { OrganizeSkeleton } from "@/components/PageSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "@/components/ui/toast";
 import { Link } from "@tanstack/react-router";
-import { FolderIcon, LockIcon, TagIcon, Trash2Icon } from "lucide-react";
-import type { ReactNode } from "react";
+import { FolderIcon, LockIcon, PauseIcon, PlayIcon, TagIcon, Trash2Icon } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { resumeSummary, usePauseGroup, useResumeGroup } from "../hooks/usePausing";
 import { useProjects } from "../hooks/useProjects";
+import { ResumePacingForm } from "../ResumePacingForm";
 import { useTags } from "../hooks/useTags";
 import { DeleteGroupDialog } from "./DeleteGroupDialog";
 import { DeleteUnusedTagsButton } from "./DeleteUnusedTagsButton";
@@ -15,17 +19,135 @@ interface RowProps {
   id: number;
   name: string;
   noteCount: number;
+  pausedCount: number;
+  // Projects only: new notes in it start paused.
+  paused?: boolean;
   // Built-in tags can't be deleted.
   locked?: boolean;
 }
 
-function Row({ kind, id, name, noteCount, locked }: RowProps) {
+function reportError(error: unknown) {
+  toast.add({
+    type: "error",
+    priority: "high",
+    description: error instanceof Error ? error.message : "Something went wrong",
+  });
+}
+
+// Pause whenever anything is still in review (or a project isn't paused by
+// default yet); resume whenever anything is paused (or the project is).
+function PauseControls({
+  kind,
+  id,
+  name,
+  noteCount,
+  pausedCount,
+  paused = false,
+}: Omit<RowProps, "locked">) {
+  const pause = usePauseGroup(kind);
+  const resume = useResumeGroup(kind);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const canPause = pausedCount < noteCount || (kind === "project" && !paused);
+  const canResume = pausedCount > 0 || paused;
+
+  const onPause = async () => {
+    try {
+      const { affected } = await pause.mutateAsync(id);
+      toast.add({
+        type: "success",
+        description:
+          kind === "project"
+            ? `Paused “${name}” (${affected.toLocaleString()} notes). New notes in it start paused.`
+            : `Paused ${affected.toLocaleString()} notes tagged “${name}”.`,
+      });
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+  const onResume = async (perDay: number) => {
+    try {
+      const result = await resume.mutateAsync({ id, perDay });
+      setResumeOpen(false);
+      toast.add({ type: "success", description: resumeSummary(result) });
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+  return (
+    <>
+      {canPause && (
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          aria-label={`Pause ${kind} ${name}`}
+          title={
+            kind === "project"
+              ? "Pause: keep its notes out of review, and new ones too"
+              : "Pause: keep its notes out of review"
+          }
+          disabled={pause.isPending}
+          onClick={onPause}
+          className="shrink-0 text-muted-foreground"
+        >
+          <PauseIcon />
+        </Button>
+      )}
+      {canResume && (
+        <Popover open={resumeOpen} onOpenChange={setResumeOpen}>
+          <PopoverTrigger
+            render={
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Resume ${kind} ${name}`}
+                title="Resume: bring its paused notes back into review"
+                className="shrink-0 text-muted-foreground"
+              >
+                <PlayIcon />
+              </Button>
+            }
+          />
+          <PopoverContent align="end" className="w-64 p-3">
+            <p className="text-sm font-medium">
+              Resume {pausedCount.toLocaleString()} paused note{pausedCount === 1 ? "" : "s"}
+            </p>
+            <ResumePacingForm isPending={resume.isPending} onResume={onResume} />
+          </PopoverContent>
+        </Popover>
+      )}
+    </>
+  );
+}
+
+function Row({ kind, id, name, noteCount, pausedCount, paused, locked }: RowProps) {
   const Icon = kind === "project" ? FolderIcon : TagIcon;
   const search = kind === "project" ? { projectId: id } : { tagId: id };
   return (
     <li className="flex h-11 items-center gap-3 px-3">
       <Icon className="size-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+      {paused && (
+        <Badge
+          variant="outline"
+          className="shrink-0 gap-1 text-muted-foreground"
+          title="New notes in this project start paused"
+        >
+          <PauseIcon className="size-3" /> Paused
+        </Badge>
+      )}
+      {pausedCount > 0 && (
+        <Link
+          to="/notes"
+          search={{ ...search, status: "paused" }}
+          className="shrink-0 text-xs text-muted-foreground tabular-nums hover:text-foreground hover:underline"
+        >
+          {pausedCount.toLocaleString()} paused
+        </Link>
+      )}
       <Link
         to="/notes"
         search={search}
@@ -33,6 +155,16 @@ function Row({ kind, id, name, noteCount, locked }: RowProps) {
       >
         {noteCount.toLocaleString()} note{noteCount === 1 ? "" : "s"}
       </Link>
+      {noteCount > 0 || paused ? (
+        <PauseControls
+          kind={kind}
+          id={id}
+          name={name}
+          noteCount={noteCount}
+          pausedCount={pausedCount}
+          paused={paused}
+        />
+      ) : null}
       {locked ? (
         <Badge variant="outline" className="shrink-0 gap-1 text-muted-foreground">
           <LockIcon className="size-3" /> Built-in
@@ -105,7 +237,7 @@ export function OrganizeList() {
     <div className="flex flex-col gap-8">
       <Section
         title="Projects"
-        description="Deleting a project keeps its notes (they go to no project) unless you choose to delete them too."
+        description="Pausing a project keeps its notes out of review, and new notes in it start paused. Deleting one keeps its notes (they go to no project) unless you choose to delete them too."
         empty="No projects yet."
         isEmpty={!projects?.length}
       >
@@ -116,6 +248,8 @@ export function OrganizeList() {
             id={project.id}
             name={project.name}
             noteCount={project.note_count}
+            pausedCount={project.paused_count}
+            paused={project.paused}
           />
         ))}
       </Section>
@@ -141,6 +275,7 @@ export function OrganizeList() {
             id={tag.id}
             name={tag.name}
             noteCount={tag.note_count}
+            pausedCount={tag.paused_count}
             locked={tag.is_difficulty}
           />
         ))}

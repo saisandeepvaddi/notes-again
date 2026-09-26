@@ -7,7 +7,15 @@ from sqlmodel import Session, col, select
 
 from db.models import Note, NoteTag, Reminder, Tag
 from db.setup import SessionDep
-from notes.bulk import MAX_BULK_IDS, chunked, trash_notes
+from notes.bulk import (
+    MAX_BULK_IDS,
+    ResumeOptions,
+    ResumeResult,
+    chunked,
+    pause_notes,
+    resume_notes,
+    trash_notes,
+)
 from notes.router import get_difficulty_tag, get_project
 from notes.utils import to_utc
 from tags.difficulty import Difficulty
@@ -86,6 +94,32 @@ def bulk_permanently_delete(body: BulkBody, session: SessionDep):
         affected += len(notes)
     session.commit()
     return BulkResult(affected=affected)
+
+
+@router.post("/pause", response_model=BulkResult)
+def bulk_pause(body: BulkBody, session: SessionDep):
+    """Keeps the notes out of review (see PATCH /notes/{id}/paused)."""
+    affected = sum(
+        pause_notes(session, col(Note.id).in_(chunk)) for chunk in chunked(_ids(body))
+    )
+    session.commit()
+    return BulkResult(affected=affected)
+
+
+class BulkResumeBody(BulkBody, ResumeOptions):
+    pass
+
+
+@router.post("/resume", response_model=ResumeResult)
+def bulk_resume(body: BulkResumeBody, session: SessionDep):
+    result = resume_notes(
+        session,
+        note_ids=_ids(body),
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
 
 
 class BulkProjectBody(BulkBody):

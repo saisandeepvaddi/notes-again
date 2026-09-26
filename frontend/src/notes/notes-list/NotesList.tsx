@@ -24,6 +24,7 @@ import {
   usePagedNotes,
   type NotesSort,
   type NotesSortOrder,
+  type NotesStatus,
 } from "./useInfiniteNotes";
 import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 
@@ -36,8 +37,46 @@ interface NotesListProps {
   projectId?: number;
   initialDate?: Date;
   search?: string;
+  status?: NotesStatus;
   page?: number;
   pageSize?: number;
+}
+
+const STATUS_OPTIONS: { value: NotesStatus | undefined; label: string; title: string }[] = [
+  { value: undefined, label: "All", title: "All notes" },
+  { value: "active", label: "Active", title: "Notes in review" },
+  { value: "paused", label: "Paused", title: "Notes kept out of review" },
+];
+
+function StatusFilter({
+  status,
+  onChange,
+}: {
+  status: NotesStatus | undefined;
+  onChange: (status: NotesStatus | undefined) => void;
+}) {
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-md border p-0.5"
+      role="group"
+      aria-label="Review status"
+    >
+      {STATUS_OPTIONS.map((option) => (
+        <Button
+          key={option.label}
+          type="button"
+          size="sm"
+          variant="ghost"
+          title={option.title}
+          aria-pressed={status === option.value}
+          className={cn(status === option.value && "bg-muted text-foreground")}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </Button>
+      ))}
+    </div>
+  );
 }
 
 interface ViewModeToggleProps {
@@ -79,6 +118,7 @@ function NotesList({
   projectId,
   initialDate,
   search,
+  status,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
 }: NotesListProps) {
@@ -118,7 +158,7 @@ function NotesList({
     }, SEARCH_DEBOUNCE_MS);
   };
 
-  const filters = { date: noteDate, tagId, projectId, search };
+  const filters = { date: noteDate, tagId, projectId, search, status };
   const infinite = useInfiniteNotes("notes", {
     ...filters,
     sort: sortKey,
@@ -158,7 +198,7 @@ function NotesList({
   const { clear: clearSelection } = selection;
   useEffect(() => {
     clearSelection();
-  }, [tagId, projectId, noteDate, search]);
+  }, [tagId, projectId, noteDate, search, status]);
   // A changed filter can leave `page` pointing past the new, smaller result
   // set -- land back on page 1 rather than showing an empty page.
   useEffect(() => {
@@ -166,13 +206,14 @@ function NotesList({
       navigate({ to: "/notes", search: (prev) => ({ ...prev, page: undefined }), replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagId, projectId, noteDate, search]);
+  }, [tagId, projectId, noteDate, search, status]);
   const selectAll = async () => {
     const { ids, total: matching } = await fetchNoteIds({
       date: noteDate,
       tagId,
       projectId,
       search,
+      status,
     });
     selection.replace(ids);
     if (ids.length < matching) {
@@ -226,6 +267,15 @@ function NotesList({
               Show All (currently: {isToday(noteDate) ? "today" : format(noteDate, "MMM d")})
             </Button>
           )}
+          <StatusFilter
+            status={status}
+            onChange={(next) =>
+              navigate({
+                to: "/notes",
+                search: (prev) => ({ ...prev, status: next, page: undefined }),
+              })
+            }
+          />
           {!isMobile && <ViewModeToggle mode={mode} onChange={setMode} />}
         </div>
       </div>
@@ -239,7 +289,7 @@ function NotesList({
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (
         <p className="text-muted-foreground">
-          {tagId != null || projectId != null || noteDate != null || search
+          {tagId != null || projectId != null || noteDate != null || search || status
             ? // Distinct from the true-empty message below: zero matches for
               // a filter doesn't mean the collection itself is empty, and
               // saying so would send someone hunting for a "New Note" button

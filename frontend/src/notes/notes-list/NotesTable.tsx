@@ -341,7 +341,13 @@ export function NotesTable({
       header: "Reviews",
       cell: (info) => {
         const note = info.row.original;
-        return <NoteReminderList noteId={note.id} reminders={note.reminders} />;
+        return (
+          <NoteReminderList
+            noteId={note.id}
+            reminders={note.reminders}
+            paused={note.paused_at !== null}
+          />
+        );
       },
     }),
     columnHelper.display({

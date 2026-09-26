@@ -28,6 +28,7 @@ class NoteResponse(SQLModel):
     ease_factor: float
     interval_days: int
     algorithm: Algorithm
+    paused_at: UTCDateTime | None = None
     reminders: list[ReminderResponse] = []
     tags: list[TagResponse] = []
     project: ProjectResponse | None = None

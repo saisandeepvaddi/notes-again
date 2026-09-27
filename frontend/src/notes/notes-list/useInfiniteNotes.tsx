@@ -4,10 +4,13 @@ import { NotePageSchema, type NoteItem } from "../new-note-form/types";
 
 export const NOTES_PAGE_SIZE = 60;
 
-export type NotesSort = "due" | "name" | "project" | "created" | "difficulty";
-export type NotesSortOrder = "asc" | "desc";
+export const NOTES_SORTS = ["due", "name", "project", "created", "difficulty"] as const;
+export type NotesSort = (typeof NOTES_SORTS)[number];
+export const NOTES_SORT_ORDERS = ["asc", "desc"] as const;
+export type NotesSortOrder = (typeof NOTES_SORT_ORDERS)[number];
 // Which notes by review state; undefined = all of them.
-export type NotesStatus = "active" | "paused";
+export const NOTES_STATUSES = ["active", "paused"] as const;
+export type NotesStatus = (typeof NOTES_STATUSES)[number];
 
 export interface UseInfiniteNotesArgs {
   date?: Date;

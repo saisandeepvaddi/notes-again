@@ -6,7 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
 import { useNavigate } from "@tanstack/react-router";
-import { format, isToday } from "date-fns";
+import { format, isToday, parseISO } from "date-fns";
 import { FolderIcon, LayoutGridIcon, SearchIcon, TableIcon, XIcon } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useEffect, useRef, useState } from "react";
@@ -31,13 +31,17 @@ import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 export const DEFAULT_PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 300;
 const DEFAULT_SORT: { key: NotesSort; order: NotesSortOrder } = { key: "due", order: "asc" };
+// The `date` search param's format: a local calendar day.
+const DATE_PARAM_FORMAT = "yyyy-MM-dd";
 
 interface NotesListProps {
   tagId?: number;
   projectId?: number;
-  initialDate?: Date;
+  date?: string;
   search?: string;
   status?: NotesStatus;
+  sort?: NotesSort;
+  order?: NotesSortOrder;
   page?: number;
   pageSize?: number;
 }
@@ -116,13 +120,16 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
 function NotesList({
   tagId,
   projectId,
-  initialDate,
+  date,
   search,
   status,
+  sort,
+  order,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
 }: NotesListProps) {
-  const [noteDate, setNoteDate] = useState<Date | undefined>(initialDate);
+  // parseISO reads a bare yyyy-MM-dd as local midnight, matching how it's written.
+  const noteDate = date ? parseISO(date) : undefined;
   const [mode, setMode] = useNotesViewMode();
   const isMobile = useIsMobile();
   // A data table isn't a mobile-native pattern and there's no room for 6
@@ -131,15 +138,19 @@ function NotesList({
   const effectiveMode = isMobile ? "grid" : mode;
   const { data: projects = [] } = useProjects();
   const navigate = useNavigate();
+  const setNoteDate = (next: Date | undefined) =>
+    navigate({
+      to: "/notes",
+      search: (prev) => ({ ...prev, date: next && format(next, DATE_PARAM_FORMAT) }),
+    });
   const activeProject = projects.find((project) => project.id === projectId);
   // Sorting happens on the server (the list is paged, so a client-side sort
   // would only reorder whatever pages happen to be loaded). Both views share
-  // it; the grid just has no headers to change it from. null = no column
-  // sort chosen: the server's default (soonest review first), and no header
-  // shows an arrow.
-  const [sort, setSort] = useState<{ key: NotesSort; order: NotesSortOrder } | null>(null);
-  const sortKey = sort?.key ?? DEFAULT_SORT.key;
-  const sortOrder = sort?.order ?? DEFAULT_SORT.order;
+  // it; the grid just has no headers to change it from. No `sort` param = no
+  // column sort chosen: the server's default (soonest review first), and no
+  // header shows an arrow.
+  const sortKey = sort ?? DEFAULT_SORT.key;
+  const sortOrder = sort ? (order ?? "asc") : DEFAULT_SORT.order;
 
   // The search box updates the URL (and thus the server query) debounced, so
   // typing doesn't fire a request or a history entry per keystroke.
@@ -152,7 +163,7 @@ function NotesList({
     searchTimer.current = setTimeout(() => {
       navigate({
         to: "/notes",
-        search: (prev) => ({ ...prev, q: value.trim() || undefined, page: undefined }),
+        search: (prev) => ({ ...prev, q: value.trim() || undefined }),
         replace: true,
       });
     }, SEARCH_DEBOUNCE_MS);
@@ -198,15 +209,7 @@ function NotesList({
   const { clear: clearSelection } = selection;
   useEffect(() => {
     clearSelection();
-  }, [tagId, projectId, noteDate, search, status]);
-  // A changed filter can leave `page` pointing past the new, smaller result
-  // set -- land back on page 1 rather than showing an empty page.
-  useEffect(() => {
-    if (page > 1) {
-      navigate({ to: "/notes", search: (prev) => ({ ...prev, page: undefined }), replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagId, projectId, noteDate, search, status]);
+  }, [tagId, projectId, date, search, status]);
   const selectAll = async () => {
     const { ids, total: matching } = await fetchNoteIds({
       date: noteDate,
@@ -224,9 +227,14 @@ function NotesList({
   };
   // Header clicks cycle asc -> desc -> unsorted (back to the default order).
   const onSortChange = (key: NotesSort) =>
-    setSort((current) => {
-      if (current?.key !== key) return { key, order: "asc" };
-      return current.order === "asc" ? { key, order: "desc" } : null;
+    navigate({
+      to: "/notes",
+      search: (prev) => {
+        if (sort !== key) return { ...prev, sort: key, order: undefined };
+        return sortOrder === "asc"
+          ? { ...prev, sort: key, order: "desc" }
+          : { ...prev, sort: undefined, order: undefined };
+      },
     });
   return (
     <div className="flex flex-col gap-4">
@@ -272,7 +280,7 @@ function NotesList({
             onChange={(next) =>
               navigate({
                 to: "/notes",
-                search: (prev) => ({ ...prev, status: next, page: undefined }),
+                search: (prev) => ({ ...prev, status: next }),
               })
             }
           />
@@ -311,7 +319,7 @@ function NotesList({
             {effectiveMode === "table" ? (
               <NotesTable
                 notes={notes}
-                sort={sort?.key}
+                sort={sort}
                 order={sortOrder}
                 onSortChange={onSortChange}
                 selection={selection}

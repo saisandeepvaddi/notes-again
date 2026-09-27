@@ -2,14 +2,16 @@ import { NoteGridSkeleton } from "@/components/PageSkeletons";
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import NotesList from "./NotesList";
-import type { NotesStatus } from "./useInfiniteNotes";
+import type { NotesSort, NotesSortOrder, NotesStatus } from "./useInfiniteNotes";
 
 interface NotesListContainerProps {
   tagId?: number;
   projectId?: number;
-  initialDate?: Date;
+  date?: string;
   search?: string;
   status?: NotesStatus;
+  sort?: NotesSort;
+  order?: NotesSortOrder;
   page?: number;
   pageSize?: number;
 }
@@ -17,9 +19,11 @@ interface NotesListContainerProps {
 export function NotesListContainer({
   tagId,
   projectId,
-  initialDate,
+  date,
   search,
   status,
+  sort,
+  order,
   page,
   pageSize,
 }: NotesListContainerProps) {
@@ -30,9 +34,11 @@ export function NotesListContainer({
           <NotesList
             tagId={tagId}
             projectId={projectId}
-            initialDate={initialDate}
+            date={date}
             search={search}
             status={status}
+            sort={sort}
+            order={order}
             page={page}
             pageSize={pageSize}
           />

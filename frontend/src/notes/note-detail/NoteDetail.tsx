@@ -18,6 +18,7 @@ import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import type { Tag } from "../new-note-form/types";
+import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteReminderList } from "../NoteReminderList";
 import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
@@ -106,7 +107,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const remove = async () => {
     try {
       await deleteNote();
-      navigate({ to: "/notes" });
+      navigate({ to: "/notes", search: lastNotesSearch() });
     } catch (error) {
       console.error("error:", error);
       toast.add({ type: "error", priority: "high", description: "Failed to delete note" });
@@ -120,6 +121,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <SidebarTrigger className="hidden md:inline-flex" />
           <Link
             to="/notes"
+            search={lastNotesSearch()}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             <ArrowLeftIcon className="size-3.5" /> All Notes

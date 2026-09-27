@@ -46,6 +46,25 @@ test.describe("notes list filters in the URL", () => {
     );
   });
 
+  test("the note page's All Notes link returns to the filtered list", async ({ page, request }) => {
+    const tag = await createTag(request, uniqueName("back-link-tag"));
+    const tagged = await createNote(request, { name: uniqueName("Tagged"), tag_ids: [tag.id] });
+
+    await page.goto(`/notes?tagId=${tag.id}&status=active`);
+    await page.getByRole("link", { name: tagged.name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/notes/${tagged.id}$`));
+
+    await page.locator("main").getByRole("link", { name: "All Notes" }).first().click();
+    await expect(page).toHaveURL(new RegExp(`tagId=${tag.id}`));
+    await expect(page).toHaveURL(/status=active/);
+
+    await page.getByRole("button", { name: "All", exact: true }).click();
+    await page.getByRole("link", { name: tagged.name, exact: true }).click();
+    await page.locator("main").getByRole("link", { name: "All Notes" }).first().click();
+    await expect(page).not.toHaveURL(/status=/);
+    await expect(page).toHaveURL(new RegExp(`tagId=${tag.id}`));
+  });
+
   test("table sort is in the URL and survives a reload", async ({ page, request }) => {
     await createNote(request, { name: uniqueName("Sortable") });
     await page.goto("/notes");

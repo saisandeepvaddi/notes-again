@@ -20,22 +20,16 @@ PROJECT_NAME = "note-and-learn"
 
 def get_app_dir(app_name: str) -> Path:
     if sys.platform == "win32":
-        # %LOCALAPPDATA% (typically C:\Users\<User>\AppData\Local)
         base = os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local")
         return Path(base) / app_name
     elif sys.platform == "darwin":
-        # ~/Library/Application Support/<app_name>
         return Path.home() / "Library" / "Application Support" / app_name
     else:
-        # XDG data home (~/.local/share/<app_name>)
         base = os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")
         return Path(base) / app_name
 
 
 def get_sqlite_db_file_path() -> Path:
-    # In a container (or anywhere with a mounted volume) set DB_PATH to point
-    # at the volume, e.g. /data/note-and-learn.db. Falls back to the local
-    # platform app-data dir for development.
     env_path = os.environ.get("DB_PATH")
     if env_path:
         db_path = Path(env_path)
@@ -48,12 +42,6 @@ def get_sqlite_db_file_path() -> Path:
 
 
 def add_missing_columns(engine: Engine) -> None:
-    """Lightweight schema patcher: adds new columns to existing tables.
-
-    There's no migration tool (Alembic) in this project. create_all() only
-    creates missing tables, so columns added to models after the DB already
-    exists need a manual ALTER TABLE, or existing user data would break.
-    """
     inspector = inspect(engine)
     existing_tables = set(inspector.get_table_names())
     migrations: dict[str, list[tuple[str, str]]] = {
@@ -61,9 +49,6 @@ def add_missing_columns(engine: Engine) -> None:
             ("ease_factor", "REAL NOT NULL DEFAULT 2.5"),
             ("interval_days", "INTEGER NOT NULL DEFAULT 0"),
             ("project_id", "INTEGER"),
-            # existing notes get 'sm2' so their ease_factor/interval_days
-            # keep meaning exactly what they always did -- only new notes
-            # created after this migration can be 'fsrs'
             ("algorithm", "TEXT NOT NULL DEFAULT 'sm2'"),
             ("fsrs_card", "TEXT"),
             ("paused_at", "DATETIME"),
@@ -93,11 +78,6 @@ def add_missing_columns(engine: Engine) -> None:
 
 
 def ensure_indexes(engine: Engine) -> None:
-    """Indexes for the paginated/sorted notes queries. create_all() only adds
-    indexes when it creates a table, so like add_missing_columns this has to be
-    an idempotent patch for databases that already exist. Without these, "next
-    due" (a per-note subquery over reminders) is a full table scan per note.
-    """
     statements = [
         (
             "CREATE INDEX IF NOT EXISTS ix_reminders_note_pending "
@@ -112,14 +92,6 @@ def ensure_indexes(engine: Engine) -> None:
 
 
 def collapse_legacy_pending_reminders(engine: Engine) -> None:
-    """Data cleanup for notes created under the old fixed-schedule model.
-
-    Those notes could have several unreviewed reminders queued at once
-    (0/1/3/7/14/30/60 days). The adaptive review flow assumes at most one
-    pending reminder per note, so on first run after upgrading, collapse
-    each note down to just its soonest pending reminder. A no-op once every
-    note has gone through the new one-at-a-time review flow.
-    """
     with Session(engine) as session:
         note_ids_with_multiple = session.exec(
             select(Reminder.note_id)
@@ -146,7 +118,6 @@ def collapse_legacy_pending_reminders(engine: Engine) -> None:
 
 
 def seed_difficulty_tags(engine: Engine) -> None:
-    """Ensures the built-in Easy/Medium/Hard difficulty tags exist."""
     with Session(engine) as session:
         for defaults in DIFFICULTY_TAGS.values():
             tag = session.exec(select(Tag).where(Tag.name == defaults.name)).one_or_none()
@@ -166,7 +137,6 @@ def seed_difficulty_tags(engine: Engine) -> None:
 
 
 def backfill_note_difficulty(engine: Engine) -> None:
-    """Every note needs exactly one difficulty tag; defaults existing notes to Medium."""
     with Session(engine) as session:
         medium = session.exec(
             select(Tag).where(Tag.name == DIFFICULTY_TAGS["medium"].name)
@@ -188,8 +158,6 @@ def backfill_note_difficulty(engine: Engine) -> None:
 
 
 def seed_settings(engine: Engine) -> None:
-    """Ensures the single global Settings row (id=1) exists. New installs
-    default new notes to FSRS (matching Anki's own current default)."""
     with Session(engine) as session:
         if session.get(Settings, 1) is None:
             session.add(Settings(id=1, default_algorithm="fsrs"))

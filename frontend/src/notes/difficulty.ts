@@ -8,11 +8,8 @@ export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
 ];
 
 export const DIFFICULTY_BADGE_CLASSES: Record<Difficulty, string> = {
-  // Teal, not the emerald success tint: green is the app's primary/action
-  // color, so an "Easy" chip in the same hue read as brand, not difficulty.
   easy: "bg-teal-500/15 text-teal-800 dark:text-teal-400",
   medium: WARNING_TINT_CLASSES,
-  // -800 to match the other two chips' weight (see statusColors.ts on -700).
   hard: "bg-red-500/15 text-red-800 dark:text-red-400",
 };
 

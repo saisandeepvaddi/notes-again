@@ -1,6 +1,3 @@
-"""Paused notes: kept as notes but left out of review, for single notes,
-selections, projects, tags and imports -- and paced back in on resume."""
-
 import datetime
 
 
@@ -37,9 +34,6 @@ def review(client, note: dict) -> dict:
     return response.json()
 
 
-# --- single notes -----------------------------------------------------------
-
-
 def test_a_paused_note_is_left_out_of_review_and_comes_back_on_resume(client):
     note = create_note(client)
     assert note["paused_at"] is None
@@ -49,14 +43,13 @@ def test_a_paused_note_is_left_out_of_review_and_comes_back_on_resume(client):
     ).json()
     assert paused["paused_at"] is not None
     assert note["id"] not in due_ids(client)
-    # still a note: readable and listed
     assert client.get(f"/api/notes/{note['id']}").status_code == 200
 
     resumed = client.patch(
         f"/api/notes/{note['id']}/paused", json={"paused": False}
     ).json()
     assert resumed["paused_at"] is None
-    assert pending_at(resumed) == pending_at(note)  # schedule untouched
+    assert pending_at(resumed) == pending_at(note)
     assert note["id"] in due_ids(client)
 
 
@@ -80,25 +73,17 @@ def test_list_filters_by_paused_and_the_day_view_skips_paused_notes(client):
     assert {n["id"] for n in response.json()["items"]} == {active["id"]}
 
 
-# --- paused by default in a paused project ----------------------------------
-
-
 def test_new_notes_follow_the_projects_default_unless_told_otherwise(client):
     project = create_project(client)
     client.post(f"/api/projects/{project['id']}/pause")
 
-    # no `paused` sent (e.g. the capture extension): the project's default
     assert create_note(client, "a", project_id=project["id"])["paused_at"] is not None
-    # an explicit choice wins either way
     assert (
         create_note(client, "b", project_id=project["id"], paused=False)["paused_at"]
         is None
     )
     assert create_note(client, "c", paused=True)["paused_at"] is not None
     assert create_note(client, "d")["paused_at"] is None
-
-
-# --- groups -----------------------------------------------------------------
 
 
 def test_pausing_a_project_pauses_its_notes_and_sets_its_default(client):
@@ -149,7 +134,6 @@ def test_bulk_pause_and_resume(client):
     )
     assert response.json() == {"affected": 2}
     assert due_ids(client) == set()
-    # already paused: nothing to do
     assert client.post(
         "/api/notes/bulk/pause", json={"note_ids": [a["id"]]}
     ).json() == {"affected": 0}
@@ -161,9 +145,6 @@ def test_bulk_pause_and_resume(client):
     assert due_ids(client) == {a["id"]}
 
 
-# --- pacing on resume -------------------------------------------------------
-
-
 def test_resume_paces_never_reviewed_due_notes_per_day(client):
     ids = [create_note(client, f"n{i}", paused=True)["id"] for i in range(5)]
 
@@ -171,13 +152,12 @@ def test_resume_paces_never_reviewed_due_notes_per_day(client):
         "/api/notes/bulk/resume", json={"note_ids": ids, "per_day": 2}
     ).json()
     assert result == {"affected": 5, "due_today": 2, "days_span": 3}
-    # in the order they were due: the first two now, the rest on later days
     assert due_ids(client) == set(ids[:2])
 
 
 def test_resume_keeps_the_schedule_of_notes_with_review_history(client):
     note = create_note(client)
-    reviewed = review(client, note)  # next review is days away now
+    reviewed = review(client, note)
     client.post("/api/notes/bulk/pause", json={"note_ids": [note["id"]]})
 
     result = client.post(
@@ -186,9 +166,6 @@ def test_resume_keeps_the_schedule_of_notes_with_review_history(client):
     assert result == {"affected": 1, "due_today": 0, "days_span": 0}
     after = client.get(f"/api/notes/{note['id']}").json()
     assert pending_at(after) == pending_at(reviewed)
-
-
-# --- import ------------------------------------------------------------------
 
 
 def test_a_paused_import_creates_paused_notes_and_paused_new_decks(client):

@@ -21,8 +21,6 @@ interface TagPickerProps {
   onToggle: (tag: Tag) => void;
   onTagClick?: (tag: Tag) => void;
   triggerLabel?: string;
-  // Icon-only trigger instead of a labeled button -- for contexts (like the
-  // note detail page) where a "Tags" row label already says what this is.
   compact?: boolean;
 }
 
@@ -34,7 +32,6 @@ export function TagPicker({
   compact = false,
 }: TagPickerProps) {
   const { data: allTags = [] } = useTags();
-  // difficulty tags (Easy/Medium/Hard) are sticky and managed via DifficultySelector, not here
   const tags = allTags.filter((tag) => !tag.is_difficulty);
   const { mutateAsync: createTag, isPending: isCreating } = useCreateTag();
   const [open, setOpen] = useState(false);

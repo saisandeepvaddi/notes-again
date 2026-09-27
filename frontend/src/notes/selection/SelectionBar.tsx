@@ -5,16 +5,12 @@ import { useState, type ReactNode } from "react";
 
 interface SelectionBarProps {
   count: number;
-  // How many notes match the list's filters (loaded or not).
   total: number;
-  // Selects every matching note, including pages not loaded yet.
   onSelectAll: () => Promise<void>;
   onClear: () => void;
   children: ReactNode;
 }
 
-// Floats at the bottom of the list (sticky, so it follows while scrolling
-// and rests after the last row) once anything is selected.
 export function SelectionBar({ count, total, onSelectAll, onClear, children }: SelectionBarProps) {
   const [selectingAll, setSelectingAll] = useState(false);
 

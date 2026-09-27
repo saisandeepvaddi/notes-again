@@ -4,9 +4,6 @@ import { useBulkNotes, type BulkAction, type BulkResult } from "../hooks/useBulk
 export const notesLabel = (count: number) =>
   `${count.toLocaleString()} note${count === 1 ? "" : "s"}`;
 
-// Runs one bulk action on the selection, then clears it (a stale selection
-// after e.g. moving notes out of the filtered project would leave notes
-// selected that are no longer visible) and reports what happened.
 export function useRunBulk(ids: () => number[], onDone: () => void) {
   const { mutateAsync, isPending } = useBulkNotes();
 

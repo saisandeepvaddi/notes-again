@@ -1,11 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL, createNote, createProject, uniqueName } from "./support/api";
 
-// The search box's own filtering is debounced (300ms) and, once it lands,
-// resets any selection made on the pre-filter list (NotesList clears
-// selection whenever its `search` prop changes). Selecting checkboxes before
-// that debounced navigation actually fires gets silently wiped out a moment
-// later, so wait for the URL to reflect the filter before selecting anything.
 async function searchAndWait(page: Page, query: string) {
   await page.getByLabel("Search notes").fill(query);
   await page.waitForURL((url) => url.searchParams.get("q") === query);
@@ -33,10 +28,6 @@ test.describe("bulk selection actions", () => {
     await expect(toolbar.getByText("2 selected")).toBeVisible();
 
     await toolbar.getByRole("button", { name: "Project" }).click();
-    // cmdk re-sorts its option list by relevance via direct DOM moves as it
-    // scores items, which can detach/reattach nodes out from under a click
-    // aimed at an unfiltered list. Filtering to a single match first avoids
-    // the reshuffle.
     await page.getByPlaceholder("Move to project...").fill(project.name);
     await page.getByRole("option", { name: project.name, exact: true }).click();
 

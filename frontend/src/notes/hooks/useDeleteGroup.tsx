@@ -14,11 +14,7 @@ const ENDPOINTS: Record<GroupKind, string> = { project: "/projects", tag: "/tags
 
 interface DeleteGroupVars {
   id: number;
-  // Also move the group's notes to the trash. Otherwise the notes are kept
-  // (a project's go to "no project"; a tag is just removed from its notes).
   deleteNotes: boolean;
-  // Projects only, with deleteNotes: also delete the tags that leaves
-  // with no notes (e.g. the ones an import created).
   deleteUnusedTags?: boolean;
 }
 
@@ -34,8 +30,6 @@ export function useDeleteGroup(kind: GroupKind) {
       return GroupDeleteResultSchema.parse(await fetcher());
     },
     onSettled(_data, _error, _vars, _result, context) {
-      // Notes lose their project/tag (and may move to the trash), so every
-      // note-derived view is stale, not just the group list itself.
       for (const key of [
         "projects",
         "tags",

@@ -1,14 +1,7 @@
-"""Projects and tags: creation (case-insensitive dedupe), listing with note
-counts, and deletion (keep-notes vs. delete-notes-too, orphan tag cleanup)."""
-
-
 def create_note(client, name="n", **body) -> dict:
     response = client.post("/api/notes/create", json={"name": name, "content": "c", **body})
     assert response.status_code == 200, response.text
     return response.json()
-
-
-# --- projects -------------------------------------------------------------
 
 
 def test_create_project(client):
@@ -36,7 +29,6 @@ def test_project_list_reports_only_live_note_counts(client):
 
     listed = client.get("/api/projects/list").json()
     assert next(p for p in listed if p["id"] == project["id"])["note_count"] == 1
-    # sanity: the live note is really the one counted
     assert client.get(f"/api/notes/{live['id']}").json()["project"]["id"] == project["id"]
 
 
@@ -81,9 +73,6 @@ def test_deleting_a_project_with_notes_can_also_delete_their_orphan_tags(client)
 
 def test_deleting_a_missing_project_404s(client):
     assert client.delete("/api/projects/999").status_code == 404
-
-
-# --- tags -----------------------------------------------------------------
 
 
 def test_create_tag(client):
@@ -151,5 +140,4 @@ def test_delete_unused_tags_removes_only_tags_no_live_note_carries(client):
     names = {t["name"] for t in client.get("/api/tags/list").json()}
     assert "unused" not in names
     assert "used" in names
-    # Difficulty tags are never "unused" even with zero notes yet.
     assert {"Easy", "Medium", "Hard"} <= names

@@ -22,9 +22,6 @@ interface MarkableReminderProps {
   reminder: NoteReminder;
 }
 
-// Reviewing is always available, not gated on the reminder actually being
-// due -- "isUpcoming" just changes the copy/urgency, not whether the rating
-// dialog opens.
 export function MarkableReminder({ reminder }: MarkableReminderProps) {
   const [open, setOpen] = useState(false);
   const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));

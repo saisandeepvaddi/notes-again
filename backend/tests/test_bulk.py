@@ -1,6 +1,3 @@
-"""Bulk note operations: same effect as the single-note endpoints, applied to
-a whole selection, skipping ids that don't (or no longer) apply."""
-
 import datetime
 
 from db.models import utcnow
@@ -14,9 +11,6 @@ def create_note(client, name="n", **body) -> dict:
 
 def two_notes(client) -> tuple[dict, dict]:
     return create_note(client, "A"), create_note(client, "B")
-
-
-# --- delete / restore / permanent -----------------------------------------
 
 
 def test_bulk_delete_trashes_the_given_notes_and_skips_the_rest(client):
@@ -39,7 +33,7 @@ def test_bulk_restore_only_restores_trashed_notes(client):
     client.delete(f"/api/notes/{a['id']}")
 
     response = client.post("/api/notes/bulk/restore", json={"note_ids": [a["id"], b["id"]]})
-    assert response.json() == {"affected": 1}  # b was never trashed
+    assert response.json() == {"affected": 1}
     assert client.get(f"/api/notes/{a['id']}").status_code == 200
 
 
@@ -51,16 +45,12 @@ def test_bulk_permanent_delete_only_touches_already_trashed_notes(client):
         "/api/notes/bulk/permanent", json={"note_ids": [a["id"], b["id"]]}
     )
     assert response.json() == {"affected": 1}
-    # b was live, so it's untouched, not destroyed.
     assert client.get(f"/api/notes/{b['id']}").status_code == 200
 
 
 def test_bulk_too_many_ids_400s(client):
     response = client.post("/api/notes/bulk/delete", json={"note_ids": list(range(10_001))})
     assert response.status_code == 400
-
-
-# --- project / tags / difficulty -------------------------------------------
 
 
 def test_bulk_set_project_moves_every_note(client):
@@ -98,7 +88,6 @@ def test_bulk_add_and_remove_tags(client):
     )
     assert removed.json() == {"affected": 1}
     assert "rust" not in [t["name"] for t in client.get(f"/api/notes/{a['id']}").json()["tags"]]
-    # b was untouched by the removal.
     assert "rust" in [t["name"] for t in client.get(f"/api/notes/{b['id']}").json()["tags"]]
 
 
@@ -124,7 +113,7 @@ def test_bulk_add_tag_is_idempotent(client):
 
 
 def test_bulk_set_difficulty_swaps_the_tag_and_ease_factor(client):
-    a, b = two_notes(client)  # both start Medium
+    a, b = two_notes(client)
     response = client.post(
         "/api/notes/bulk/difficulty", json={"note_ids": [a["id"], b["id"]], "difficulty": "easy"}
     )
@@ -133,9 +122,6 @@ def test_bulk_set_difficulty_swaps_the_tag_and_ease_factor(client):
         note = client.get(f"/api/notes/{note_id}").json()
         assert [t["name"] for t in note["tags"] if t["is_difficulty"]] == ["Easy"]
         assert note["ease_factor"] == 2.8
-
-
-# --- reschedule -------------------------------------------------------------
 
 
 def test_bulk_reschedule_moves_pending_reminders_only(client):

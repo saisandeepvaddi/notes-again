@@ -12,9 +12,6 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
   if (loading) {
-    // Usually resolves from Firebase's local session cache in well under the
-    // reveal delay, so this is normally never seen; a slow check gets a quiet
-    // spinner on blank paper rather than a word in the middle of the screen.
     return (
       <LoadingState label="Checking sign-in" className="grid min-h-dvh place-items-center">
         <Spinner className="text-muted-foreground" />

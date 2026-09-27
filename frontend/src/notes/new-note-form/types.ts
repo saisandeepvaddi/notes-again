@@ -3,8 +3,6 @@ import { z } from "zod";
 export const DifficultySchema = z.enum(["easy", "medium", "hard"]);
 export type Difficulty = z.infer<typeof DifficultySchema>;
 
-// Per-review grade (Anki's own 4-button scale), distinct from Difficulty --
-// that's a sticky, manually-set note label, not a review rating.
 export const RatingSchema = z.enum(["again", "hard", "good", "easy"]);
 export type Rating = z.infer<typeof RatingSchema>;
 
@@ -19,18 +17,14 @@ export const TagSchema = z.object({
 
 export type Tag = z.infer<typeof TagSchema>;
 
-// A separate concept from tags -- its own table/column, not a kind of tag.
 export const ProjectSchema = z.object({
   id: z.number(),
   name: z.string(),
-  // New notes in it start paused (a default -- each note has its own state).
   paused: z.boolean().default(false),
 });
 
 export type Project = z.infer<typeof ProjectSchema>;
 
-// The list endpoints also say how many live (not trashed) notes each has,
-// and how many of those are paused.
 export const ProjectListItemSchema = ProjectSchema.extend({
   note_count: z.number(),
   paused_count: z.number().default(0),
@@ -49,9 +43,6 @@ export const NoteBaseSchema = z.object({
   content: z.string(),
 });
 
-// Stricter than NoteBaseSchema (which also parses API responses, where we
-// don't want a pre-existing empty-named note to fail to load) — this is only
-// for validating the new-note form as the user types.
 export const NewNoteFormSchema = NoteBaseSchema.extend({
   name: z.string().trim().min(1, "Name is required"),
 });
@@ -60,9 +51,6 @@ export const NoteReminderSchema = z.object({
   id: z.number(),
   remind_at: z.coerce.date(),
   reviewed_at: z.coerce.date().optional().nullable().default(null),
-  // A free string, not DifficultySchema: reviews made before this app only
-  // had Easy/Medium/Hard may still carry old rating vocabulary ("again",
-  // "good") in history, and that's fine to just display as-is.
   rating: z.string().optional().nullable().default(null),
 });
 
@@ -75,7 +63,6 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   ease_factor: z.number(),
   interval_days: z.number(),
   algorithm: AlgorithmSchema,
-  // Set while the note is kept out of review.
   paused_at: z.coerce.date().nullable().optional().default(null),
   reminders: z.array(NoteReminderSchema).default([]),
   tags: z.array(TagSchema).default([]),
@@ -84,15 +71,12 @@ export const NoteItemSchema = NoteBaseSchema.extend({
 
 export type NoteItem = z.infer<typeof NoteItemSchema>;
 
-// One server page of notes plus how many match in total (for "N notes" and
-// for knowing when to stop fetching more).
 export const NotePageSchema = z.object({
   items: z.array(NoteItemSchema),
   total: z.number(),
 });
 export type NotePage = z.infer<typeof NotePageSchema>;
 
-// Every id matching a list's filters (capped server-side) -- for "select all".
 export const NoteIdsSchema = z.object({ ids: z.array(z.number()), total: z.number() });
 export type NoteBase = z.infer<typeof NoteBaseSchema>;
 

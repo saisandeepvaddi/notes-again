@@ -72,8 +72,6 @@ class UnusedTagsResult(BaseModel):
 
 @router.delete("/unused", response_model=UnusedTagsResult)
 def delete_all_unused_tags(session: SessionDep):
-    """Deletes every regular tag no live note carries (see delete_unused_tags).
-    Registered before DELETE /{tag_id} so "unused" isn't read as a tag_id."""
     deleted = delete_unused_tags(session)
     session.commit()
     return UnusedTagsResult(tags_deleted=deleted)
@@ -91,8 +89,6 @@ class PauseResult(BaseModel):
 
 @router.post("/{tag_id}/pause", response_model=PauseResult)
 def pause_tag(tag_id: int, session: SessionDep):
-    """Pauses every note carrying the tag. Unlike a project, a tag has no
-    paused-by-default: a note can carry many tags, so it'd be ambiguous."""
     affected = pause_notes(session, _tagged(session, tag_id))
     session.commit()
     return PauseResult(affected=affected)
@@ -112,13 +108,10 @@ def resume_tag(tag_id: int, body: ResumeOptions, session: SessionDep):
 
 @router.delete("/{tag_id}", response_model=GroupDeleteResult)
 def delete_tag(tag_id: int, session: SessionDep, delete_notes: bool = False):
-    """Deletes the tag, removing it from every note that had it. The notes are
-    kept unless `delete_notes`, which moves them to the trash instead."""
     tag = session.exec(select(Tag).where(Tag.id == tag_id)).one_or_none()
     if tag is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tag not found")
     if tag.is_difficulty:
-        # Every note carries exactly one; they set its starting ease factor.
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Difficulty tags can't be deleted")
 
     tagged = col(Note.id).in_(select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id))

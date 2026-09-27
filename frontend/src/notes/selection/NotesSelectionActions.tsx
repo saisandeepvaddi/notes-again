@@ -48,8 +48,6 @@ interface NotesSelectionActionsProps {
   onDone: () => void;
 }
 
-// Used as a PopoverTrigger `render` element, so it must pass the trigger's
-// props (click handler, ref, aria-*) through to the Button.
 function ActionButton({
   icon,
   children,
@@ -63,7 +61,6 @@ function ActionButton({
   );
 }
 
-// Every popover opens upward: the bar sits at the bottom of the screen.
 function ActionPopover({
   trigger,
   className,
@@ -93,7 +90,6 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
   const { data: allTags = [] } = useTags();
   const { mutateAsync: createProject } = useCreateProject();
   const { mutateAsync: createTag } = useCreateTag();
-  // difficulty tags are changed with the Difficulty action, never as plain tags
   const tags = allTags.filter((tag) => !tag.is_difficulty);
 
   const [open, setOpen] = useState<

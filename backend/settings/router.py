@@ -12,9 +12,6 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 
 def get_or_create_settings(session: Session) -> Settings:
-    """Defensive fallback only -- db/setup.py's seed_settings() is the real
-    creation path at startup; this just guards against the row somehow
-    being missing."""
     settings = session.get(Settings, 1)
     if settings is None:
         settings = Settings(id=1)

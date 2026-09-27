@@ -1,11 +1,6 @@
-"""Reviewing a reminder: SM-2 math (pure), and the review/undo endpoints
-wired to both schedulers (FSRS is this app's default for new notes)."""
-
 import datetime
 
 from notes.scheduling.sm2 import review_sm2
-
-# --- review_sm2 (pure function) ----------------------------------------
 
 
 def test_again_resets_interval_to_one_day_and_lowers_ease():
@@ -20,11 +15,9 @@ def test_again_never_drops_ease_below_the_floor():
 
 
 def test_bootstrap_ladder_is_the_same_regardless_of_rating():
-    # First successful review: 0 -> 1 day.
     assert review_sm2(2.5, 0, "good")[1] == 1
     assert review_sm2(2.5, 0, "hard")[1] == 1
     assert review_sm2(2.5, 0, "easy")[1] == 1
-    # Second: 1 -> 6 days.
     assert review_sm2(2.5, 1, "good")[1] == 6
     assert review_sm2(2.5, 1, "hard")[1] == 6
     assert review_sm2(2.5, 1, "easy")[1] == 6
@@ -33,22 +26,19 @@ def test_bootstrap_ladder_is_the_same_regardless_of_rating():
 def test_good_multiplies_interval_by_the_new_ease_and_leaves_ease_unchanged():
     ease, interval = review_sm2(2.5, 10, "good")
     assert ease == 2.5
-    assert interval == 25  # 10 * 2.5
+    assert interval == 25
 
 
 def test_hard_uses_a_fixed_multiplier_independent_of_ease():
     ease, interval = review_sm2(2.5, 10, "hard")
     assert ease == 2.35
-    assert interval == 12  # round(10 * 1.2)
+    assert interval == 12
 
 
 def test_easy_applies_ease_bonus_on_top_of_good_growth():
     ease, interval = review_sm2(2.5, 10, "easy")
     assert ease == 2.65
     assert interval == round(10 * 2.65 * 1.3)
-
-
-# --- review endpoint, end to end -----------------------------------------
 
 
 def create_note(client, **body) -> dict:
@@ -82,7 +72,6 @@ def test_reviewing_records_the_rating_and_schedules_the_next_reminder(client):
 
 
 def test_reviewing_an_fsrs_note_also_schedules_a_next_reminder(client):
-    # fsrs is the seeded default -- no use_sm2() call.
     note = create_note(client)
     assert note["algorithm"] == "fsrs"
     pending = note["reminders"][0]
@@ -120,14 +109,14 @@ def test_undo_review_restores_the_note_and_drops_the_new_reminder(client):
     reviewed = client.patch(
         f"/api/notes/reminders/{pending['id']}/now", json={"action": "review", "rating": "good"}
     ).json()
-    assert reviewed["interval_days"] == 1  # bootstrap step from 0
+    assert reviewed["interval_days"] == 1
 
     undone = client.patch(
         f"/api/notes/reminders/{pending['id']}/now", json={"action": "undo_review"}
     )
     assert undone.status_code == 200
     body = undone.json()
-    assert body["interval_days"] == 0  # back to pre-review state
+    assert body["interval_days"] == 0
     assert len(body["reminders"]) == 1
     assert body["reminders"][0]["id"] == pending["id"]
     assert body["reminders"][0]["reviewed_at"] is None
@@ -157,7 +146,6 @@ def test_only_the_most_recent_review_can_be_undone(client):
         json={"action": "review", "rating": "good"},
     )
 
-    # The first (now stale) review can no longer be undone.
     stale_undo = client.patch(
         f"/api/notes/reminders/{first_pending['id']}/now", json={"action": "undo_review"}
     )

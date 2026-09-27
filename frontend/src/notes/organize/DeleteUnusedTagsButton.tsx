@@ -19,7 +19,6 @@ import { useDeleteUnusedTags } from "../hooks/useDeleteUnusedTags";
 const MAX_LISTED = 12;
 
 interface DeleteUnusedTagsButtonProps {
-  // Names of the tags no live note carries.
   unusedTagNames: string[];
 }
 

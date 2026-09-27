@@ -13,8 +13,6 @@ function readStored(): NotesViewMode {
   }
 }
 
-// Per-viewer display preference, not app data — localStorage is the right
-// tool here rather than anything server-backed.
 export function useNotesViewMode() {
   const [mode, setModeState] = useState<NotesViewMode>(readStored);
 
@@ -23,7 +21,6 @@ export function useNotesViewMode() {
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      // ignore
     }
   }
 

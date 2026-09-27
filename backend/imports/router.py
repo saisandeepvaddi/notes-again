@@ -10,11 +10,6 @@ router = APIRouter(prefix="/import", tags=["import"])
 
 @router.post("/notes", response_model=ImportResult)
 def import_notes(body: ImportRequest, session: SessionDep):
-    """Imports notes (and the decks/tags they name) from a parsed JSON file.
-
-    `dry_run` returns exactly what a real import would do without writing
-    anything. Errors are plain-string 400s so the UI can show them as-is.
-    """
     if not 0 <= body.per_day <= MAX_PER_DAY:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"New notes per day must be 0-{MAX_PER_DAY}."

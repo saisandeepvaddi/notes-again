@@ -12,7 +12,6 @@ export function useDeleteUnusedTags() {
       return UnusedTagsResultSchema.parse(await fetcher());
     },
     onSettled(_data, _error, _vars, _result, context) {
-      // Trashed notes may lose a tag too, and the filter bar lists tags.
       for (const key of ["tags", "notes", "trashed-notes"]) {
         context.client.invalidateQueries({ queryKey: [key] });
       }

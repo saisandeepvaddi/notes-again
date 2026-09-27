@@ -8,18 +8,11 @@ import { NoteContent } from "../NoteContent";
 import { RatingButtons } from "../RatingButtons";
 import { fetchDueNotes, useDueNotes } from "../notes-list/useDueNotes";
 
-// Works through one batch of due notes at a time. After a bulk import
-// thousands can be due at once, so the session holds only the current batch
-// in memory and asks the server for the next one when it runs out; `remaining`
-// is the server's total, not the batch size.
 export function ReviewSession() {
   const queryClient = useQueryClient();
   const { data: firstPage } = useDueNotes();
   const [queue, setQueue] = useState(firstPage.items);
   const [remaining, setRemaining] = useState(firstPage.total);
-  // Local to this session, not persisted -- just enough to tell "you finished
-  // a real batch" from "there was never anything due" at the end, so that
-  // moment can say something true instead of one generic line for both.
   const [reviewedCount, setReviewedCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const current = queue[0];
@@ -34,7 +27,6 @@ export function ReviewSession() {
 
     setLoadingMore(true);
     try {
-      // staleTime 0: the note just rated must not be in what comes back.
       const page = await queryClient.fetchQuery({
         queryKey: ["due-notes"],
         queryFn: fetchDueNotes,
@@ -50,9 +42,6 @@ export function ReviewSession() {
     }
   };
 
-  // Same card shell as the main return below, so fetching the next batch
-  // doesn't blank the screen back to bare loading text -- the "N left" line
-  // and card boundary stay put, only the content inside changes.
   if (loadingMore) {
     return (
       <div className="flex flex-col gap-4 w-full max-w-2xl">

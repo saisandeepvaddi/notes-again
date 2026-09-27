@@ -88,8 +88,6 @@ class PauseResult(BaseModel):
 
 @router.post("/{project_id}/pause", response_model=PauseResult)
 def pause_project(project_id: int, session: SessionDep):
-    """Pauses every note in the project, and makes new notes created in it
-    start paused by default too."""
     project = _live_project(session, project_id)
     project.paused = True
     session.add(project)
@@ -100,8 +98,6 @@ def pause_project(project_id: int, session: SessionDep):
 
 @router.post("/{project_id}/resume", response_model=ResumeResult)
 def resume_project(project_id: int, body: ResumeOptions, session: SessionDep):
-    """Resumes every note in the project (see notes.bulk.resume_notes) and
-    turns its paused-by-default off."""
     project = _live_project(session, project_id)
     project.paused = False
     session.add(project)
@@ -122,13 +118,6 @@ def delete_project(
     delete_notes: bool = False,
     delete_unused_tags_too: bool = Query(False, alias="delete_orphan_tags"),
 ):
-    """Deletes the project. Its notes are kept (they just lose the project,
-    i.e. land in "no project") unless `delete_notes`, which moves them to the
-    trash instead. Trashed notes lose the project too either way: the row they
-    pointed at is gone.
-
-    With `delete_notes`, `delete_orphan_tags` also deletes the tags those notes
-    carried that no other (live) note uses -- e.g. the ones an import created."""
     project = session.exec(select(Project).where(Project.id == project_id)).one_or_none()
     if project is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
@@ -140,7 +129,6 @@ def delete_project(
     trashed = trash_notes(session, in_project) if delete_notes else 0
     tags_deleted = 0
     if delete_notes and delete_unused_tags_too:
-        # Before the notes lose their project below, or nothing is "in" it.
         project_tag_ids = (
             select(NoteTag.tag_id)
             .join(Note, col(Note.id) == col(NoteTag.note_id))

@@ -52,15 +52,11 @@ import type { NotesSort, NotesSortOrder } from "./useInfiniteNotes";
 
 const columnHelper = createColumnHelper<NoteItem>();
 
-// Sort key for the "Reviews" column: soonest-due first. Every note has
-// exactly one pending reminder, so this is effectively "review this next".
 function nextReviewTimestamp(note: NoteItem): number {
   const pending = note.reminders.find((reminder) => reminder.reviewed_at == null);
   return pending ? pending.remind_at.getTime() : Number.POSITIVE_INFINITY;
 }
 
-// One tag plus a "+N" overflow chip keeps every row single-line; difficulty
-// has its own column so it never competes with tags for this space.
 const MAX_VISIBLE_TAGS = 1;
 export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -70,10 +66,6 @@ function ProjectCell({ project }: { project: Project | null | undefined }) {
     return <span className="text-muted-foreground">—</span>;
   }
   return (
-    // min-w-0 + shrink (overriding the base Badge's shrink-0/w-fit): without
-    // this a long project name never wraps or truncates, and in a
-    // table-fixed cell that means it paints straight over the Tags column
-    // next to it instead of stopping at the cell boundary.
     <Badge variant="secondary" className="min-w-0 max-w-full shrink gap-1">
       <FolderIcon className="size-3 shrink-0" />
       <button
@@ -117,8 +109,6 @@ interface ColumnFilterProps {
   selectedId?: number;
 }
 
-// Shared shape for the Project/Tags header filters: a funnel icon that lights
-// up when that column is filtered, opening a searchable list to change it.
 function ColumnFilter({
   label,
   active,
@@ -181,7 +171,6 @@ function ColumnFilter({
   );
 }
 
-// Column id -> the server-side sort key it maps to.
 const SORT_KEYS: Record<string, NotesSort> = {
   name: "name",
   difficulty: "difficulty",
@@ -209,7 +198,6 @@ interface NotesTablePagination {
 
 interface NotesTableProps {
   notes: NoteItem[];
-  // undefined = no column sort chosen (server default order, no arrow shown)
   sort?: NotesSort;
   order: NotesSortOrder;
   onSortChange: (sort: NotesSort) => void;
@@ -229,16 +217,11 @@ export function NotesTable({
   activeProjectId,
   activeTagId,
 }: NotesTableProps) {
-  // See NotesList: the React Compiler breaks TanStack Table's mutable
-  // instance -- opt this component out.
   "use no memo";
   const navigate = useNavigate();
   const { data: projects = [] } = useProjects();
   const { data: allTags = [] } = useTags();
   const tagOptions = allTags.filter((tag) => !tag.is_difficulty);
-  // Difficulty is a tag under the hood (the chip bar above filters it the
-  // same way), so both header filters drive the one tagId search param --
-  // each lights up only when the active tag is one of its own options.
   const difficultyOptions = DIFFICULTY_OPTIONS.flatMap(({ label }) => {
     const tag = allTags.find((t) => t.is_difficulty && t.name.toLowerCase() === label.toLowerCase());
     return tag ? [{ id: tag.id, name: label }] : [];
@@ -250,9 +233,6 @@ export function NotesTable({
     columnHelper.accessor("name", {
       header: "Note",
       cell: (info) => (
-        // Stretched-link pattern: the ::after pseudo-element covers the whole
-        // cell (relative to this wrapper), so clicking anywhere in the Note
-        // column opens the note, not just the text itself.
         <div className="relative truncate" title={info.getValue()}>
           <Link
             to="/notes/$noteId"
@@ -306,9 +286,6 @@ export function NotesTable({
           return <span className="text-muted-foreground">—</span>;
         }
         return (
-          // nowrap + a shrinkable first chip (same min-w-0 override as
-          // ProjectCell): a long tag name truncates instead of wrapping the
-          // row onto a second line, while the "+N" chip keeps its size.
           <div className="flex min-w-0 items-center gap-1">
             {visible.map((tag) => (
               <Badge
@@ -358,8 +335,6 @@ export function NotesTable({
     }),
   ];
 
-  // Sorting is done by the server (the list is paged), so the table only
-  // *displays* the current sort rather than performing it.
   const sorting: SortingState = Object.entries(SORT_KEYS)
     .filter(([, key]) => key === sort)
     .map(([id]) => ({ id, desc: order === "desc" }));
@@ -399,10 +374,6 @@ export function NotesTable({
                 {headerGroup.headers.map((header) => {
                   const sortable = header.column.getCanSort();
                   const sortDirection = header.column.getIsSorted();
-                  // A column's own filter icon is a real <button>, so it must
-                  // never end up inside the sort toggle's <button> below --
-                  // nested buttons are invalid HTML and the browser's click
-                  // handling for them is unreliable (the sort fires too).
                   const columnFilter =
                     header.column.id === "project" ? (
                       <ColumnFilter

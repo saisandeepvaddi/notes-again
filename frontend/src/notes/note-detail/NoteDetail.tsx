@@ -28,9 +28,6 @@ interface NoteDetailProps {
   noteId: number;
 }
 
-// Directly editable, no separate edit mode -- this page (unlike the
-// read-only note card) is exactly where tag/project/name/content changes
-// happen, so nothing here should require an extra click to unlock.
 export function NoteDetail({ noteId }: NoteDetailProps) {
   const { data: note } = useNote(noteId);
   const navigate = useNavigate();
@@ -51,8 +48,6 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const project = note.project ?? null;
   const difficulty = getDifficulty(note.tags);
 
-  // Switching to a different note: reset local state from the freshly
-  // loaded note instead of carrying over the previous note's edits.
   useEffect(() => {
     setName(note.name);
     setContent(note.content);
@@ -60,14 +55,6 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteId]);
 
-  // Debounced autosave: skip the render that just synced from `note` above,
-  // save `AUTOSAVE_DELAY_MS` after the user stops typing otherwise. Known
-  // tradeoff: navigating to a different note within the debounce window
-  // discards the pending save rather than flushing it (the cleanup below
-  // clears it as part of resetting state for the new note) -- acceptable
-  // for a single-user app; a save-on-route-change flush would need the old
-  // note's id/updateNote captured separately since this effect's own
-  // closures are already bound to the new note by the time it runs.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -130,8 +117,6 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
     <div className="flex h-full max-w-4xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {/* The Layout mobile header already has its own trigger; this one is
-              for desktop, where that bar is hidden. */}
           <SidebarTrigger className="hidden md:inline-flex" />
           <Link
             to="/notes"
@@ -157,10 +142,6 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         aria-label="Note title"
-        // Reads as a plain title until hovered/focused, when it shows the
-        // field. Inset like the ghost buttons below so the text never touches
-        // the field's edge, and md: overrides because Input's own
-        // md:text-xs/dark:bg-input would otherwise win at those breakpoints.
         className="h-auto border-transparent bg-transparent px-2 py-1 font-serif text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20 md:text-lg dark:bg-transparent dark:hover:bg-input/30 dark:focus-visible:bg-input/30"
       />
 

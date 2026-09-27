@@ -2,11 +2,9 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 interface ComboboxProps {
   label: string;
-  /** Names that already exist on the server. */
   options: string[];
   value: string[];
   onChange: (next: string[]) => void;
-  /** Tags are multi; a project is single. */
   multiple?: boolean;
   placeholder?: string;
 }
@@ -19,19 +17,12 @@ interface Item {
 const MAX_SHOWN = 8;
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
-/** Exact match first, then prefix, then anything containing the query. */
 function rank(name: string, query: string): number {
   const n = name.toLowerCase();
   if (n === query) return 0;
   return n.startsWith(query) ? 1 : 2;
 }
 
-/**
- * Pick from existing names or type a new one ("Create …"); new names are
- * created server-side when the note is saved. Text still in the box when it
- * loses focus is committed as if Enter had been pressed, so a tag can't be
- * silently dropped by clicking Save.
- */
 export function Combobox({ label, options, value, onChange, multiple = false, placeholder }: ComboboxProps) {
   const uid = useId();
   const listId = `${uid}-list`;
@@ -53,7 +44,6 @@ export function Combobox({ label, options, value, onChange, multiple = false, pl
   }, [options, value, trimmed]);
 
   const choose = (name: string) => {
-    // Reuse the server's casing when the name already exists.
     const canonical = options.find((o) => same(o, name)) ?? name;
     if (!value.some((v) => same(v, canonical))) {
       onChange(multiple ? [...value, canonical] : [canonical]);
@@ -76,7 +66,6 @@ export function Combobox({ label, options, value, onChange, multiple = false, pl
         break;
       case "Enter":
         if (trimmed) {
-          // Commit only; the surrounding form must not also submit.
           e.preventDefault();
           e.stopPropagation();
           choose(open && items[active] ? items[active].name : trimmed);
@@ -95,7 +84,7 @@ export function Combobox({ label, options, value, onChange, multiple = false, pl
         break;
       case "Escape":
         if (open) {
-          e.stopPropagation(); // close the list, not the whole dialog
+          e.stopPropagation();
           setOpen(false);
         }
         break;
@@ -164,7 +153,6 @@ export function Combobox({ label, options, value, onChange, multiple = false, pl
               role="option"
               aria-selected={i === active}
               className={i === active ? "nl-option is-active" : "nl-option"}
-              // mousedown, not click: keeps focus in the input so onBlur doesn't fire first.
               onMouseDown={(e) => {
                 e.preventDefault();
                 choose(item.name);

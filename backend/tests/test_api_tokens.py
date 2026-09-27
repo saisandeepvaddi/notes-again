@@ -16,9 +16,6 @@ def mint(client, name="Extension", **body) -> dict:
     return response.json()
 
 
-# --- who can call what -------------------------------------------------------
-
-
 def test_requests_without_credentials_are_rejected(client):
     assert client.get("/api/projects/list").status_code == 401
     assert client.get("/api/tokens/list").status_code == 401
@@ -27,9 +24,6 @@ def test_requests_without_credentials_are_rejected(client):
 def test_firebase_sessions_still_work_and_bad_ones_do_not(client):
     assert client.get("/api/projects/list", headers=ME).status_code == 200
     assert client.get("/api/projects/list", headers=bearer("garbage")).status_code == 401
-
-
-# --- creating and listing ----------------------------------------------------
 
 
 def test_create_returns_the_plaintext_once_and_list_never_does(client):
@@ -57,9 +51,6 @@ def test_name_is_required(client):
     assert response.status_code == 400
 
 
-# --- what a capture token may do ---------------------------------------------
-
-
 def test_capture_token_can_save_a_note_end_to_end(client):
     headers = bearer(mint(client)["token"])
     assert client.get("/api/projects/list", headers=headers).status_code == 200
@@ -78,7 +69,6 @@ def test_capture_token_can_save_a_note_end_to_end(client):
     )
     assert note.status_code == 200, note.text
     assert note.json()["project"]["name"] == "Reading"
-    # ...and it's really there, as far as a full sign-in is concerned.
     assert client.get(f"/api/notes/{note.json()['id']}", headers=ME).status_code == 200
 
 
@@ -110,7 +100,6 @@ def test_a_token_cannot_manage_tokens(client):
 
 
 def test_token_management_stays_closed_even_if_a_scope_were_widened(client, monkeypatch):
-    """Defence in depth: the routes' own guard must hold without the scope list's help."""
     from tokens import service
 
     created = mint(client)
@@ -123,9 +112,6 @@ def test_token_management_stays_closed_even_if_a_scope_were_widened(client, monk
     ):
         assert response.status_code == 403
         assert response.json()["detail"] == "API tokens can't manage tokens"
-
-
-# --- lifecycle ---------------------------------------------------------------
 
 
 def test_unknown_token_is_rejected(client):
@@ -165,12 +151,9 @@ def test_last_used_is_recorded(client):
     assert client.get("/api/tokens/list", headers=ME).json()[0]["last_used_at"] is not None
 
 
-# --- ALLOWED_EMAILS ----------------------------------------------------------
-
-
 def test_allowlist_blocks_other_accounts(client, monkeypatch):
     monkeypatch.setenv("ALLOWED_EMAILS", "Me@X.dev, someone@else.dev")
-    assert client.get("/api/projects/list", headers=ME).status_code == 200  # case-insensitive
+    assert client.get("/api/projects/list", headers=ME).status_code == 200
     assert client.get("/api/projects/list", headers=bearer("stranger-session")).status_code == 403
 
 
@@ -185,9 +168,6 @@ def test_removing_someone_from_the_allowlist_also_kills_their_tokens(client, mon
 
     monkeypatch.setenv("ALLOWED_EMAILS", "someone@else.dev")
     assert client.get("/api/projects/list", headers=headers).status_code == 401
-
-
-# --- unchanged behaviour -----------------------------------------------------
 
 
 def test_auth_disabled_still_means_open(client, monkeypatch):

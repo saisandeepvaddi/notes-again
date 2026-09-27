@@ -20,13 +20,9 @@ interface ProjectPickerProps {
   value: Project | null;
   onChange: (project: Project | null) => void;
   onProjectClick?: (project: Project) => void;
-  // Icon-only trigger instead of a labeled button -- for contexts (like the
-  // note detail page) where a "Project" row label already says what this is.
   compact?: boolean;
 }
 
-// Single-select, unlike TagPicker -- a note has at most one project, swapped
-// rather than added alongside (mirrors how Easy/Medium/Hard difficulty works).
 export function ProjectPicker({
   value,
   onChange,
@@ -91,15 +87,10 @@ export function ProjectPicker({
           render={
             compact ? (
               value ? (
-                // The project badge right next to this already says
-                // "project" -- a bare icon is unambiguous once one's set.
                 <Button type="button" size="icon-xs" variant="ghost" aria-label="Change project">
                   <PlusIcon />
                 </Button>
               ) : (
-                // Nothing else on the row says "project" yet, so spell it
-                // out here -- unlike Tags, there's no existing chip to
-                // give a bare "+" context.
                 <Button type="button" size="xs" variant="ghost">
                   <PlusIcon /> Project
                 </Button>

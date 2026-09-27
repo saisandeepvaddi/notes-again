@@ -7,12 +7,6 @@ from notes.bulk import chunked
 
 
 def delete_unused_tags(session: Session, among: Select | None = None) -> int:
-    """Deletes regular tags that no live (not trashed) note carries, and
-    returns how many. `among` limits it to tag ids returned by that query.
-
-    Difficulty tags are never touched. Trashed notes may still carry a tag
-    that gets deleted here; they simply lose it, so a restored note comes
-    back without it. Doesn't commit."""
     in_use = (
         select(NoteTag.tag_id)
         .join(Note, col(Note.id) == col(NoteTag.note_id))

@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createNote, createTag, uniqueName } from "./support/api";
 
-// The list's filters live in the URL, so the back button walks back through
-// them (and back *to* them from a note) instead of resetting the list.
 test.describe("notes list filters in the URL", () => {
   test("back from a note restores the filters, then steps back through them", async ({
     page,

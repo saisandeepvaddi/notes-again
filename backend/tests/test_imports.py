@@ -1,7 +1,3 @@
-"""Bulk JSON import: dry-run preview vs. commit, duplicate/invalid-row
-handling, and deck/tag creation."""
-
-
 def import_notes(client, payload, *, dry_run=False, **body):
     response = client.post(
         "/api/import/notes", json={"payload": payload, "dry_run": dry_run, **body}
@@ -10,16 +6,13 @@ def import_notes(client, payload, *, dry_run=False, **body):
     return response.json()
 
 
-# --- dry run vs commit ----------------------------------------------------
-
-
 def test_dry_run_reports_what_would_happen_without_writing_anything(client):
     payload = {"notes": [{"name": "A loose note", "content": "body"}]}
     result = import_notes(client, payload, dry_run=True)
 
     assert result["dry_run"] is True
     assert result["notes_created"] == 1
-    assert client.get("/api/notes/list").json()["total"] == 0  # nothing written
+    assert client.get("/api/notes/list").json()["total"] == 0
 
 
 def test_committing_actually_creates_the_notes(client):
@@ -43,9 +36,6 @@ def test_dry_run_and_commit_report_identical_numbers(client):
 
     for key in ("notes_created", "new_decks", "new_tags", "duplicates_skipped", "invalid_skipped"):
         assert preview[key] == real[key]
-
-
-# --- decks, tags, difficulty ------------------------------------------------
 
 
 def test_import_creates_decks_and_tags_named_in_the_file(client):
@@ -97,12 +87,8 @@ def test_tags_named_after_difficulty_labels_are_ignored_with_a_warning(client):
     payload = {"notes": [{"name": "n", "content": "c", "tags": ["Easy"]}]}
     result = import_notes(client, payload)
     tag_names = {t["name"] for t in client.get("/api/notes/list").json()["items"][0]["tags"]}
-    # Only the (default) Medium difficulty tag -- "Easy" the plain tag was dropped.
     assert tag_names == {"Medium"}
     assert result["warnings"]
-
-
-# --- duplicates and invalid rows -------------------------------------------
 
 
 def test_reimporting_the_same_file_skips_duplicates(client):
@@ -124,7 +110,7 @@ def test_duplicates_are_scoped_per_deck(client):
         ]
     }
     result = import_notes(client, payload)
-    assert result["notes_created"] == 2  # same name, different decks -- not a dup
+    assert result["notes_created"] == 2
     assert result["duplicates_skipped"] == 0
 
 
@@ -134,7 +120,7 @@ def test_invalid_rows_are_skipped_with_a_reason_not_a_hard_failure(client):
 
     assert result["notes_created"] == 1
     assert result["invalid_skipped"] == 2
-    assert client.get("/api/notes/list").json()["total"] == 1  # the one valid row was written
+    assert client.get("/api/notes/list").json()["total"] == 1
 
 
 def test_malformed_payload_shape_is_a_400_not_a_500(client):
@@ -147,9 +133,6 @@ def test_non_object_row_is_an_issue_not_a_crash(client):
     result = import_notes(client, payload)
     assert result["invalid_skipped"] == 1
     assert result["notes_created"] == 0
-
-
-# --- per_day / scheduling ---------------------------------------------------
 
 
 def test_per_day_zero_makes_everything_due_now(client):
@@ -172,7 +155,7 @@ def test_a_decks_own_per_day_overrides_the_file_level_default(client):
     result = import_notes(client, payload, per_day=10)
     deck_summary = result["decks"][0]
     assert deck_summary["per_day"] == 1
-    assert result["days_span"] == 2  # one note per day at per_day=1
+    assert result["days_span"] == 2
 
 
 def test_out_of_range_per_day_400s(client):

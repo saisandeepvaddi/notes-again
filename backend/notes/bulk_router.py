@@ -20,11 +20,6 @@ from notes.router import get_difficulty_tag, get_project
 from notes.utils import to_utc
 from tags.difficulty import Difficulty
 
-# Bulk versions of the single-note edits in router.py: the same rules, applied
-# to a whole selection in a handful of statements instead of one request (and
-# one round trip) per note. Each returns how many notes it actually touched;
-# ids that don't match (already trashed, since deleted, ...) are skipped rather
-# than failing the whole batch.
 router = APIRouter(prefix="/notes/bulk", tags=["notes"])
 
 
@@ -37,7 +32,6 @@ class BulkBody(BaseModel):
 
 
 def _ids(body: BulkBody) -> list[int]:
-    # Plain-string 400 (not a pydantic 422) so the UI can show it as-is.
     if len(body.note_ids) > MAX_BULK_IDS:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
@@ -56,7 +50,6 @@ def _live_ids(session: Session, chunk: list[int]) -> list[int]:
 
 @router.post("/delete", response_model=BulkResult)
 def bulk_trash(body: BulkBody, session: SessionDep):
-    """Moves the notes to the trash (same soft delete as DELETE /notes/{id})."""
     affected = sum(
         trash_notes(session, col(Note.id).in_(chunk)) for chunk in chunked(_ids(body))
     )
@@ -80,12 +73,8 @@ def bulk_restore(body: BulkBody, session: SessionDep):
 
 @router.post("/permanent", response_model=BulkResult)
 def bulk_permanently_delete(body: BulkBody, session: SessionDep):
-    """Permanently deletes notes -- only ones already in the trash, so a stale
-    selection can never destroy a live note."""
     affected = 0
     for chunk in chunked(_ids(body)):
-        # ORM delete (not a bulk DELETE) so reminders cascade and note_tags
-        # rows go with them, exactly like DELETE /notes/{id}/permanent.
         notes = session.exec(
             select(Note).where(col(Note.id).in_(chunk), col(Note.deleted_at).is_not(None))
         ).all()
@@ -98,7 +87,6 @@ def bulk_permanently_delete(body: BulkBody, session: SessionDep):
 
 @router.post("/pause", response_model=BulkResult)
 def bulk_pause(body: BulkBody, session: SessionDep):
-    """Keeps the notes out of review (see PATCH /notes/{id}/paused)."""
     affected = sum(
         pause_notes(session, col(Note.id).in_(chunk)) for chunk in chunked(_ids(body))
     )
@@ -128,9 +116,8 @@ class BulkProjectBody(BulkBody):
 
 @router.post("/project", response_model=BulkResult)
 def bulk_set_project(body: BulkProjectBody, session: SessionDep):
-    """Moves the notes into a project (or, with project_id null, out of any)."""
     if body.project_id is not None:
-        get_project(session, body.project_id)  # 404s if it doesn't exist
+        get_project(session, body.project_id)
     affected = 0
     for chunk in chunked(_ids(body)):
         result = session.exec(  # type: ignore[call-overload]
@@ -150,7 +137,6 @@ class BulkTagsBody(BulkBody):
 
 @router.post("/tags", response_model=BulkResult)
 def bulk_edit_tags(body: BulkTagsBody, session: SessionDep):
-    """Adds and/or removes (regular, not difficulty) tags on the notes."""
     wanted = set(body.add_tag_ids) | set(body.remove_tag_ids)
     tags = session.exec(select(Tag).where(col(Tag.id).in_(wanted))).all() if wanted else []
     if len(tags) != len(wanted):
@@ -196,8 +182,6 @@ class BulkDifficultyBody(BulkBody):
 
 @router.post("/difficulty", response_model=BulkResult)
 def bulk_set_difficulty(body: BulkDifficultyBody, session: SessionDep):
-    """Sets the notes' difficulty tag (replacing any existing one) and syncs
-    their ease factor to it -- same as PATCH /notes/{id}/difficulty."""
     tag = get_difficulty_tag(session, body.difficulty)
     difficulty_tag_ids = list(
         session.exec(select(Tag.id).where(col(Tag.is_difficulty).is_(True))).all()
@@ -230,8 +214,6 @@ class BulkRescheduleBody(BulkBody):
 
 @router.post("/reschedule", response_model=BulkResult)
 def bulk_reschedule(body: BulkRescheduleBody, session: SessionDep):
-    """Moves each note's upcoming review to `remind_at` (see
-    PATCH /notes/{id}/reminders/pending). Scheduling state is untouched."""
     remind_at = to_utc(body.remind_at)
     affected = 0
     for chunk in chunked(_ids(body)):

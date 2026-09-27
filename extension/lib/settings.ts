@@ -1,13 +1,9 @@
 import { browser } from "wxt/browser";
 
 export interface Settings {
-  /** API origin, e.g. http://localhost:8000 or https://notes.example.com */
   serverUrl: string;
-  /** Where "Open in Note and Learn" links go, when it differs from the API (local dev: the Vite server). Empty = serverUrl. */
   appUrl: string;
-  /** Personal API token from the web app (Settings > API tokens). Empty = the server has auth disabled (local dev). */
   apiToken: string;
-  /** Pre-filled in the dialog, since captures tend to come in runs for one project. */
   lastProject: string;
 }
 

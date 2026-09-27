@@ -48,7 +48,6 @@ export function OptionsApp() {
       if (token && !token.startsWith(TOKEN_PREFIX)) {
         throw new Error(`That doesn't look like a Note and Learn token: they start with ${TOKEN_PREFIX}.`);
       }
-      // First await on purpose: permissions.request must run inside the click's user gesture.
       const granted = await browser.permissions.request({ origins: [hostPermissionPattern(base)] });
       if (!granted) {
         throw new Error(`Access to ${base} was not granted, so the extension can't reach your server.`);

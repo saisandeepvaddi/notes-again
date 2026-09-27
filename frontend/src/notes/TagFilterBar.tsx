@@ -20,9 +20,6 @@ interface TagFilterBarProps {
   activeTagId?: number;
 }
 
-// How many regular tags show inline before the rest fold into "+N" -- past
-// this a growing tag list would push the view-mode toggle and date filter
-// off the row instead of just scrolling its own overflow away.
 const MAX_VISIBLE_TAGS = 8;
 
 export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
@@ -35,23 +32,18 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
   }
 
   const difficultyTags = allTags.filter((tag) => tag.is_difficulty);
-  // Most-used first stands in for "recent" -- the tag list has no per-tag
-  // last-used timestamp, and note_count is the closest proxy the API has.
   const regularTags = [...allTags]
     .filter((tag) => !tag.is_difficulty)
     .sort((a, b) => b.note_count - a.note_count);
 
   const activeTag = regularTags.find((tag) => tag.id === activeTagId);
   const visible = regularTags.slice(0, MAX_VISIBLE_TAGS);
-  // The active filter's tag must stay visible (so its own badge is there to
-  // click off) even if it fell outside the most-used cutoff.
   if (activeTag && !visible.some((tag) => tag.id === activeTag.id)) {
     visible[visible.length - 1] = activeTag;
   }
   const visibleIds = new Set(visible.map((tag) => tag.id));
   const overflowTags = regularTags.filter((tag) => !visibleIds.has(tag.id));
 
-  // Merge, not replace: a tag click shouldn't drop an active project/date filter.
   const goToTag = (tagId?: number) =>
     navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId }) });
 

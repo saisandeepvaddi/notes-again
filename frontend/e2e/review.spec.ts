@@ -6,9 +6,6 @@ test.describe("review session", () => {
     page,
     request,
   }) => {
-    // An ancient first_reminder_at sorts before anything any other spec
-    // could have created, so this note is deterministically first in the
-    // due queue regardless of what else is due in the shared database.
     const note = await createNote(request, {
       name: uniqueName("Due note"),
       content: "Recall me please.",
@@ -21,8 +18,6 @@ test.describe("review session", () => {
 
     await page.getByRole("button", { name: "Good" }).click();
 
-    // The card moves on to whatever's next due (or the empty state) -- what
-    // matters is that this note's own reminder was actually recorded.
     await expect(page.getByText(note.name, { exact: true })).toHaveCount(0);
 
     const response = await request.get(`${API_URL}/notes/${note.id}`);

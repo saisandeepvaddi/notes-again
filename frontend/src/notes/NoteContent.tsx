@@ -14,9 +14,6 @@ md.use(
   }),
 );
 
-// Virtualized lists unmount cards as they scroll away and remount them when
-// scrolled back. Without this every remount would blank and re-run the full
-// markdown + syntax-highlight render; keep the most recent results instead.
 const HTML_CACHE_LIMIT = 300;
 const htmlCache = new Map<string, string>();
 

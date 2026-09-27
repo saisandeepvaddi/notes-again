@@ -26,15 +26,11 @@ export const getHeaders = async (customHeaders?: Record<string, string>) => {
   return headers;
 };
 
-// The Firebase ID token is attached by getHeaders(). A 401 back from the API
-// means it's no longer valid — drop the session so the login screen returns.
 const handleResponse = async (response: Response, url: string) => {
   if (response.status === 401 && !isDevEnv()) {
     await auth?.signOut().catch(() => {});
   }
   if (!response.ok) {
-    // FastAPI error bodies are {"detail": "..."} -- surface that message when
-    // present instead of just the status code.
     const detail = await response
       .clone()
       .json()
@@ -46,9 +42,6 @@ const handleResponse = async (response: Response, url: string) => {
       .catch(() => null);
     throw new Error(detail ?? `Error with ${url} with code: ${response.status}`);
   }
-  // 204 No Content has no body -- response.json() throws on an empty body,
-  // which would otherwise surface as a false "failed" error even though the
-  // request succeeded (hit by delete_note/permanently_delete_note/empty_trash).
   if (response.status === 204) {
     return null;
   }

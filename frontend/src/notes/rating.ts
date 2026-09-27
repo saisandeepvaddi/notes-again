@@ -1,9 +1,6 @@
 import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
 import type { Rating } from "./new-note-form/types";
 
-// `caption` is plain-language recall wording: the labels alone (Again/Hard/
-// Good/Easy) are Anki jargon, and Hard/Easy also collide with a note's
-// separate Easy/Medium/Hard difficulty label, which means something else.
 export const RATING_OPTIONS: { value: Rating; label: string; caption: string }[] = [
   { value: "again", label: "Again", caption: "Forgot it" },
   { value: "hard", label: "Hard", caption: "Struggled" },

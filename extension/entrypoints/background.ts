@@ -51,11 +51,8 @@ async function handle(request: BackgroundRequest): Promise<unknown> {
   }
 }
 
-// --- opening the capture UI ------------------------------------------------
-
 async function openFallbackWindow(context: PendingWindowContext) {
   const id = crypto.randomUUID();
-  // storage.session is in-memory and cleared on browser restart: exactly the lifetime a hand-off needs.
   await browser.storage.session.set({ [`pending:${id}`]: context });
   await browser.windows.create({
     url: browser.runtime.getURL(`/capture-window.html?id=${id}`),
@@ -65,11 +62,6 @@ async function openFallbackWindow(context: PendingWindowContext) {
   });
 }
 
-/**
- * Prefer the in-page dialog. Some pages can't host it (chrome://, the web
- * stores, built-in PDF viewers), and there the injection throws, so fall back
- * to a small popup window running the same form.
- */
 async function openCapture(tab: Browser.tabs.Tab | undefined, mode: "page" | "selection", selectionText?: string) {
   if (!tab) {
     [tab] = await browser.tabs.query({ active: true, currentWindow: true });
@@ -126,6 +118,6 @@ export default defineBackground(() => {
       (data) => sendResponse({ ok: true, data } satisfies BackgroundResponse<unknown>),
       (err: unknown) => sendResponse({ ok: false, error: serializeError(err) } satisfies BackgroundResponse<never>),
     );
-    return true; // keep the channel open for the async response (works in Chrome and Firefox)
+    return true;
   });
 });

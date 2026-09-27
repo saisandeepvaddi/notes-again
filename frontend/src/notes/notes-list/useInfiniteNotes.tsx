@@ -8,7 +8,6 @@ export const NOTES_SORTS = ["due", "name", "project", "created", "difficulty"] a
 export type NotesSort = (typeof NOTES_SORTS)[number];
 export const NOTES_SORT_ORDERS = ["asc", "desc"] as const;
 export type NotesSortOrder = (typeof NOTES_SORT_ORDERS)[number];
-// Which notes by review state; undefined = all of them.
 export const NOTES_STATUSES = ["active", "paused"] as const;
 export type NotesStatus = (typeof NOTES_STATUSES)[number];
 
@@ -24,8 +23,6 @@ export interface UseInfiniteNotesArgs {
   enabled?: boolean;
 }
 
-// The filter half of the list's query string, shared by /notes/list and
-// /notes/ids so "select all" selects exactly what the list is showing.
 export function notesFilterParams({
   date,
   tagId,
@@ -49,9 +46,6 @@ export function notesFilterParams({
   return params;
 }
 
-// Server-paged list of notes, loaded a page at a time as the user scrolls.
-// `keyPrefix` decides which cache family the query lives in, so existing
-// invalidations (["notes"], ["trashed-notes"]) keep hitting the right lists.
 export function useInfiniteNotes(
   keyPrefix: "notes" | "trashed-notes",
   {
@@ -107,8 +101,6 @@ export function useInfiniteNotes(
       const loaded = allPages.reduce((count, page) => count + page.items.length, 0);
       return lastPage.items.length > 0 && loaded < lastPage.total ? loaded : undefined;
     },
-    // Keep showing the current rows while a new filter/sort loads, instead of
-    // blanking the whole list.
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -123,8 +115,6 @@ export interface UsePagedNotesArgs extends UseInfiniteNotesArgs {
   pageSize: number;
 }
 
-// Single-page (offset/limit) equivalent of useInfiniteNotes, for the table
-// view's page-by-page navigation instead of endless scroll.
 export function usePagedNotes(
   keyPrefix: "notes" | "trashed-notes",
   {

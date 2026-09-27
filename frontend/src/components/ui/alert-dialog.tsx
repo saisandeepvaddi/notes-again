@@ -38,9 +38,6 @@ function AlertDialogContent({
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm";
-  // Base UI's AlertDialog never dismisses on an outside press (it's meant for
-  // "you must decide" confirmations). Opt-in for prompts where backing out is
-  // harmless, e.g. a rating picker -- destructive confirms leave this unset.
   onBackdropClick?: () => void;
 }) {
   return (
@@ -50,9 +47,6 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          // Below sm: a full-width sheet anchored to the bottom edge (the
-          // native-feeling mobile pattern). At sm+: the original small
-          // centered popup, unchanged.
           "group/alert-dialog-content fixed inset-x-0 bottom-0 z-50 grid w-full max-w-none translate-x-0 translate-y-0 gap-3 rounded-t-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:data-[size=default]:max-w-sm sm:data-[size=sm]:max-w-64",
           className,
         )}

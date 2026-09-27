@@ -8,12 +8,6 @@ import { CaptureDialog } from "../lib/ui/CaptureDialog";
 import styles from "../lib/ui/styles.css?inline";
 import { cleanUrl } from "../lib/url";
 
-/**
- * Injected on demand by the background script (activeTab), never registered
- * as a standing content script. Mounts the capture dialog in a shadow root so
- * neither the page's CSS nor its key handlers can touch it.
- */
-
 let mounted: { host: HTMLElement; root: Root } | null = null;
 
 function closeDialog() {
@@ -22,7 +16,6 @@ function closeDialog() {
   mounted = null;
 }
 
-/** Constructable stylesheets aren't subject to the page's CSP `style-src`; a <style> tag can be. */
 function applyStyles(shadow: ShadowRoot) {
   try {
     const sheet = new CSSStyleSheet();
@@ -37,10 +30,8 @@ function applyStyles(shadow: ShadowRoot) {
 
 function buildContext(message: OpenDialogMessage): CaptureContext {
   const info = extractPageInfo(document);
-  // The page's own selection keeps paragraph breaks; the context-menu text is the fallback for inputs and iframes.
   const selection = normalizeSelection(window.getSelection()?.toString() || message.selectionText || "");
   return {
-    // Asked to save a selection but there isn't one (shortcut with nothing selected): save the page instead.
     mode: message.mode === "selection" && selection ? "selection" : "page",
     url: cleanUrl(location.href),
     title: info.title || message.tabTitle || "",
@@ -55,7 +46,6 @@ function openDialog(message: OpenDialogMessage) {
 
   const host = document.createElement("note-and-learn-capture");
   host.style.cssText = "all: initial !important; position: fixed !important; inset: 0 !important; z-index: 2147483647 !important;";
-  // Sites bind single-key shortcuts on document; typing in the dialog must not trigger them.
   for (const type of ["keydown", "keyup", "keypress"]) {
     host.addEventListener(type, (e) => e.stopPropagation());
   }
@@ -72,7 +62,6 @@ function openDialog(message: OpenDialogMessage) {
 }
 
 export default defineUnlistedScript(() => {
-  // executeScript re-runs this file on every capture; register the listener once per page.
   const marker = window as typeof window & { __noteAndLearnCapture?: boolean };
   if (marker.__noteAndLearnCapture) {
     return;

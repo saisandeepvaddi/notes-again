@@ -10,7 +10,6 @@ interface ImportArgs {
   paused: boolean;
 }
 
-// dryRun = the preview: same server-side logic as the real import, nothing written.
 export function useImportNotes() {
   return useMutation({
     mutationKey: ["import-notes"],

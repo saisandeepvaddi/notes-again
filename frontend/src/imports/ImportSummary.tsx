@@ -25,8 +25,6 @@ function dayLabel(date: Date) {
   return isToday(date) ? "today" : format(date, "MMM d");
 }
 
-// Used for both the preview (dry run) and the final result -- same numbers
-// either way, since the server runs the same logic for both.
 export function ImportSummary({ result }: { result: ImportResult }) {
   const verb = result.dry_run ? "to import" : "imported";
   return (

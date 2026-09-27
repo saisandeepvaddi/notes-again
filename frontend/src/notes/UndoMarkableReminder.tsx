@@ -53,10 +53,6 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
             size={"sm"}
             variant="outline"
             onClick={() => setOpen(true)}
-            // Was a raw green-300/400 with no dark-mode variant, and an
-            // outline-green-300/20 utility that did nothing (Tailwind's
-            // outline-color has no effect without an outline-style) --
-            // unified to the app's one shared "success" recipe instead.
             className={SUCCESS_BUTTON_CLASSES}
           >
             <CheckIcon />

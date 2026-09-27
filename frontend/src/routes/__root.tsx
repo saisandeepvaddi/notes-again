@@ -45,22 +45,10 @@ function RootDocument() {
     <html lang="en">
       <head>
         <HeadContent />
-        {/* Sets the .dark class before first paint so there's no flash of the wrong theme. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         <Layout />
-        {/* <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        /> */}
         <Scripts />
         <Toaster />
       </body>

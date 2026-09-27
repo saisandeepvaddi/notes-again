@@ -1,9 +1,7 @@
 import { CaptureError, type CaptureApi, type Lookups, type NoteDraft, type SavedNote } from "./types";
 
 export interface ExistingRoutesOptions {
-  /** Server origin, no trailing slash. */
   baseUrl: string;
-  /** Personal API token, sent as a Bearer credential. Empty = send none (server with auth disabled). */
   token: string;
   fetch?: typeof fetch;
 }
@@ -35,7 +33,6 @@ function dedupeNames(names: string[]): string[] {
   return out;
 }
 
-/** FastAPI errors are `{"detail": "msg"}` or, for 422s, `{"detail": [{"msg": ...}]}`. */
 async function errorDetail(response: Response): Promise<string | null> {
   const body: unknown = await response.json().catch(() => null);
   if (typeof body !== "object" || body === null || !("detail" in body)) {
@@ -54,14 +51,6 @@ async function errorDetail(response: Response): Promise<string | null> {
   return null;
 }
 
-/**
- * CaptureApi over the routes the web app already uses. Projects and tags are
- * resolved by name through their create endpoints, which are idempotent and
- * case-insensitive, so "create if missing" is just "call create".
- *
- * Three round-trips per save (projects/tags in parallel, then the note) and
- * no source-URL dedupe; both go away with a dedicated import endpoint.
- */
 export function createExistingRoutesApi(options: ExistingRoutesOptions): CaptureApi {
   const { baseUrl, token } = options;
   const doFetch = options.fetch ?? fetch;
@@ -114,7 +103,6 @@ export function createExistingRoutesApi(options: ExistingRoutesOptions): Capture
       ]);
       return {
         projects: projects.map((p) => p.name),
-        // Easy/Medium/Hard are difficulty settings, not free-form tags.
         tags: tags.filter((t) => !t.is_difficulty).map((t) => t.name),
       };
     },

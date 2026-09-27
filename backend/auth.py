@@ -1,19 +1,3 @@
-"""Request authentication.
-
-Two kinds of credential, both sent as ``Authorization: Bearer <credential>``:
-
-* A Firebase ID token. The frontend signs the user in with Firebase
-  (email/password) and we verify the token with the Firebase Admin SDK. Only
-  users you create in the Firebase console can obtain one, so that console is
-  the whole user-management surface. Set ``ALLOWED_EMAILS`` to also pin access
-  to specific addresses, as a backstop in case sign-ups are ever left open.
-* A personal API token (``nal_...``), created from Settings, for clients that
-  can't sign in interactively, e.g. the browser extension. Tokens are scoped:
-  a ``capture`` token can only save notes (see ``tokens.service``).
-
-Local dev has no Firebase in front — set ``AUTH_DISABLED=1`` there.
-"""
-
 import logging
 import os
 from typing import Annotated
@@ -46,8 +30,6 @@ else:
 
 
 def allowed_emails() -> set[str]:
-    """Emails permitted to use the API, from ``ALLOWED_EMAILS`` (comma-separated).
-    Empty means "no restriction beyond having a valid credential"."""
     raw = os.environ.get("ALLOWED_EMAILS", "")
     return {email.strip().lower() for email in raw.split(",") if email.strip()}
 
@@ -93,7 +75,6 @@ def _identity_from_api_token(request: Request, session: SessionDep, token: str) 
 
 
 def require_user(request: Request, session: SessionDep) -> dict:
-    """FastAPI dependency: a valid Firebase ID token or API token, or 401/403."""
     if AUTH_DISABLED:
         return _DEV_IDENTITY
 
@@ -107,8 +88,6 @@ def require_user(request: Request, session: SessionDep) -> dict:
 
 
 def require_session_user(identity: Annotated[dict, Depends(require_user)]) -> dict:
-    """Like ``require_user`` but refuses API tokens: for routes (managing
-    tokens) that must only ever be reachable with a real sign-in."""
     if identity.get("auth") == "api_token":
         raise HTTPException(status_code=403, detail="API tokens can't manage tokens")
     return identity

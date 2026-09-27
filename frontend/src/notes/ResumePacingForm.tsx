@@ -5,10 +5,6 @@ import { PlayIcon } from "lucide-react";
 import { useState } from "react";
 import { DEFAULT_RESUME_PER_DAY } from "./hooks/usePausing";
 
-// Asks how fast paused notes come back, for resuming many at once (a
-// selection, a project, a tag): never-reviewed notes that are already due are
-// spread out this many per day so a big paused deck doesn't flood today's
-// review. Notes with review history keep their own schedule.
 export function ResumePacingForm({
   isPending,
   onResume,

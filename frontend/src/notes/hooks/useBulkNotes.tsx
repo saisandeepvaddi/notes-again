@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import type { Difficulty } from "../new-note-form/types";
 
-// Resume also says how the notes were paced back in (see ResumeResultSchema).
 const BulkResultSchema = z.object({
   affected: z.number(),
   due_today: z.number().optional(),
@@ -11,7 +10,6 @@ const BulkResultSchema = z.object({
 });
 export type BulkResult = z.infer<typeof BulkResultSchema>;
 
-// One entry per POST /notes/bulk/<action>, with that action's extra fields.
 export type BulkAction =
   | { action: "delete" }
   | { action: "restore" }
@@ -32,8 +30,6 @@ export function useBulkNotes() {
       return BulkResultSchema.parse(await fetcher(JSON.stringify({ note_ids: noteIds, ...extra })));
     },
     onSettled(_data, _error, _vars, _result, context) {
-      // Notes moved between projects/tags/trash or rescheduled: every
-      // note-derived view (and the per-project/tag counts) is stale.
       for (const key of [
         "notes",
         "due-notes",

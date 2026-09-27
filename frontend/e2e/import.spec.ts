@@ -40,8 +40,6 @@ test.describe("import", () => {
     await expect(page.getByText("Import complete")).toBeVisible();
     await expect(page.getByText("2 notes added.")).toBeVisible();
 
-    // Button's `nativeButton={false}` (it renders a <Link>) gives the
-    // element role="button" for accessibility even though it's really an <a>.
     await page.getByRole("button", { name: "View notes" }).click();
     await page.getByLabel("Search notes").fill(noteOne);
     await expect(page.getByRole("link", { name: noteOne, exact: true })).toBeVisible();

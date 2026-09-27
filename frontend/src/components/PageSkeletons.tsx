@@ -4,11 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { LoadingState } from "./LoadingState";
 
-// Loading placeholders shaped like each page's real content -- same
-// containers, widths, and spacing as the components they stand in for -- so
-// nothing jumps when the data lands. Line widths are fixed (not random) so a
-// skeleton looks the same on every render and never flickers between widths.
-
 const BODY_LINES = ["w-11/12", "w-4/5", "w-full", "w-2/3", "w-5/6"];
 
 function Lines({ widths, className }: { widths: string[]; className?: string }) {
@@ -25,7 +20,6 @@ function Pill({ className }: { className?: string }) {
   return <Skeleton className={cn("h-5 rounded-full", className)} />;
 }
 
-// Mirrors NoteCard: fixed h-72, title bar, clipped body, badge footer.
 function NoteCardSkeleton({ index }: { index: number }) {
   const shift = index % BODY_LINES.length;
   const widths = [...BODY_LINES.slice(shift), ...BODY_LINES.slice(0, shift)];
@@ -49,8 +43,6 @@ function NoteCardSkeleton({ index }: { index: number }) {
   );
 }
 
-// Same column rule VirtualNoteGrid computes in JS: as many 260px-min columns
-// as fit, each capped at 320px, 16px apart.
 export function NoteGridSkeleton({ label = "Loading notes", count = 6 }) {
   return (
     <LoadingState
@@ -66,7 +58,6 @@ export function NoteGridSkeleton({ label = "Loading notes", count = 6 }) {
 
 const TABLE_NAME_WIDTHS = ["w-2/3", "w-1/2", "w-3/4", "w-2/5", "w-3/5", "w-1/2", "w-2/3", "w-2/5"];
 
-// Mirrors NotesTable's bordered table: header strip, then one row per note.
 export function NoteTableSkeleton() {
   return (
     <LoadingState
@@ -93,7 +84,6 @@ export function NoteTableSkeleton() {
   );
 }
 
-// Mirrors NoteDetail: nav row, title, reminder row, chip row, editor.
 export function NoteDetailSkeleton() {
   return (
     <LoadingState label="Loading note" className="flex h-full max-w-4xl flex-col gap-4">
@@ -127,7 +117,6 @@ export function NoteDetailSkeleton() {
   );
 }
 
-// Mirrors ReviewSession: "N left" line above one note card with the rating row.
 export function ReviewSkeleton() {
   return (
     <LoadingState label="Loading review" className="flex w-full max-w-2xl flex-col gap-4">
@@ -173,7 +162,6 @@ function OrganizeSectionSkeleton({ rows }: { rows: number }) {
   );
 }
 
-// Mirrors OrganizeList: a Projects section and a Tags section.
 export function OrganizeSkeleton() {
   return (
     <LoadingState label="Loading projects and tags" className="flex flex-col gap-8">
@@ -183,8 +171,6 @@ export function OrganizeSkeleton() {
   );
 }
 
-// Mirrors SettingsForm + ApiTokens: a setting row with its control, then the
-// tokens section with its action and list.
 export function SettingsSkeleton() {
   return (
     <LoadingState label="Loading settings" className="flex flex-col gap-8">

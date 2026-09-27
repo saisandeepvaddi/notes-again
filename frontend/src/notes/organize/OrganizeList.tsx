@@ -20,9 +20,7 @@ interface RowProps {
   name: string;
   noteCount: number;
   pausedCount: number;
-  // Projects only: new notes in it start paused.
   paused?: boolean;
-  // Built-in tags can't be deleted.
   locked?: boolean;
 }
 
@@ -34,8 +32,6 @@ function reportError(error: unknown) {
   });
 }
 
-// Pause whenever anything is still in review (or a project isn't paused by
-// default yet); resume whenever anything is paused (or the project is).
 function PauseControls({
   kind,
   id,

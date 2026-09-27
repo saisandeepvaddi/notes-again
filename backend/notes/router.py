@@ -35,9 +35,6 @@ def get_difficulty_tag(session: Session, difficulty: Difficulty) -> Tag:
 
 
 def apply_difficulty(session: Session, note: Note, difficulty: Difficulty) -> Tag:
-    """Sets a note's difficulty tag (swapping out any existing one) and syncs
-    its ease factor to match. This is the only lever on review pacing now —
-    there's no separate per-review rating scale."""
     tag = get_difficulty_tag(session, difficulty)
     note.tags = [t for t in note.tags if not t.is_difficulty] + [tag]
     note.ease_factor = tag.default_ease_factor or note.ease_factor
@@ -65,7 +62,6 @@ MAX_PAGE_SIZE = 200
 
 
 def _next_due():
-    """Correlated subquery: when this note's pending reminder is due."""
     return (
         select(func.min(Reminder.remind_at))
         .where(
@@ -91,8 +87,6 @@ def _sort_key(sort: NoteSort):
     if sort == "created":
         return col(Note.created_at)
     if sort == "difficulty":
-        # Rank by DIFFICULTY_TAGS' declared order (easy < medium < hard), so
-        # "asc" reads easy-to-hard regardless of the tags' names or ids.
         rank = case(
             {defaults.name: i for i, defaults in enumerate(DIFFICULTY_TAGS.values())},
             value=col(Tag.name),
@@ -116,19 +110,12 @@ def _notes_page(
     limit: int,
     offset: int,
 ) -> NotePage:
-    """One page of notes matching `conditions`, plus the total match count.
-
-    Every filter is an EXISTS/IN predicate on Note itself (never a join that
-    can fan out to several rows per note), so LIMIT/OFFSET and the count are
-    exact, and reminders/tags/project are eager-loaded (no per-note queries).
-    """
     total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
     key = _sort_key(sort)
     direction = key.asc() if order == "asc" else key.desc()
     statement = (
         select(Note)
         .where(*conditions)
-        # notes with no value (no pending reminder / no project) always last
         .order_by(direction.nulls_last(), col(Note.id).asc())
         .limit(limit)
         .offset(offset)
@@ -151,8 +138,6 @@ def _list_conditions(
     search: str | None = None,
     paused: bool | None = None,
 ) -> list:
-    """The WHERE conditions shared by /list and /ids, so "select all N
-    matching" selects exactly the notes the list is showing."""
     conditions: list = [
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
     ]
@@ -167,18 +152,12 @@ def _list_conditions(
         conditions.append(or_(col(Note.name).ilike(term), col(Note.content).ilike(term)))
 
     if start is not None and end is not None:
-        # a day's reviews: paused notes aren't reviewed, so they're never "due"
         conditions.append(col(Note.paused_at).is_(None))
         start_utc = to_utc(start).replace(tzinfo=None)
         end_utc = to_utc(end).replace(tzinfo=None)
 
         in_range = and_(col(Reminder.remind_at) >= start_utc, col(Reminder.remind_at) < end_utc)
         if start_utc <= utcnow().replace(tzinfo=None) < end_utc:
-            # This window covers "now", i.e. it's today -- the calendar and
-            # the due-today count both roll every overdue pending reminder
-            # onto today regardless of how many days overdue it is, so match
-            # that here too, or clicking today's cell shows fewer notes than
-            # it counted.
             remind_at_filter = or_(
                 in_range,
                 and_(col(Reminder.remind_at) < start_utc, col(Reminder.reviewed_at).is_(None)),
@@ -248,10 +227,6 @@ def get_note_ids(
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
 ):
-    """Just the ids of every note /list would return for the same filters (in
-    the same order), for "select all N matching" -- the list is paged, so the
-    client can't know the ids it hasn't loaded. Capped at MAX_BULK_IDS: `ids`
-    is shorter than `total` when there are more than that."""
     conditions = _list_conditions(
         start=start,
         end=end,
@@ -279,9 +254,6 @@ def get_due_notes(
     limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
 ):
-    """Active (not paused) notes whose pending reminder is due now, oldest-due
-    first. Paged: after a bulk import thousands can be due at once, and the
-    review flow only ever needs the next few."""
     conditions: list = [
         col(Note.deleted_at).is_(None),
         col(Note.paused_at).is_(None),
@@ -312,8 +284,6 @@ class NewNoteBody(BaseModel):
     tag_ids: list[int] = Field(default_factory=list)
     difficulty: Difficulty = "medium"
     project_id: int | None = None
-    # None = the project's default (Project.paused), so clients that don't
-    # know about pausing (the capture extension) still honor a paused project
     paused: bool | None = None
 
 
@@ -322,7 +292,6 @@ def create_note(body: NewNoteBody, session: SessionDep):
     tags: list[Tag] = []
     if body.tag_ids:
         tags = list(session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all())
-    # difficulty is sticky and applied separately, never via arbitrary tag_ids
     tags = [tag for tag in tags if not tag.is_difficulty]
 
     project = get_project(session, body.project_id) if body.project_id is not None else None
@@ -364,8 +333,6 @@ def update_note(note_id: int, body: UpdateNoteBody, session: SessionDep):
 
 @router.delete("/trash", status_code=status.HTTP_204_NO_CONTENT)
 def empty_trash(session: SessionDep):
-    """Permanently deletes every note currently in the trash. Registered
-    before DELETE /{note_id} below so "trash" isn't swallowed as a note_id."""
     notes = session.exec(select(Note).where(col(Note.deleted_at).is_not(None))).all()
     for note in notes:
         session.delete(note)
@@ -477,9 +444,6 @@ class SetPausedBody(BaseModel):
 
 @router.patch("/{note_id}/paused", response_model=NoteResponse)
 def set_note_paused(note_id: int, body: SetPausedBody, session: SessionDep):
-    """Pauses (keeps out of review) or resumes a note. Its reminder and
-    scheduling state are untouched either way, so a resumed note that's
-    overdue is simply due now."""
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
@@ -497,11 +461,6 @@ class RescheduleReminderBody(BaseModel):
 
 @router.patch("/{note_id}/reminders/pending", response_model=NoteResponse)
 def reschedule_pending_reminder(note_id: int, body: RescheduleReminderBody, session: SessionDep):
-    """Move a note's upcoming reminder to an arbitrary date — e.g. "review this
-    today" even though it isn't naturally due yet. Every not-deleted note has
-    exactly one pending (unreviewed) reminder at all times, so this just moves
-    it rather than adding a second one; SM-2 state (ease/interval) is untouched,
-    only the schedule."""
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
@@ -555,7 +514,6 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
         session.refresh(note)
         return note
 
-    # undo_review
     if reminder.reviewed_at is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Reminder was not reviewed")
 

@@ -1,6 +1,5 @@
 const TRACKING_PARAMS = /^(utm_[a-z]+|fbclid|gclid|dclid|msclkid|mc_eid|igshid|_hsenc|_hsmi)$/i;
 
-/** Strips well-known tracking params so the saved link is the clean one. */
 export function cleanUrl(raw: string): string {
   let url: URL;
   try {
@@ -16,11 +15,6 @@ export function cleanUrl(raw: string): string {
   return url.toString();
 }
 
-/**
- * Hosts where plain http:// is acceptable: this machine and private networks
- * (local dev, a home server on the LAN). Anything else must use https, since
- * the API token rides along on every request.
- */
 export function isPrivateHost(hostname: string): boolean {
   const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host === "::1") {
@@ -34,10 +28,6 @@ export function isPrivateHost(hostname: string): boolean {
   return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
 }
 
-/**
- * Validates and normalises a user-entered server URL to `scheme://host[:port]`
- * (no path, no trailing slash). A bare `localhost:8000` gets `http://`.
- */
 export function normalizeBaseUrl(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) {
@@ -51,7 +41,6 @@ export function normalizeBaseUrl(input: string): string {
       throw new Error(`"${input}" is not a valid URL.`);
     }
   };
-  // A bare host gets https, except on this machine / a private network where dev servers are plain http.
   let url = parse(hasScheme ? trimmed : `https://${trimmed}`);
   if (!hasScheme && isPrivateHost(url.hostname)) {
     url = parse(`http://${trimmed}`);
@@ -65,16 +54,11 @@ export function normalizeBaseUrl(input: string): string {
   return url.origin;
 }
 
-/**
- * Match pattern for `permissions.request`. Ports are left out on purpose:
- * `http://localhost/*` covers any port in both Chrome and Firefox.
- */
 export function hostPermissionPattern(baseUrl: string): string {
   const url = new URL(baseUrl);
   return `${url.protocol}//${url.hostname}/*`;
 }
 
-/** Where "Open in Note and Learn" points. `appUrl` differs from the API in local dev (Vite vs. FastAPI). */
 export function noteUrl(appUrl: string, serverUrl: string, noteId: number): string {
   const base = appUrl.trim() || serverUrl;
   return `${base.replace(/\/+$/, "")}/notes/${noteId}`;

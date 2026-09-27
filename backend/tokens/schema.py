@@ -14,5 +14,4 @@ class TokenResponse(SQLModel):
 
 
 class CreatedTokenResponse(TokenResponse):
-    # The only time the plaintext token is ever returned.
     token: str

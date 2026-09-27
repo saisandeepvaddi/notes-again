@@ -5,11 +5,6 @@ import type { CaptureContext, PendingWindowContext } from "../../lib/capture/typ
 import { CaptureDialog } from "../../lib/ui/CaptureDialog";
 import "../../lib/ui/styles.css";
 
-/**
- * Fallback for pages that can't host the in-page dialog (chrome://, web
- * stores, PDF viewers). The background script hands over what it knows via
- * storage.session, keyed by the id in the query string.
- */
 async function loadContext(): Promise<CaptureContext> {
   const id = new URLSearchParams(location.search).get("id");
   const key = `pending:${id}`;

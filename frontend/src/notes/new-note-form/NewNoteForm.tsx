@@ -18,7 +18,6 @@ function NewNoteForm() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [project, setProject] = useState<Project | null>(null);
-  // null = follow the project's default; picking another project resets it
   const [pausedChoice, setPausedChoice] = useState<boolean | null>(null);
   const paused = pausedChoice ?? project?.paused ?? false;
   const toggleTag = (tag: Tag) => {

@@ -4,7 +4,6 @@ import { CreatedApiTokenSchema } from "./types";
 
 interface CreateApiTokenInput {
   name: string;
-  // null = never expires
   expiresInDays: number | null;
 }
 

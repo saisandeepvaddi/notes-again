@@ -31,7 +31,6 @@ import { useNotesViewMode, type NotesViewMode } from "./useNotesViewMode";
 export const DEFAULT_PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 300;
 const DEFAULT_SORT: { key: NotesSort; order: NotesSortOrder } = { key: "due", order: "asc" };
-// The `date` search param's format: a local calendar day.
 const DATE_PARAM_FORMAT = "yyyy-MM-dd";
 
 interface NotesListProps {
@@ -128,13 +127,9 @@ function NotesList({
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
 }: NotesListProps) {
-  // parseISO reads a bare yyyy-MM-dd as local midnight, matching how it's written.
   const noteDate = date ? parseISO(date) : undefined;
   const [mode, setMode] = useNotesViewMode();
   const isMobile = useIsMobile();
-  // A data table isn't a mobile-native pattern and there's no room for 6
-  // columns on a phone screen -- force the card grid there regardless of
-  // the stored preference, and don't offer the toggle at all.
   const effectiveMode = isMobile ? "grid" : mode;
   const { data: projects = [] } = useProjects();
   const navigate = useNavigate();
@@ -144,16 +139,9 @@ function NotesList({
       search: (prev) => ({ ...prev, date: next && format(next, DATE_PARAM_FORMAT) }),
     });
   const activeProject = projects.find((project) => project.id === projectId);
-  // Sorting happens on the server (the list is paged, so a client-side sort
-  // would only reorder whatever pages happen to be loaded). Both views share
-  // it; the grid just has no headers to change it from. No `sort` param = no
-  // column sort chosen: the server's default (soonest review first), and no
-  // header shows an arrow.
   const sortKey = sort ?? DEFAULT_SORT.key;
   const sortOrder = sort ? (order ?? "asc") : DEFAULT_SORT.order;
 
-  // The search box updates the URL (and thus the server query) debounced, so
-  // typing doesn't fire a request or a history entry per keystroke.
   const [searchInput, setSearchInput] = useState(search ?? "");
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => setSearchInput(search ?? ""), [search]);
@@ -204,8 +192,6 @@ function NotesList({
       }),
   };
   const selection = useNoteSelection(notes.map((note) => note.id));
-  // A selection is about the notes on screen: a different filter is a
-  // different set of notes, so don't carry ticks (some now off-screen) over.
   const { clear: clearSelection } = selection;
   useEffect(() => {
     clearSelection();
@@ -225,7 +211,6 @@ function NotesList({
       });
     }
   };
-  // Header clicks cycle asc -> desc -> unsorted (back to the default order).
   const onSortChange = (key: NotesSort) =>
     navigate({
       to: "/notes",
@@ -298,11 +283,7 @@ function NotesList({
       ) : notes.length === 0 ? (
         <p className="text-muted-foreground">
           {tagId != null || projectId != null || noteDate != null || search || status
-            ? // Distinct from the true-empty message below: zero matches for
-              // a filter doesn't mean the collection itself is empty, and
-              // saying so would send someone hunting for a "New Note" button
-              // to fix a problem that's actually just an active filter.
-              "No notes match this filter."
+            ? "No notes match this filter."
             : "No notes yet — capture one with New Note above, or from the browser extension."}
         </p>
       ) : (
@@ -314,7 +295,6 @@ function NotesList({
                 : `${total.toLocaleString()} note${total === 1 ? "" : "s"}`}
             </p>
           )}
-          {/* Dimmed (not blanked) while a new filter/sort loads over the old rows. */}
           <div className={cn("transition-opacity", isPlaceholderData && "opacity-60")}>
             {effectiveMode === "table" ? (
               <NotesTable

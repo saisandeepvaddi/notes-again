@@ -30,8 +30,6 @@ class Tag(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     created_at: datetime.datetime = Field(default_factory=utcnow)
 
-    # difficulty tags (Easy/Medium/Hard) are seeded built-ins, sticky on every
-    # note, and set a note's starting SM-2 ease factor when applied
     is_difficulty: bool = Field(default=False)
     default_ease_factor: float | None = Field(default=None)
 
@@ -39,19 +37,12 @@ class Tag(SQLModel, table=True):
 
 
 class Project(SQLModel, table=True):
-    """A note's grouping -- a separate concept from tags, not a kind of tag:
-    its own name namespace, its own table, one per note (a foreign key on
-    Note, not a many-to-many)."""
-
     __tablename__ = "projects"  # type: ignore
     id: int = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
     created_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
-    # whether notes created in this project start paused -- only a default
-    # for new notes (pre-checked "Paused" box), never read by the review
-    # queue itself; Note.paused_at is the only source of truth for that
     paused: bool = Field(default=False)
 
     notes: list["Note"] = Relationship(back_populates="project")
@@ -66,30 +57,15 @@ class Note(SQLModel, table=True):
     updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
 
-    # set while the note is paused: kept as a note (reference material, a
-    # deck imported for later) but left out of review. Its reminder and
-    # scheduling state are untouched, so pausing is fully reversible.
     paused_at: datetime.datetime | None = Field(default=None)
 
-    # spaced-repetition state (SM-2-lite), advanced on each review
     ease_factor: float = Field(default=2.5)
     interval_days: int = Field(default=0)
 
-    # which scheduler produced this note's ease_factor/interval_days (sm2)
-    # or fsrs_card (fsrs) state -- permanent once set at creation,
-    # independent of Settings.default_algorithm, which only decides what
-    # NEW notes get. Existing notes must never be reinterpreted under a
-    # different algorithm just because the global default changed.
-    algorithm: str = Field(default="sm2")  # Literal["sm2", "fsrs"]
+    algorithm: str = Field(default="sm2")
 
-    # serialized fsrs.Card (via Card.to_json()/from_json()), only
-    # populated/consulted when algorithm == "fsrs". Kept as one opaque
-    # blob rather than exploded into columns -- nothing in this app
-    # queries FSRS's internal fields individually, and due dates live on
-    # Reminder.remind_at same as they do for SM-2 notes.
     fsrs_card: str | None = Field(default=None)
 
-    # 1 is default_user's user_id
     user_id: int | None = Field(default=1, foreign_key="users.id")
     user: User | None = Relationship(back_populates="notes")
     reminders: list["Reminder"] = Relationship(
@@ -112,11 +88,8 @@ class Reminder(SQLModel, table=True):
     reviewed_at: datetime.datetime | None = Field(default=None)
     rating: str | None = Field(default=None)
 
-    # snapshot of the note's SM-2 state before this reminder was created, used to undo a review
     ease_factor: float | None = Field(default=None)
     interval_days: int | None = Field(default=None)
-    # same idea for fsrs notes: the note's fsrs_card before this reminder
-    # was created
     fsrs_card: str | None = Field(default=None)
 
     note_id: int | None = Field(default=None, foreign_key="notes.id")
@@ -124,30 +97,18 @@ class Reminder(SQLModel, table=True):
 
 
 class Settings(SQLModel, table=True):
-    """Single global row (id fixed at 1) for app-wide preferences -- today
-    just which scheduling algorithm new notes are created with."""
-
     __tablename__ = "settings"  # type: ignore
     id: int = Field(default=1, primary_key=True)
-    default_algorithm: str = Field(default="fsrs")  # Literal["sm2", "fsrs"]
+    default_algorithm: str = Field(default="fsrs")
 
 
 class ApiToken(SQLModel, table=True):
-    """A personal access token for clients that can't do an interactive
-    sign-in (the browser extension). Only the SHA-256 of the token is stored,
-    so a database leak or backup can't be replayed as a credential; the
-    plaintext is shown once, when the token is created."""
-
     __tablename__ = "api_tokens"  # type: ignore
     id: int = Field(default=None, primary_key=True)
     name: str
     token_hash: str = Field(unique=True, index=True)
-    # Non-secret leading characters, so a token can be recognised in the list.
     prefix: str
-    # What the token may do; see tokens.service.SCOPE_ROUTES.
     scope: str = Field(default="capture")
-    # Who minted it. If that account is later removed from ALLOWED_EMAILS,
-    # its tokens stop working too.
     created_by: str | None = Field(default=None)
     created_at: datetime.datetime = Field(default_factory=utcnow)
     last_used_at: datetime.datetime | None = Field(default=None)

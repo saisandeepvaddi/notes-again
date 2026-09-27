@@ -1,8 +1,3 @@
-/*
- * Hand-written on purpose: the dialog renders inside a shadow root on
- * arbitrary pages, and Tailwind v4's @property-based utilities don't work
- * there. Everything is scoped under .nl-root.
- */
 .nl-root,
 .nl-root * {
   box-sizing: border-box;
@@ -316,7 +311,6 @@
   justify-content: flex-start;
 }
 
-/* Options page */
 .nl-options {
   max-width: 560px;
   margin: 0 auto;

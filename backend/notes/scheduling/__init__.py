@@ -1,7 +1,3 @@
-"""Dispatches per-review scheduling to whichever algorithm a note was
-created under (Note.algorithm) -- the one place notes/router.py needs to
-branch on algorithm at all."""
-
 import datetime
 
 from db.models import Note, Reminder, utcnow
@@ -21,25 +17,18 @@ __all__ = [
 
 
 def new_note_scheduling_state(algorithm: Algorithm) -> dict:
-    """Extra fields to set on a just-created Note, beyond what
-    apply_difficulty already seeds (ease_factor, for sm2)."""
     if algorithm == "fsrs":
         return {"fsrs_card": new_card_json()}
     return {}
 
 
 def snapshot_for_new_reminder(note: Note) -> dict:
-    """Fields to stamp onto a newly-created pending Reminder so a future
-    review of it can be undone back to the note's current state."""
     if note.algorithm == "fsrs":
         return {"fsrs_card": note.fsrs_card}
     return {"ease_factor": note.ease_factor, "interval_days": note.interval_days}
 
 
 def review_note(note: Note, rating: Rating) -> datetime.datetime:
-    """Applies `rating` to `note`'s scheduling state in place; returns the
-    next reminder's due datetime. Caller creates the next Reminder (via
-    snapshot_for_new_reminder) and commits."""
     if note.algorithm == "fsrs":
         if note.fsrs_card is None:
             raise ValueError(f"FSRS note {note.id} missing fsrs_card")
@@ -54,8 +43,6 @@ def review_note(note: Note, rating: Rating) -> datetime.datetime:
 
 
 def restore_from_snapshot(note: Note, reminder: Reminder) -> None:
-    """Undo: restores note's scheduling state from the pre-review snapshot
-    stored on `reminder` (the reviewed reminder being undone)."""
     if note.algorithm == "fsrs":
         if reminder.fsrs_card is not None:
             note.fsrs_card = reminder.fsrs_card

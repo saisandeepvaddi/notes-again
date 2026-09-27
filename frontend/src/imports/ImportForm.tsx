@@ -79,7 +79,6 @@ export function ImportForm() {
   const perDayNumber = Number.parseInt(perDay, 10);
   const perDayValid = Number.isInteger(perDayNumber) && perDayNumber >= 0 && perDayNumber <= 1000;
 
-  // Any change to the input or options makes an earlier preview stale.
   const edit = () => {
     setPreview(null);
     setError(null);

@@ -4,8 +4,6 @@ import { z } from "zod";
 import { NoteItemSchema } from "../new-note-form/types";
 import type { GroupKind } from "./useDeleteGroup";
 
-// Pausing keeps notes out of review (and resuming brings them back): every
-// note-derived view and the per-project/tag paused counts are stale.
 function invalidatePausing(client: QueryClient) {
   for (const key of ["notes", "due-notes", "notes-calendar", "projects", "tags"]) {
     client.invalidateQueries({ queryKey: [key] });
@@ -17,12 +15,10 @@ export const PauseResultSchema = z.object({ affected: z.number() });
 export const ResumeResultSchema = z.object({
   affected: z.number(),
   due_today: z.number(),
-  // days the never-reviewed notes were spread over (0 = none were)
   days_span: z.number(),
 });
 export type ResumeResult = z.infer<typeof ResumeResultSchema>;
 
-// Same default as import's "new notes per day".
 export const DEFAULT_RESUME_PER_DAY = 10;
 
 export function resumeBody(perDay: number) {
@@ -52,8 +48,6 @@ export function useSetNotePaused(noteId: number) {
 
 const GROUP_ENDPOINTS: Record<GroupKind, string> = { project: "/projects", tag: "/tags" };
 
-// Pausing a project also makes new notes in it start paused; resuming turns
-// that off. A tag has no such default (a note can carry many tags).
 export function usePauseGroup(kind: GroupKind) {
   return useMutation({
     mutationKey: ["pause-group", kind],

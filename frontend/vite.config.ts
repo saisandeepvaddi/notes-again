@@ -21,8 +21,6 @@ const config = defineConfig(() => {
       }),
       tailwindcss(),
       tanstackStart({
-        // Build a client-only SPA: a prerendered index.html shell plus client
-        // assets, served by the FastAPI backend. No Node server in production.
         spa: { enabled: true, prerender: { outputPath: "/index" } },
       }),
       react({

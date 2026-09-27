@@ -12,8 +12,6 @@ from db.setup import SessionDep
 from .schema import CreatedTokenResponse, TokenResponse
 from .service import CAPTURE_SCOPE, display_prefix, generate_token, hash_token
 
-# Managing tokens needs a real sign-in: a token must never be able to mint or
-# revoke tokens, or a leaked one could outlive its own revocation.
 router = APIRouter(prefix="/tokens", tags=["tokens"], dependencies=[Depends(require_session_user)])
 
 
@@ -29,7 +27,6 @@ def list_tokens(session: SessionDep):
 
 class NewTokenBody(BaseModel):
     name: str = Field(max_length=80)
-    # None = never expires.
     expires_in_days: int | None = Field(default=None, ge=1, le=3650)
 
 

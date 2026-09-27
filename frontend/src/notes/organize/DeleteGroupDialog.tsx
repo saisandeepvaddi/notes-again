@@ -23,7 +23,6 @@ interface DeleteGroupDialogProps {
   id: number;
   name: string;
   noteCount: number;
-  // The button that opens the dialog.
   trigger: ReactElement;
 }
 
@@ -48,8 +47,6 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
     if (next) {
       setDeleteNotes(false);
       setDeleteUnusedTags(false);
-      // The count shown is what "delete its notes" will act on, so make sure
-      // it's current (notes are added/trashed elsewhere without touching it).
       void queryClient.invalidateQueries({ queryKey: [kind === "project" ? "projects" : "tags"] });
     }
   };
@@ -63,7 +60,6 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
       });
       setOpen(false);
       if (isFiltered) {
-        // The list being viewed is filtered by the thing that no longer exists.
         void navigate({ to: "/notes", search: (prev) => ({ ...prev, [searchKey]: undefined }) });
       }
       const parts = [`Deleted ${kind} "${name}"`];
@@ -127,8 +123,6 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
           </label>
         )}
         {kind === "project" && deleteNotes && noteCount > 0 && (
-          // Only meaningful once the notes are going: a tag left with no
-          // notes is what an import leaves behind when its deck is deleted.
           <label className="flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm">
             <Checkbox
               className="mt-0.5"

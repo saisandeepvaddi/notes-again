@@ -29,12 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# In production the SPA is served same-origin by this app, so no CORS is needed.
-# For local dev the Vite server is a separate origin — set CORS_ORIGINS
-# (comma-separated), e.g. "http://localhost:5173,http://192.168.1.11:5173".
 cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
-# In dev the frontend can be reached over the LAN (phone, other machines) on an
-# IP that isn't known ahead of time, so allow any private-network origin too.
 cors_origin_regex = os.environ.get("CORS_ORIGIN_REGEX") or None
 if cors_origins or cors_origin_regex:
     app.add_middleware(
@@ -53,8 +48,6 @@ app.include_router(router=api_router, tags=["api"])
 async def healthz() -> dict:
     return {"status": "ok"}
 
-# The built SPA (frontend/dist/client after `pnpm build`): an index.html shell
-# plus /assets/*. Absent in pure API-dev mode, where Vite serves the frontend.
 default_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist" / "client"
 frontend_dist = Path(os.environ.get("FRONTEND_DIST", default_dist))
 index_file = frontend_dist / "index.html"

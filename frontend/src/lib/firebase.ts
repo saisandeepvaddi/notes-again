@@ -7,9 +7,6 @@ const config = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
 };
 
-// Auth is active only when Firebase is configured. Local dev leaves these unset
-// (the backend runs with AUTH_DISABLED=1); a production build without them is a
-// misconfiguration, so fail loudly rather than shipping an unauthenticated app.
 export const firebaseEnabled = Boolean(config.apiKey && config.authDomain && config.projectId);
 
 if (import.meta.env.PROD && !firebaseEnabled && typeof window !== "undefined") {

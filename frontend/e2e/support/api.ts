@@ -1,8 +1,5 @@
 import type { APIRequestContext } from "@playwright/test";
 
-// The frontend talks to the backend on its own port (no dev proxy — see
-// utils/fetchers.ts), so tests that want to seed data directly (skipping a
-// UI flow that isn't what the test is about) hit it the same way.
 export const API_URL = "http://127.0.0.1:8210/api";
 
 export function uniqueName(prefix: string) {

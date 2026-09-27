@@ -1,14 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { createNote, uniqueName } from "./support/api";
 
-// MDXEditor exposes its contenteditable region as a textbox named "editable
-// markdown"; there's only ever one per page.
 const contentEditor = (page: import("@playwright/test").Page) =>
   page.getByRole("textbox", { name: "editable markdown" });
 
-// Keyed by its label rather than position: routes are code-split, so right
-// after a URL assertion a plain `input().first()` can still catch the
-// previous page's own first input mid-transition.
 const noteDetailNameInput = (page: import("@playwright/test").Page) =>
   page.getByLabel("Note title");
 
@@ -23,25 +18,20 @@ test.describe("note lifecycle", () => {
     await page.keyboard.type("Original content for the CRUD test.");
     await page.getByRole("button", { name: "Create" }).click();
 
-    // Creating redirects to the list; the new note shows up there.
     await expect(page).toHaveURL(/\/notes$/);
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
 
     await page.getByRole("link", { name, exact: true }).click();
     await expect(page).toHaveURL(/\/notes\/\d+$/);
-    // Unique to the (fully mounted) detail page -- waiting for it rules out
-    // still being mid-transition from the list page before editing below.
     await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await expect(page.getByText("Original content for the CRUD test.")).toBeVisible();
 
-    // Editing autosaves (debounced) rather than needing an explicit save action.
     await noteDetailNameInput(page).fill(editedName);
     await contentEditor(page).click();
     await page.keyboard.press("Control+A");
     await page.keyboard.type("Edited content for the CRUD test.");
     await expect(page.getByText("Saved", { exact: true })).toBeVisible({ timeout: 5000 });
 
-    // Persisted, not just in local state.
     await page.reload();
     await expect(noteDetailNameInput(page)).toHaveValue(editedName);
     await expect(page.getByText("Edited content for the CRUD test.")).toBeVisible();
@@ -62,7 +52,6 @@ test.describe("note lifecycle", () => {
     await page.goto("/notes");
     await expect(page.getByRole("link", { name: editedName, exact: true })).toBeVisible();
 
-    // Trash it again so it can be permanently removed.
     await page.getByRole("link", { name: editedName, exact: true }).click();
     await page.getByRole("button", { name: "Delete", exact: true }).click();
     await page.goto("/trash");

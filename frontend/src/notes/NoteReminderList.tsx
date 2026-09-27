@@ -12,11 +12,7 @@ import { UndoMarkableReminder } from "./UndoMarkableReminder";
 interface NoteReminderListProps {
   noteId: number;
   reminders: NoteReminderType[];
-  // Card view: just the one actionable/status badge, none of the secondary
-  // controls (undo, reschedule, review history) -- those live on the note's
-  // own page.
   compact?: boolean;
-  // Paused notes aren't in review, so there's nothing due to mark or move.
   paused?: boolean;
 }
 
@@ -60,8 +56,6 @@ export function NoteReminderList({
         <Popover>
           <PopoverTrigger
             render={
-              // Icon + count rather than "N reviewed": the full label was the
-              // piece that pushed table rows onto a second line.
               <Button
                 size="sm"
                 variant={"outline"}

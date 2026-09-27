@@ -9,7 +9,6 @@ test.describe("link editing", () => {
     });
 
     await page.goto(`/notes/${note.id}`);
-    // Putting the caret inside the link opens the preview popover.
     await page.getByRole("link", { name: "Google" }).click();
     const popover = page.locator('[data-slot="popover-content"]');
     await expect(popover.getByRole("link", { name: "https://google.com" })).toBeVisible();

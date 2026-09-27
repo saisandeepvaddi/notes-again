@@ -19,13 +19,6 @@ def build_note(
     first_reminder_at: datetime.datetime,
     paused: bool = False,
 ) -> Note:
-    """Builds a fully-formed new Note (not yet added to a session): exactly one
-    difficulty tag, ease factor seeded from it, algorithm-specific scheduling
-    state, and its single pending Reminder. Shared by note creation and bulk
-    import so the two can't drift apart.
-
-    `tags` must not contain difficulty tags -- callers filter them out.
-    """
     note = Note(
         name=name,
         content=content,

@@ -43,7 +43,7 @@ describe("normalizeBaseUrl", () => {
   it("refuses plain http to a public host, since the API token would travel unencrypted", () => {
     expect(() => normalizeBaseUrl("http://notes.example.com")).toThrow(/Use https/);
     expect(() => normalizeBaseUrl("http://8.8.8.8")).toThrow(/Use https/);
-    expect(() => normalizeBaseUrl("http://172.32.0.1")).toThrow(/Use https/); // just outside 172.16/12
+    expect(() => normalizeBaseUrl("http://172.32.0.1")).toThrow(/Use https/);
     expect(() => normalizeBaseUrl("http://192.169.1.1")).toThrow(/Use https/);
   });
 });

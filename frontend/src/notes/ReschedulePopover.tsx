@@ -10,9 +10,6 @@ interface ReschedulePopoverProps {
   currentRemindAt: Date;
 }
 
-// Every note has exactly one upcoming reminder; this moves it to any day —
-// "today" for something you want to review right now even though it's not
-// naturally due, or any other date to push it out/pull it in.
 export function ReschedulePopover({ noteId, currentRemindAt }: ReschedulePopoverProps) {
   const [open, setOpen] = useState(false);
   const reschedule = useRescheduleReminder({ noteId });

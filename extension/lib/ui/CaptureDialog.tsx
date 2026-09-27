@@ -7,7 +7,6 @@ import { Combobox } from "./Combobox";
 
 export interface CaptureDialogProps {
   ctx: CaptureContext;
-  /** `overlay`: floating over a page. `window`: fills a popup window. */
   variant: "overlay" | "window";
   onClose: () => void;
 }
@@ -34,7 +33,6 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [lookups, setLookups] = useState<LookupState>({ state: "loading" });
   const [save, setSave] = useState<SaveState>({ state: "idle" });
-  // Don't let the late-arriving "last used project" overwrite a choice the user already made.
   const projectTouched = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -102,7 +100,6 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
       className={rootClass}
       onKeyDown={onKeyDown}
       onMouseDown={(e) => {
-        // Click on the dim area closes, but only if nothing would be lost.
         if (variant === "overlay" && e.target === e.currentTarget && !dirty && save.state !== "saving") {
           onClose();
         }

@@ -9,7 +9,6 @@ interface Call {
   auth: string | null;
 }
 
-/** Fake server: routes by "METHOD /path" and records every call. */
 function fakeServer(routes: Record<string, (body: any) => { status?: number; json: unknown }>) {
   const calls: Call[] = [];
   const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -46,11 +45,9 @@ describe("saveNote", () => {
     });
 
     expect(saved).toEqual({ id: 99, name: "A post" });
-    // "rust" and "Rust" are one tag: created once.
     const tagCalls = calls.filter((c) => c.path === "/api/tags/create");
     expect(tagCalls.map((c) => c.body)).toEqual([{ name: "rust" }, { name: "web" }]);
     expect(calls.find((c) => c.path === "/api/projects/create")?.body).toEqual({ name: "Reading" });
-    // The note is created last, with ids from the earlier calls.
     expect(calls.at(-1)).toMatchObject({
       path: "/api/notes/create",
       body: { name: "A post", content: "https://a.dev\n\nbody", tag_ids: [1, 2], project_id: 7 },

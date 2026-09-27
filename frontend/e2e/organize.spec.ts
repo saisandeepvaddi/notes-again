@@ -1,8 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createNote, createProject, createTag, uniqueName } from "./support/api";
 
-// A project/tag chip once picked (as opposed to the same name showing up in
-// a still-mounted popover option, or a sidebar link) is rendered as a Badge.
 const chip = (page: Page, text: string) =>
   page.locator('[data-slot="badge"]').filter({ hasText: text });
 
@@ -38,7 +36,6 @@ test.describe("projects and tags", () => {
     const tagRow = page.locator("li").filter({ hasText: tagName });
     await expect(tagRow.getByText("1 note", { exact: true })).toBeVisible();
 
-    // The note count is a link back into the filtered notes list.
     await projectRow.getByText("1 note", { exact: true }).click();
     await expect(page).toHaveURL(/\/notes\?.*projectId=/);
     await expect(page.getByRole("link", { name: noteName, exact: true })).toBeVisible();
@@ -63,15 +60,8 @@ test.describe("projects and tags", () => {
     await page.getByPlaceholder("Search or create tag...").fill(tagName);
     await page.getByRole("option", { name: `Create "${tagName}"` }).click();
     await expect(chip(page, tagName)).toBeVisible();
-    // Creating a tag (unlike a project) doesn't close its picker popover --
-    // it stays open over the rest of the page until dismissed.
     await page.keyboard.press("Escape");
 
-    // Difficulty starts at Medium (the default); change it and confirm the
-    // badge reflects it. The badge's own text is the lowercase enum value
-    // ("medium"/"hard") -- "Medium"/"Hard" is only a CSS capitalize(), not
-    // what's actually in the DOM. The popover's option buttons are real
-    // capitalized labels, so only the badge itself needs the lowercase form.
     await page.getByText("medium", { exact: true }).click();
     await page.getByRole("button", { name: "Hard", exact: true }).click();
     await expect(page.getByText("hard", { exact: true })).toBeVisible();

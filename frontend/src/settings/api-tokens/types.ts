@@ -11,7 +11,6 @@ export const ApiTokenSchema = z.object({
 });
 export type ApiToken = z.infer<typeof ApiTokenSchema>;
 
-// The only response that carries the plaintext token; it is never shown again.
 export const CreatedApiTokenSchema = ApiTokenSchema.extend({ token: z.string() });
 export type CreatedApiToken = z.infer<typeof CreatedApiTokenSchema>;
 

@@ -1,10 +1,3 @@
-"""Bulk note import: parse an uploaded JSON structure, plan what would be
-created, and (optionally) write it.
-
-`plan_import` only reads the database, so a dry run and a real import share
-exactly the same logic -- the preview is what actually gets written.
-"""
-
 import datetime
 from dataclasses import dataclass, field
 from typing import Any
@@ -26,12 +19,12 @@ DIFFICULTIES = ("easy", "medium", "hard")
 
 
 class ImportFileError(ValueError):
-    """The file as a whole is unusable (wrong shape, too big, ...)."""
+    pass
 
 
 @dataclass
 class Row:
-    index: int  # 1-based position in the file (decks first, then loose notes)
+    index: int
     name: str
     content: str
     deck: str | None
@@ -44,14 +37,12 @@ def _key(name: str) -> str:
 
 
 def _text(value: Any) -> str | None:
-    """Stripped non-empty text, or None."""
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
 
 
 def _parse_tags(raw: Any) -> list[str] | None:
-    """A list of names or one comma-separated string; None if malformed."""
     if raw is None:
         return []
     if isinstance(raw, str):
@@ -63,12 +54,8 @@ def _parse_tags(raw: Any) -> list[str] | None:
 
 @dataclass
 class FileRates:
-    """How many of each group's notes become due per day, as the file set them.
-    A deck's own `per_day` beats the file-level one; anything unset falls back
-    to the default chosen at import time."""
-
     default: int | None = None
-    by_deck: dict[str, int] = field(default_factory=dict)  # lowercase deck name -> per_day
+    by_deck: dict[str, int] = field(default_factory=dict)
 
 
 def _parse_per_day(value: Any, where: str) -> int:
@@ -78,10 +65,7 @@ def _parse_per_day(value: Any, where: str) -> int:
 
 
 def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
-    """Flattens the file into ordered rows. Structural problems raise
-    ImportFileError; problems with an individual note become issues and that
-    note is skipped."""
-    entries: list[tuple[str | None, Any]] = []  # (enclosing deck, raw note)
+    entries: list[tuple[str | None, Any]] = []
     rates = FileRates()
 
     if isinstance(payload, list):
@@ -131,7 +115,6 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
             continue
 
         name = _text(item.get("name"))
-        # A note's own "deck" (or "project") wins over the deck it's nested in.
         raw_deck = item.get("deck", item.get("project"))
         deck = _text(raw_deck) or enclosing_deck
         if name is None:
@@ -179,13 +162,12 @@ class PlannedNote:
     deck_key: str | None
     tag_keys: list[str]
     remind_at: datetime.datetime
-    day: int  # 0 = due now
+    day: int
 
 
 @dataclass
 class Plan:
     kept: list[PlannedNote]
-    # first-seen casing for anything that doesn't exist yet, keyed by lowercase
     new_decks: dict[str, str]
     new_tags: dict[str, str]
     existing_decks: dict[str, Project]
@@ -213,7 +195,6 @@ def plan_import(
     deck_key_by_id = {p.id: key for key, p in existing_decks.items()}
     existing_tags = {_key(t.name): t for t in session.exec(select(Tag)).all()}
 
-    # (deck key or None, lowercase name) for every live note, to skip duplicates
     taken: set[tuple[str | None, str]] = set()
     for project_id, name in session.exec(
         select(Note.project_id, func.lower(func.trim(Note.name))).where(
@@ -296,9 +277,6 @@ def plan_import(
         deck_summary.to_create += 1
         kept_rows.append((row, deck_key, tag_keys))
 
-    # Stagger first reviews, per deck: a deck's Nth kept note (in file order)
-    # falls on day N // its per_day (see Pacer). Notes with no deck form their
-    # own group. A paused import isn't staggered -- it's paced when resumed.
     pacer = Pacer(tz_offset_minutes)
     position_in_group: dict[str | None, int] = {}
     kept: list[PlannedNote] = []
@@ -343,10 +321,8 @@ def plan_import(
 
 
 def execute_plan(session: Session, plan: Plan) -> None:
-    """Writes the plan in ONE transaction: all or nothing."""
     decks = dict(plan.existing_decks)
     for key, name in plan.new_decks.items():
-        # a deck brought in paused keeps new captures paused by default too
         project = Project(name=name, paused=plan.paused)
         session.add(project)
         decks[key] = project
@@ -355,7 +331,7 @@ def execute_plan(session: Session, plan: Plan) -> None:
         tag = Tag(name=name)
         session.add(tag)
         tags[key] = tag
-    session.flush()  # assigns ids and surfaces any constraint problem early
+    session.flush()
 
     difficulty_tags = {
         difficulty: tags[_key(defaults.name)] for difficulty, defaults in DIFFICULTY_TAGS.items()

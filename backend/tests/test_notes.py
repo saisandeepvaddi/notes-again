@@ -1,5 +1,7 @@
 import datetime
 
+import pytest
+
 from db.models import utcnow
 
 
@@ -235,3 +237,22 @@ def test_due_notes_only_returns_notes_whose_reminder_is_due(client):
     due_ids = {n["id"] for n in client.get("/api/notes/due").json()["items"]}
     assert due["id"] in due_ids
     assert not_due["id"] not in due_ids
+
+
+@pytest.mark.parametrize(
+    ("name", "query"),
+    [
+        ("Two pointers: **sliding window** with `deque`", "pointers: sliding window with deque"),
+        ("## Hello there", "hello there"),
+        ("Renew passport at [gov.uk](https://www.gov.uk/renew)", "passport at gov.uk"),
+        ("Renew passport at [gov.uk](https://www.gov.uk/renew)", "gov.uk/renew"),
+        ("Read ~~old~~ *new* docs", "old new docs"),
+        ("keep snake_case_names", "snake_case_names"),
+    ],
+)
+def test_list_search_matches_rendered_title_text(client, name, query):
+    match = create(client, name, content="irrelevant")
+    create(client, "Other", content="also irrelevant")
+
+    found = client.get("/api/notes/list", params={"search": query}).json()
+    assert [n["id"] for n in found["items"]] == [match["id"]]

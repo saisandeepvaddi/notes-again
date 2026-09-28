@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2Icon } from "lucide-react";
 import { useState } from "react";
 import { NoteContent } from "../NoteContent";
+import { NoteTitle } from "../NoteTitle";
 import { RatingButtons } from "../RatingButtons";
 import { fetchDueNotes, useDueNotes } from "../notes-list/useDueNotes";
 
@@ -77,7 +78,9 @@ export function ReviewSession() {
     <div className="flex flex-col gap-4 w-full max-w-2xl">
       <p className="text-muted-foreground">{remaining.toLocaleString()} left</p>
       <Card>
-        <CardHeader className="font-serif font-semibold text-xl">{current.name}</CardHeader>
+        <CardHeader className="font-serif font-semibold text-xl">
+          <NoteTitle title={current.name} />
+        </CardHeader>
         <CardContent>
           <NoteContent markdown={current.content} />
         </CardContent>

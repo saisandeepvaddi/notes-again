@@ -10,6 +10,7 @@ import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
+import { NoteTitle, noteTitleText } from "./NoteTitle";
 import { SelectCheckbox, selectionClickCapture } from "./selection/SelectCheckbox";
 
 const MAX_VISIBLE_TAGS = 2;
@@ -28,6 +29,7 @@ interface NoteCardProps {
 export function NoteCard({ note, select }: NoteCardProps) {
   const navigate = useNavigate();
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId: note.id });
+  const titleText = noteTitleText(note.name);
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const visibleTags = regularTags.slice(0, MAX_VISIBLE_TAGS);
   const hiddenTags = regularTags.slice(MAX_VISIBLE_TAGS);
@@ -53,7 +55,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
           {select && (
             <SelectCheckbox
               revealOnHover
-              label={`Select ${note.name}`}
+              label={`Select ${titleText}`}
               checked={select.selected}
               onToggle={select.onToggle}
             />
@@ -61,19 +63,19 @@ export function NoteCard({ note, select }: NoteCardProps) {
           <Tooltip>
             <TooltipTrigger
               render={
-                <h2 className="min-w-0 truncate font-serif font-semibold text-sm">
-                  <Link
-                    to="/notes/$noteId"
-                    params={{ noteId: String(note.id) }}
-                    className="after:absolute after:inset-0 hover:underline"
-                  >
-                    {note.name}
-                  </Link>
-                </h2>
+                <Link
+                  to="/notes/$noteId"
+                  params={{ noteId: String(note.id) }}
+                  aria-label={titleText}
+                  className="peer absolute inset-0"
+                />
               }
             />
-            <TooltipContent>{note.name}</TooltipContent>
+            <TooltipContent>{titleText}</TooltipContent>
           </Tooltip>
+          <h2 className="min-w-0 truncate font-serif font-semibold text-sm peer-hover:underline">
+            <NoteTitle title={note.name} />
+          </h2>
         </div>
         <Button
           size="icon-xs"

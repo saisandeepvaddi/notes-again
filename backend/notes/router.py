@@ -149,7 +149,13 @@ def _list_conditions(
 
     if search:
         term = f"%{search.strip()}%"
-        conditions.append(or_(col(Note.name).ilike(term), col(Note.content).ilike(term)))
+        conditions.append(
+            or_(
+                col(Note.name).ilike(term),
+                func.title_text(Note.name).ilike(term),
+                col(Note.content).ilike(term),
+            )
+        )
 
     if start is not None and end is not None:
         conditions.append(col(Note.paused_at).is_(None))

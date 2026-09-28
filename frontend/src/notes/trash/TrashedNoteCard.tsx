@@ -21,6 +21,7 @@ import { useRestoreNote } from "../hooks/useRestoreNote";
 import type { NoteItem } from "../new-note-form/types";
 import type { CardSelection } from "../NoteCard";
 import { NoteContent } from "../NoteContent";
+import { NoteTitle, noteTitleText } from "../NoteTitle";
 import { SelectCheckbox, selectionClickCapture } from "../selection/SelectCheckbox";
 
 interface TrashedNoteCardProps {
@@ -71,12 +72,14 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
         {select && (
           <SelectCheckbox
             revealOnHover
-            label={`Select ${note.name}`}
+            label={`Select ${noteTitleText(note.name)}`}
             checked={select.selected}
             onToggle={select.onToggle}
           />
         )}
-        <h2 className="truncate font-serif font-semibold text-sm">{note.name}</h2>
+        <h2 className="truncate font-serif font-semibold text-sm">
+          <NoteTitle title={note.name} />
+        </h2>
       </CardHeader>
       <CardContent>
         <div className="relative max-h-28 overflow-hidden">
@@ -103,7 +106,8 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
               </AlertDialogMedia>
               <AlertDialogTitle>Delete forever?</AlertDialogTitle>
               <AlertDialogDescription>
-                This permanently deletes "{note.name}" and its review history. This can't be undone.
+                This permanently deletes "{noteTitleText(note.name)}" and its review history. This
+                can't be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

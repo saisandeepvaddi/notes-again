@@ -9,7 +9,13 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
@@ -45,6 +51,7 @@ import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
 import { markdownExcerpt } from "../markdownExcerpt";
 import { NoteReminderList } from "../NoteReminderList";
+import { NoteTitle, noteTitleText } from "../NoteTitle";
 import type { NoteItem, Project } from "../new-note-form/types";
 import { SelectCheckbox, selectionClickCapture } from "../selection/SelectCheckbox";
 import type { NoteSelection } from "../selection/useNoteSelection";
@@ -223,7 +230,9 @@ export function NotesTable({
   const { data: allTags = [] } = useTags();
   const tagOptions = allTags.filter((tag) => !tag.is_difficulty);
   const difficultyOptions = DIFFICULTY_OPTIONS.flatMap(({ label }) => {
-    const tag = allTags.find((t) => t.is_difficulty && t.name.toLowerCase() === label.toLowerCase());
+    const tag = allTags.find(
+      (t) => t.is_difficulty && t.name.toLowerCase() === label.toLowerCase(),
+    );
     return tag ? [{ id: tag.id, name: label }] : [];
   });
   const difficultyFilterActive = difficultyOptions.some((option) => option.id === activeTagId);
@@ -233,14 +242,17 @@ export function NotesTable({
     columnHelper.accessor("name", {
       header: "Note",
       cell: (info) => (
-        <div className="relative truncate" title={info.getValue()}>
+        <div className="relative truncate" title={noteTitleText(info.getValue())}>
           <Link
             to="/notes/$noteId"
             params={{ noteId: String(info.row.original.id) }}
-            className="font-serif font-medium after:absolute after:inset-0 hover:underline"
-          >
-            {info.getValue()}
-          </Link>
+            aria-label={noteTitleText(info.getValue())}
+            className="peer absolute inset-0"
+          />
+          <NoteTitle
+            title={info.getValue()}
+            className="font-serif font-medium peer-hover:underline"
+          />
         </div>
       ),
     }),
@@ -263,7 +275,10 @@ export function NotesTable({
       cell: (info) => {
         const difficulty = getDifficulty(info.row.original.tags);
         return (
-          <Badge variant="outline" className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}>
+          <Badge
+            variant="outline"
+            className={cn("capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}
+          >
             {difficulty}
           </Badge>
         );
@@ -347,7 +362,8 @@ export function NotesTable({
     getCoreRowModel: getCoreRowModel(),
   });
   const rows = table.getRowModel().rows;
-  const allLoadedSelected = notes.length > 0 && notes.every((note) => selection.isSelected(note.id));
+  const allLoadedSelected =
+    notes.length > 0 && notes.every((note) => selection.isSelected(note.id));
 
   const { page, pageSize, total, onPageChange, onPageSizeChange } = pagination;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -367,7 +383,9 @@ export function NotesTable({
                     checked={allLoadedSelected}
                     indeterminate={selection.count > 0 && !allLoadedSelected}
                     onToggle={() =>
-                      selection.count > 0 ? selection.clear() : selection.replace(notes.map((n) => n.id))
+                      selection.count > 0
+                        ? selection.clear()
+                        : selection.replace(notes.map((n) => n.id))
                     }
                   />
                 </TableHead>
@@ -452,7 +470,7 @@ export function NotesTable({
                 >
                   <TableCell>
                     <SelectCheckbox
-                      label={`Select ${row.original.name}`}
+                      label={`Select ${noteTitleText(row.original.name)}`}
                       checked={selected}
                       onToggle={toggle}
                     />
@@ -476,7 +494,10 @@ export function NotesTable({
               : `${firstRow.toLocaleString()}–${lastRow.toLocaleString()} of ${total.toLocaleString()}`}
           </span>
           <Select
-            items={PAGE_SIZE_OPTIONS.map((size) => ({ value: String(size), label: `${size} / page` }))}
+            items={PAGE_SIZE_OPTIONS.map((size) => ({
+              value: String(size),
+              label: `${size} / page`,
+            }))}
             value={String(pageSize)}
             onValueChange={(value) => value && onPageSizeChange(Number(value))}
           >

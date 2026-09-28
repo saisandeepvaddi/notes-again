@@ -5,11 +5,12 @@ from pathlib import Path
 from typing import Annotated, Any, cast
 
 from fastapi import Depends, Request
-from sqlalchemy import Engine, func, inspect, text
+from sqlalchemy import Engine, event, func, inspect, text
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from db.models import Note, Reminder, Settings, Tag, User
+from notes.title_text import markdown_title_text
 from tags.difficulty import DIFFICULTY_TAGS
 
 logging.basicConfig(level=logging.INFO)
@@ -191,6 +192,12 @@ def get_session(request: Request):
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
+def _register_sql_functions(dbapi_connection, _connection_record) -> None:
+    dbapi_connection.create_function(
+        "title_text", 1, markdown_title_text, deterministic=True
+    )
+
+
 def setup_db() -> Engine | None:
     try:
         db_path = get_sqlite_db_file_path()
@@ -199,6 +206,7 @@ def setup_db() -> Engine | None:
         sqlite_path = f"sqlite:///{db_path}"
         log.info(f"Database {sqlite_path=}")
         engine = create_engine(url=sqlite_path, connect_args=connect_args)
+        event.listen(engine, "connect", _register_sql_functions)
         create_db_and_tables(engine=engine)
         log.info("DB setup completed")
         return engine

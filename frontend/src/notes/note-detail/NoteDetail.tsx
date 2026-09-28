@@ -20,6 +20,7 @@ import { MarkdownEditor } from "../MarkdownEditor";
 import type { Tag } from "../new-note-form/types";
 import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteReminderList } from "../NoteReminderList";
+import { NoteTitle } from "../NoteTitle";
 import { ProjectPicker } from "../ProjectPicker";
 import { TagPicker } from "../TagPicker";
 
@@ -40,6 +41,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const { mutateAsync: setPaused, isPending: isPausing } = useSetNotePaused(noteId);
 
   const [name, setName] = useState(note.name);
+  const [editingTitle, setEditingTitle] = useState(false);
   const [content, setContent] = useState(note.content);
   const [justSaved, setJustSaved] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,6 +53,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
 
   useEffect(() => {
     setName(note.name);
+    setEditingTitle(false);
     setContent(note.content);
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,12 +143,35 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
         </div>
       </div>
 
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        aria-label="Note title"
-        className="h-auto border-transparent bg-transparent px-2 py-1 font-serif text-lg font-semibold hover:border-input hover:bg-input/20 focus-visible:border-input focus-visible:bg-input/20 md:text-lg dark:bg-transparent dark:hover:bg-input/30 dark:focus-visible:bg-input/30"
-      />
+      {editingTitle ? (
+        <Input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => setEditingTitle(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+          }}
+          aria-label="Note title"
+          className="h-auto border-input bg-input/20 px-2 py-1 font-serif text-lg font-semibold md:text-lg dark:bg-input/30"
+        />
+      ) : (
+        <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
+          <button
+            type="button"
+            aria-label="Edit title"
+            onClick={() => setEditingTitle(true)}
+            className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+          />
+          <h1 className="font-serif text-lg leading-7 font-semibold wrap-break-word">
+            {name.trim() ? (
+              <NoteTitle title={name} />
+            ) : (
+              <span className="text-muted-foreground">Untitled</span>
+            )}
+          </h1>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {isPaused && (

@@ -80,7 +80,7 @@ def test_export_carries_decks_notes_and_review_state(client):
     seed_library(client)
     data = export(client)
 
-    assert data["format"] == "note-and-learn"
+    assert data["format"] == "notes-again"
     assert data["version"] == 1
     [deck] = data["decks"]
     assert deck["name"] == "Leetcode"

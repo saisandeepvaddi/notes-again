@@ -11,7 +11,7 @@ from tags.difficulty import DIFFICULTY_TAGS
 from .review_state import export_review
 from .schema import ExportCount, ExportRequest
 
-EXPORT_FORMAT = "note-and-learn"
+EXPORT_FORMAT = "notes-again"
 EXPORT_VERSION = 1
 
 _DIFFICULTY_BY_TAG = {

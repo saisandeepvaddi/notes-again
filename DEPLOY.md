@@ -10,14 +10,14 @@ SQLite lives on a mounted volume; Litestream streams it to Cloudflare R2.
   (`index.html` + `assets/`). No Node server at runtime.
 - **Backend** — `uvicorn --app-dir backend main:app`. Serves `/api/*`, and
   everything else falls back to the SPA `index.html`.
-- **DB** — `DB_PATH` env var (default `/data/note-and-learn.db`).
+- **DB** — `DB_PATH` env var (default `/data/notes-again.db`).
 - **Backups** — `docker-entrypoint.sh` runs the app under
   `litestream replicate` when R2 creds are present, and restores from R2 on
   first boot if the volume is empty.
 
 ## One-time setup
 
-1. **Cloudflare R2** — create a bucket (e.g. `note-and-learn-backups`) and an
+1. **Cloudflare R2** — create a bucket (e.g. `notes-again-backups`) and an
    R2 API token with *Object Read & Write*. That gives you an S3-style
    access key id + secret and an account-scoped endpoint
    (`<account-id>.r2.cloudflarestorage.com`).
@@ -54,19 +54,19 @@ resolve to the box's real network stack, i.e. the same `127.0.0.1:8000` that
 
 (Alternative: keep `cloudflared` off host networking and instead attach it to
 the app's compose network — `docker network ls`, usually
-`note-and-learn_default` — then point the tunnel's origin at `http://app:8000`,
+`notes-again_default` — then point the tunnel's origin at `http://app:8000`,
 the compose service name, instead of `localhost`.)
 
 ### Seeding from your current local DB
 
 Your dev DB is at
-`~/Library/Application Support/note-and-learn/note-and-learn.db`. To carry it
+`~/Library/Application Support/notes-again/notes-again.db`. To carry it
 over, copy it into the volume before first start:
 
 ```sh
-docker volume create note-and-learn_db
-docker run --rm -v note-and-learn_db:/data -v "$HOME/Library/Application Support/note-and-learn":/src alpine \
-  cp /src/note-and-learn.db /data/note-and-learn.db
+docker volume create notes-again_db
+docker run --rm -v notes-again_db:/data -v "$HOME/Library/Application Support/notes-again":/src alpine \
+  cp /src/notes-again.db /data/notes-again.db
 ```
 
 (Or just let it start fresh — the migration + seed steps run on boot.)
@@ -143,7 +143,7 @@ tokens**; it is shown once, so copy it straight into the tool.
 
 ```sh
 docker compose run --rm --entrypoint "" app \
-  litestream restore -config /etc/litestream.yml -o /data/restored.db /data/note-and-learn.db
+  litestream restore -config /etc/litestream.yml -o /data/restored.db /data/notes-again.db
 ```
 
 ## Local dev (unchanged)

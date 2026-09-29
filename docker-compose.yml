@@ -1,3 +1,5 @@
+name: notes-again
+
 services:
   app:
     build:
@@ -7,7 +9,7 @@ services:
         VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
         VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
         VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
-    image: note-and-learn
+    image: notes-again
     ports:
       # Bound to loopback: reach it only via the reverse proxy / tunnel.
       - "127.0.0.1:8000:8000"

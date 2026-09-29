@@ -56,7 +56,7 @@ COPY litestream.yml /etc/litestream.yml
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
-ENV DB_PATH=/data/note-and-learn.db \
+ENV DB_PATH=/data/notes-again.db \
     FRONTEND_DIST=/app/frontend/dist/client \
     PORT=8000
 VOLUME ["/data"]

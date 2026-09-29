@@ -15,7 +15,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 ## Running locally
 
-- Backend: `AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 backend/.venv/bin/uvicorn --app-dir backend main:app --reload`. The repo-root `.env` holds container/production values (`DB_PATH=/data/...`, secrets); keep it out of local runs. With `DB_PATH` unset, the DB lives in the OS app-data dir (`~/Library/Application Support/note-and-learn/` on macOS).
+- Backend: `AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 backend/.venv/bin/uvicorn --app-dir backend main:app --reload`. The repo-root `.env` holds container/production values (`DB_PATH=/data/...`, secrets); keep it out of local runs. With `DB_PATH` unset, the DB lives in the OS app-data dir (`~/Library/Application Support/notes-again/` on macOS).
 - Frontend: `pnpm dev` in `frontend/` (port 5273). `frontend/.env` sets `VITE_SERVER_IP`/`VITE_SERVER_PORT` for the API; empty `VITE_FIREBASE_*` vars disable the login screen in dev (a production build throws without them).
 
 ## Verifying changes

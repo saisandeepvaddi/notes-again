@@ -16,7 +16,7 @@ from tags.difficulty import DIFFICULTY_TAGS
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-PROJECT_NAME = "note-and-learn"
+PROJECT_NAME = "notes-again"
 
 
 def get_app_dir(app_name: str) -> Path:

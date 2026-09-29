@@ -6,7 +6,7 @@ set -euo pipefail
 # --- configure once -----------------------------------------------------
 REMOTE_USER=$VPS_USER
 REMOTE_HOST=$VPS_HOST
-REMOTE_PATH="~/note-and-learn"
+REMOTE_PATH="~/notes-again"
 BRANCH="main"
 # -------------------------------------------------------------------------
 

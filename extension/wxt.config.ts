@@ -30,7 +30,7 @@ export default defineConfig({
     ...(browser === "firefox" && {
       browser_specific_settings: {
         gecko: {
-          id: "note-and-learn-capture@saisandeepvaddi",
+          id: "notes-again-capture@saisandeepvaddi",
           strict_min_version: "140.0",
           data_collection_permissions: { required: ["websiteContent", "authenticationInfo"] },
         },

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-DB_PATH="${DB_PATH:-/data/note-and-learn.db}"
+DB_PATH="${DB_PATH:-/data/notes-again.db}"
 mkdir -p "$(dirname "$DB_PATH")"
 
 run_app() {

@@ -38,7 +38,7 @@ Spaced repetition applied to freeform markdown notes rather than Anki-style flas
 
 ## Brand Commitments
 
-Name: "Notes Again" (package name `notes-again`; the repo, database file, Docker volume and export `format` keep the old `note-and-learn` identifier; browser extension listed as "Notes Again Capture"). No other locked voice, logo, or identity constraints confirmed yet.
+Name: "Notes Again" (package and infrastructure name `notes-again`; browser extension listed as "Notes Again Capture"). No other locked voice, logo, or identity constraints confirmed yet.
 
 ## Evidence on Hand
 

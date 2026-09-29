@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { ExportButton } from "@/notes/export/ExportButton";
 import { ImportButton } from "@/notes/ImportButton";
 import { NewNoteButton } from "@/notes/NewNoteButton";
 import { NotesListContainer } from "@/notes/notes-list/NotesListContainer";
@@ -32,6 +33,7 @@ function AllNotes() {
       <PageHeader title="All Notes" actions={
           <>
             <ImportButton />
+            <ExportButton projectId={projectId} tagId={tagId} />
             <NewNoteButton />
           </>
         } />

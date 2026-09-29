@@ -11,6 +11,13 @@ from notes.pacing import MAX_PER_DAY, Pacer
 from notes.router import get_default_algorithm
 from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
+from .review_state import (
+    ReviewState,
+    ReviewStateError,
+    apply_review,
+    parse_datetime,
+    parse_review,
+)
 from .schema import ImportDeckSummary, ImportIssue, ImportResult
 
 MAX_NOTES = 10_000
@@ -30,6 +37,9 @@ class Row:
     deck: str | None
     tags: list[str]
     difficulty: Difficulty
+    review: ReviewState | None = None
+    created_at: datetime.datetime | None = None
+    updated_at: datetime.datetime | None = None
 
 
 def _key(name: str) -> str:
@@ -53,9 +63,10 @@ def _parse_tags(raw: Any) -> list[str] | None:
 
 
 @dataclass
-class FileRates:
+class FileOptions:
     default: int | None = None
     by_deck: dict[str, int] = field(default_factory=dict)
+    paused_decks: set[str] = field(default_factory=set)
 
 
 def _parse_per_day(value: Any, where: str) -> int:
@@ -64,9 +75,9 @@ def _parse_per_day(value: Any, where: str) -> int:
     return value
 
 
-def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
+def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileOptions]:
     entries: list[tuple[str | None, Any]] = []
-    rates = FileRates()
+    rates = FileOptions()
 
     if isinstance(payload, list):
         entries = [(None, item) for item in payload]
@@ -90,6 +101,11 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
                 rates.by_deck.setdefault(
                     _key(deck_name), _parse_per_day(deck["per_day"], f'in deck "{deck_name}"')
                 )
+            deck_paused = deck.get("paused", False)
+            if not isinstance(deck_paused, bool):
+                raise ImportFileError(f'"paused" in deck "{deck_name}" must be true or false.')
+            if deck_paused:
+                rates.paused_decks.add(_key(deck_name))
             deck_notes = deck.get("notes", [])
             if not isinstance(deck_notes, list):
                 raise ImportFileError(f'"notes" in deck "{deck_name}" must be a list.')
@@ -142,6 +158,17 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
         if difficulty not in DIFFICULTIES:
             issue(f'Unknown difficulty "{raw_difficulty}" (use easy, medium or hard).')
             continue
+        try:
+            review = None if item.get("review") is None else parse_review(item["review"])
+            created_at = (
+                None if item.get("created_at") is None else parse_datetime(item["created_at"], "created_at")
+            )
+            updated_at = (
+                None if item.get("updated_at") is None else parse_datetime(item["updated_at"], "updated_at")
+            )
+        except ReviewStateError as error:
+            issue(str(error))
+            continue
 
         rows.append(
             Row(
@@ -151,6 +178,9 @@ def normalize(payload: Any) -> tuple[list[Row], list[ImportIssue], FileRates]:
                 deck=deck,
                 tags=tags,
                 difficulty=difficulty,  # type: ignore[arg-type]
+                review=review,
+                created_at=created_at,
+                updated_at=updated_at,
             )
         )
     return rows, issues, rates
@@ -163,6 +193,7 @@ class PlannedNote:
     tag_keys: list[str]
     remind_at: datetime.datetime
     day: int
+    paused: bool
 
 
 @dataclass
@@ -174,13 +205,14 @@ class Plan:
     existing_tags: dict[str, Tag]
     result: ImportResult
     paused: bool = False
+    paused_decks: set[str] = field(default_factory=set)
 
 
 def plan_import(
     session: Session,
     rows: list[Row],
     issues: list[ImportIssue],
-    rates: FileRates,
+    rates: FileOptions,
     *,
     per_day: int,
     default_deck: str | None,
@@ -281,18 +313,25 @@ def plan_import(
     position_in_group: dict[str | None, int] = {}
     kept: list[PlannedNote] = []
     for row, deck_key, tag_keys in kept_rows:
-        position = position_in_group.get(deck_key, 0)
-        position_in_group[deck_key] = position + 1
-        day = 0 if paused else pacer.day(position, rate_for(deck_key))
+        if row.review is not None:
+            remind_at = row.review.due_at or pacer.due_at(0)
+            day = max(0, (remind_at - pacer.today_start) // datetime.timedelta(days=1))
+        else:
+            position = position_in_group.get(deck_key, 0)
+            position_in_group[deck_key] = position + 1
+            day = 0 if paused else pacer.day(position, rate_for(deck_key))
+            remind_at = pacer.due_at(day)
         kept.append(
             PlannedNote(
                 row=row,
                 deck_key=deck_key,
                 tag_keys=tag_keys,
-                remind_at=pacer.due_at(day),
+                remind_at=remind_at,
                 day=day,
+                paused=paused or (row.review is not None and row.review.paused),
             )
         )
+    in_review = [planned for planned in kept if not planned.paused]
 
     warnings = [
         f'Tag "{name}" is a built-in difficulty label, so it was ignored on {count} '
@@ -310,20 +349,23 @@ def plan_import(
         decks=list(per_deck.values()),
         first_due=min((p.remind_at for p in kept), default=None),
         last_due=max((p.remind_at for p in kept), default=None),
-        due_today=0 if paused else sum(1 for planned in kept if planned.day == 0),
-        days_span=0 if paused else max((planned.day for planned in kept), default=-1) + 1,
+        due_today=sum(1 for planned in in_review if planned.day == 0),
+        days_span=max((planned.day for planned in in_review), default=-1) + 1,
         paused=paused,
+        restored_reviews=sum(1 for planned in kept if planned.row.review is not None),
         issues=all_issues[:MAX_ISSUES],
         issues_truncated=len(all_issues) > MAX_ISSUES,
         warnings=warnings,
     )
-    return Plan(kept, new_decks, new_tags, existing_decks, existing_tags, result, paused)
+    return Plan(
+        kept, new_decks, new_tags, existing_decks, existing_tags, result, paused, rates.paused_decks
+    )
 
 
 def execute_plan(session: Session, plan: Plan) -> None:
     decks = dict(plan.existing_decks)
     for key, name in plan.new_decks.items():
-        project = Project(name=name, paused=plan.paused)
+        project = Project(name=name, paused=plan.paused or key in plan.paused_decks)
         session.add(project)
         decks[key] = project
     tags = dict(plan.existing_tags)
@@ -337,17 +379,23 @@ def execute_plan(session: Session, plan: Plan) -> None:
         difficulty: tags[_key(defaults.name)] for difficulty, defaults in DIFFICULTY_TAGS.items()
     }
     algorithm = get_default_algorithm(session)
-    session.add_all(
-        build_note(
-            name=planned.row.name,
-            content=planned.row.content,
+    for planned in plan.kept:
+        row = planned.row
+        note = build_note(
+            name=row.name,
+            content=row.content,
             algorithm=algorithm,
-            difficulty_tag=difficulty_tags[planned.row.difficulty],
+            difficulty_tag=difficulty_tags[row.difficulty],
             tags=[tags[key] for key in planned.tag_keys],
             project=decks[planned.deck_key] if planned.deck_key is not None else None,
             first_reminder_at=planned.remind_at,
-            paused=plan.paused,
+            paused=planned.paused,
         )
-        for planned in plan.kept
-    )
+        if row.review is not None:
+            apply_review(note, row.review, fallback_due=planned.remind_at)
+        if row.created_at is not None:
+            note.created_at = row.created_at
+        if row.updated_at is not None:
+            note.updated_at = row.updated_at
+        session.add(note)
     session.commit()

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from auth import require_user
+from imports.router import export_router
 from imports.router import router as imports_router
 from notes.bulk_router import router as notes_bulk_router
 from notes.router import router as notes_router
@@ -16,4 +17,5 @@ router.include_router(tags_router)
 router.include_router(projects_router)
 router.include_router(settings_router)
 router.include_router(imports_router)
+router.include_router(export_router)
 router.include_router(tokens_router)

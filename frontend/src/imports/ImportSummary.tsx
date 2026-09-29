@@ -36,22 +36,35 @@ export function ImportSummary({ result }: { result: ImportResult }) {
         <Stat label="skipped" value={result.duplicates_skipped + result.invalid_skipped} />
       </div>
 
+      {result.restored_reviews > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {result.restored_reviews === result.notes_created
+            ? "Every note"
+            : `${result.restored_reviews.toLocaleString()} of these notes`}{" "}
+          {result.dry_run ? "will keep" : "kept"} {result.restored_reviews === 1 ? "its" : "their"}{" "}
+          review schedule and history from the file; per-day pacing only applies to the rest.
+        </p>
+      )}
+
       {result.paused ? (
         <p className="text-sm text-muted-foreground">
           {result.dry_run ? "They'll be" : "They're"} paused: kept as notes, but not in review.
           Resume them from Organize (per deck) or from a selection in Notes when you're ready.
         </p>
-      ) : result.first_due && result.last_due && (
-        <p className="text-sm text-muted-foreground">
-          {result.due_today === result.notes_created ? (
-            <>Every imported note is due for review right away.</>
-          ) : (
-            <>
-              {result.due_today.toLocaleString()} due today; the rest are spread over up to{" "}
-              {result.days_span} days (the last batch is due {dayLabel(result.last_due)}).
-            </>
-          )}
-        </p>
+      ) : (
+        result.first_due &&
+        result.last_due && (
+          <p className="text-sm text-muted-foreground">
+            {result.due_today === result.notes_created ? (
+              <>Every imported note is due for review right away.</>
+            ) : (
+              <>
+                {result.due_today.toLocaleString()} due today; the rest are spread over up to{" "}
+                {result.days_span} days (the last batch is due {dayLabel(result.last_due)}).
+              </>
+            )}
+          </p>
+        )
       )}
 
       {result.warnings.length > 0 && (
@@ -69,7 +82,9 @@ export function ImportSummary({ result }: { result: ImportResult }) {
               <TableRow className="hover:bg-transparent">
                 <TableHead>Deck</TableHead>
                 {!result.paused && <TableHead className="text-right">Per day</TableHead>}
-                <TableHead className="text-right">{result.dry_run ? "To import" : "Imported"}</TableHead>
+                <TableHead className="text-right">
+                  {result.dry_run ? "To import" : "Imported"}
+                </TableHead>
                 <TableHead className="text-right">Skipped</TableHead>
               </TableRow>
             </TableHeader>

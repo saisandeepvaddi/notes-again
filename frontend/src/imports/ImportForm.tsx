@@ -40,6 +40,11 @@ function FormatHelp() {
           <li>A note with the same name in the same deck is skipped, so re-importing is safe.</li>
           <li>Tags named Easy / Medium / Hard are ignored; use difficulty instead.</li>
           <li>
+            Files from <strong>Export</strong> (on All Notes) include each note's{" "}
+            <code>review</code> state, so notes come back with their schedule, rating history and
+            paused state instead of starting over.
+          </li>
+          <li>
             <code>per_day</code> sets how many notes become due each day: at the top of the file,
             and/or on a deck (a deck's own value wins). <code>0</code> makes them all due now.
             Each deck is spread out on its own. Without it, the default below (10) is used.

@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
   CalendarClockIcon,
+  DownloadIcon,
   FolderIcon,
   GaugeIcon,
   PauseIcon,
@@ -39,6 +40,7 @@ import { useCreateTag } from "../hooks/useCreateTag";
 import { resumeBody, resumeSummary } from "../hooks/usePausing";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
+import { ExportDialog } from "../export/ExportDialog";
 import { ResumePacingForm } from "../ResumePacingForm";
 import { notesLabel, useRunBulk } from "./useRunBulk";
 
@@ -169,6 +171,11 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
 
   return (
     <>
+      <ExportDialog
+        noteIds={ids}
+        selectedCount={count}
+        trigger={<ActionButton icon={<DownloadIcon />}>Export</ActionButton>}
+      />
       <ActionPopover
         open={open === "project"}
         onOpenChange={openPopover("project")}

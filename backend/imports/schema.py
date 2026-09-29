@@ -42,6 +42,21 @@ class ImportResult(BaseModel):
     due_today: int = 0
     days_span: int = 0
     paused: bool = False
+    restored_reviews: int = 0
     issues: list[ImportIssue]
     issues_truncated: bool = False
     warnings: list[str]
+
+
+class ExportRequest(BaseModel):
+    project_ids: list[int] = []
+    include_no_project: bool = False
+    tag_ids: list[int] = []
+    note_ids: list[int] | None = None
+    include_paused: bool = True
+    include_review: bool = True
+
+
+class ExportCount(BaseModel):
+    notes: int
+    decks: int

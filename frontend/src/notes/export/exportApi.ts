@@ -20,7 +20,7 @@ export async function fetchExportCount(options: ExportOptions): Promise<ExportCo
 
 function filenameFrom(disposition: string | null) {
   const match = disposition?.match(/filename="?([^";]+)"?/);
-  return match?.[1] ?? `note-and-learn-${format(new Date(), "yyyy-MM-dd")}.json`;
+  return match?.[1] ?? `notes-again-${format(new Date(), "yyyy-MM-dd")}.json`;
 }
 
 export async function downloadExport(options: ExportOptions): Promise<void> {

@@ -1,4 +1,4 @@
-# Note and Learn
+# Notes Again
 
 Personal, self-hosted spaced-repetition app: freeform markdown notes organized into projects and tags, resurfaced for review on an SM2/FSRS schedule. Single user per deployment.
 

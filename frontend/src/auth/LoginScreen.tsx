@@ -46,7 +46,7 @@ export default function LoginScreen() {
     <div className="grid min-h-dvh place-items-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Note and Learn</CardTitle>
+          <CardTitle>Notes Again</CardTitle>
           <CardDescription>Sign in to continue.</CardDescription>
         </CardHeader>
         <CardContent>

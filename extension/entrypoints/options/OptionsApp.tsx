@@ -46,7 +46,7 @@ export function OptionsApp() {
       const base = normalizeBaseUrl(serverUrl);
       const token = apiToken.trim();
       if (token && !token.startsWith(TOKEN_PREFIX)) {
-        throw new Error(`That doesn't look like a Note and Learn token: they start with ${TOKEN_PREFIX}.`);
+        throw new Error(`That doesn't look like a Notes Again token: they start with ${TOKEN_PREFIX}.`);
       }
       const granted = await browser.permissions.request({ origins: [hostPermissionPattern(base)] });
       if (!granted) {
@@ -79,7 +79,7 @@ export function OptionsApp() {
 
   return (
     <div className="nl-root nl-options">
-      <h1>Note and Learn Capture</h1>
+      <h1>Notes Again Capture</h1>
       <p className="nl-help">Save pages and selections straight into your notes.</p>
 
       <section>
@@ -122,7 +122,7 @@ export function OptionsApp() {
             </label>
             <input id="app-url" className="nl-input" value={appUrl} placeholder="Same as server URL" onChange={(e) => setAppUrl(e.target.value)} />
             <p className="nl-help">
-              Where "Open in Note and Learn" goes. Leave empty in production, where the API serves the web app from the same address.
+              Where "Open in Notes Again" goes. Leave empty in production, where the API serves the web app from the same address.
               It's only needed when the web app lives elsewhere, as in local dev.
             </p>
             {!appUrl.trim() && isLocalHost(serverUrl) && (

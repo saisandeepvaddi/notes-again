@@ -1,4 +1,4 @@
-# Note and Learn Capture
+# Notes Again Capture
 
 Browser extension (Chrome/Edge/Brave and Firefox, Manifest V3) that saves the current page, or a text selection, as a note.
 
@@ -36,7 +36,7 @@ After a rebuild, reload the extension so the browser picks up the new files: Chr
 
 The token can only save notes: list and create projects/tags and create notes. It can't read, edit or delete anything, and you can revoke it from Settings at any time (the extension will then say so).
 
-## Where the links point ("Open in Note and Learn")
+## Where the links point ("Open in Notes Again")
 
 Two addresses, because they are two different things:
 

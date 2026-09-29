@@ -77,7 +77,7 @@ async function openCapture(tab: Browser.tabs.Tab | undefined, mode: "page" | "se
       } satisfies OpenDialogMessage);
       return;
     } catch (err) {
-      console.debug("[note-and-learn] in-page dialog unavailable, using a window instead:", err);
+      console.debug("[notes-again] in-page dialog unavailable, using a window instead:", err);
     }
   }
   await openFallbackWindow({
@@ -90,8 +90,8 @@ async function openCapture(tab: Browser.tabs.Tab | undefined, mode: "page" | "se
 
 function createMenus() {
   void browser.contextMenus.removeAll().then(() => {
-    browser.contextMenus.create({ id: MENU_SELECTION, title: "Save selection to Note and Learn", contexts: ["selection"] });
-    browser.contextMenus.create({ id: MENU_PAGE, title: "Save this page to Note and Learn", contexts: ["page"] });
+    browser.contextMenus.create({ id: MENU_SELECTION, title: "Save selection to Notes Again", contexts: ["selection"] });
+    browser.contextMenus.create({ id: MENU_PAGE, title: "Save this page to Notes Again", contexts: ["page"] });
   });
 }
 

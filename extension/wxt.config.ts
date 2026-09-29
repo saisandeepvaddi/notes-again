@@ -7,8 +7,8 @@ export default defineConfig({
   manifestVersion: 3,
   imports: false,
   manifest: ({ browser }) => ({
-    name: "Note and Learn Capture",
-    description: "Save the current page or a text selection as a note in Note and Learn.",
+    name: "Notes Again Capture",
+    description: "Save the current page or a text selection as a note in Notes Again.",
     permissions: ["activeTab", "scripting", "contextMenus", "storage"],
     host_permissions: [
       "http://localhost/*",
@@ -16,7 +16,7 @@ export default defineConfig({
       ...(process.env.WXT_SERVER_URL ? [hostPermissionPattern(process.env.WXT_SERVER_URL)] : []),
     ],
     optional_host_permissions: ["https://*/*", "http://*/*"],
-    action: { default_title: "Save this page to Note and Learn" },
+    action: { default_title: "Save this page to Notes Again" },
     commands: {
       "save-page": {
         suggested_key: { default: "Alt+Shift+N" },

@@ -60,7 +60,7 @@ function AppSidebar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
     <Sidebar>
-      <SidebarHeader className="font-semibold px-2">Note and Learn</SidebarHeader>
+      <SidebarHeader className="font-semibold px-2">Notes Again</SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>

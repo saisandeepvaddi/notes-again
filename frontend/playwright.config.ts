@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
-const dbDir = fs.mkdtempSync(path.join(os.tmpdir(), "note-and-learn-e2e-"));
+const dbDir = fs.mkdtempSync(path.join(os.tmpdir(), "notes-again-e2e-"));
 const dbPath = path.join(dbDir, "test.db");
 
 const BACKEND_PORT = 8210;

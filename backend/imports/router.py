@@ -45,7 +45,7 @@ def import_notes(body: ImportRequest, session: SessionDep):
 
 @export_router.post("/notes")
 def export_notes(body: ExportRequest, session: SessionDep):
-    filename = f"note-and-learn-{utcnow():%Y-%m-%d}.json"
+    filename = f"notes-again-{utcnow():%Y-%m-%d}.json"
     return Response(
         content=json.dumps(build_export(session, body), ensure_ascii=False, indent=2),
         media_type="application/json",

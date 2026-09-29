@@ -1,4 +1,4 @@
-# Deploying note-and-learn
+# Deploying Notes Again
 
 Single container: FastAPI serves the API **and** the prebuilt SPA on one port.
 SQLite lives on a mounted volume; Litestream streams it to Cloudflare R2.

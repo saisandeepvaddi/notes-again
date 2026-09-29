@@ -1,5 +1,5 @@
 ---
-name: Note and Learn
+name: Notes Again
 description: A personal, self-hosted spaced-repetition tool for retaining technical notes
 colors:
   background: "oklch(0.985 0.004 85)"
@@ -78,13 +78,13 @@ components:
     padding: "1rem"
 ---
 
-# Design System: Note and Learn
+# Design System: Notes Again
 
 ## Overview
 
 **Creative North Star: "The Field Notebook"**
 
-Note and Learn is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).
+Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).
 
 Density is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually *reads as content* (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.
 

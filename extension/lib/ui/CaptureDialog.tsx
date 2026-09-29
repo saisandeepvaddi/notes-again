@@ -105,7 +105,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
         }
       }}
     >
-      <div className="nl-card" role="dialog" aria-modal="true" aria-label="Save to Note and Learn">
+      <div className="nl-card" role="dialog" aria-modal="true" aria-label="Save to Notes Again">
         <header className="nl-header">
           <div>
             <h2 className="nl-title">{ctx.mode === "selection" ? "Save selection" : "Save page"}</h2>
@@ -123,7 +123,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
             <p className="nl-saved-title">Saved “{save.saved.name}”</p>
             <div className="nl-actions">
               <a className="nl-button nl-primary" href={save.saved.openUrl} target="_blank" rel="noopener noreferrer">
-                Open in Note and Learn
+                Open in Notes Again
               </a>
               <button type="button" className="nl-button" onClick={onClose} autoFocus>
                 Done

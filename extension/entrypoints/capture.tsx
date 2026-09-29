@@ -44,7 +44,7 @@ function openDialog(message: OpenDialogMessage) {
   closeDialog();
   const ctx = buildContext(message);
 
-  const host = document.createElement("note-and-learn-capture");
+  const host = document.createElement("notes-again-capture");
   host.style.cssText = "all: initial !important; position: fixed !important; inset: 0 !important; z-index: 2147483647 !important;";
   for (const type of ["keydown", "keyup", "keypress"]) {
     host.addEventListener(type, (e) => e.stopPropagation());
@@ -62,11 +62,11 @@ function openDialog(message: OpenDialogMessage) {
 }
 
 export default defineUnlistedScript(() => {
-  const marker = window as typeof window & { __noteAndLearnCapture?: boolean };
-  if (marker.__noteAndLearnCapture) {
+  const marker = window as typeof window & { __notesAgainCapture?: boolean };
+  if (marker.__notesAgainCapture) {
     return;
   }
-  marker.__noteAndLearnCapture = true;
+  marker.__notesAgainCapture = true;
 
   browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
     if (!isOpenDialogMessage(message)) {

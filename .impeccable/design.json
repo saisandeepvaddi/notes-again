@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-09-22T06:42:40Z",
-  "title": "Design System: Note and Learn",
+  "title": "Design System: Notes Again",
   "extensions": {
     "colorMeta": {
       "primary": {
@@ -201,7 +201,7 @@
   ],
   "narrative": {
     "northStar": "The Field Notebook",
-    "overview": "Note and Learn is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact, olive-and-paper working notebook rather than a SaaS dashboard. The neutral scale is never true gray — background, borders, and text all carry a faint moss tint from the same ~150° hue family that the primary accent lives in, so the whole interface feels like it was cut from one material instead of a gray shell with a brand color dropped on top. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).\n\nDensity is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually reads as content (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.",
+    "overview": "Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact, olive-and-paper working notebook rather than a SaaS dashboard. The neutral scale is never true gray — background, borders, and text all carry a faint moss tint from the same ~150° hue family that the primary accent lives in, so the whole interface feels like it was cut from one material instead of a gray shell with a brand color dropped on top. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).\n\nDensity is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually reads as content (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.",
     "keyCharacteristics": [
       "One accent hue (~150°, moss/olive) carries primary, ring, and sidebar-primary; neutrals share its tint rather than being true gray.",
       "Flat-by-default: hairline ring (ring-1 ring-foreground/10) defines containers; shadow is reserved for floating overlays.",

@@ -1,53 +1,85 @@
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { useUpdateReminder } from "./hooks/useUpdateReminder";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { useRateReminder } from "./hooks/useRateReminder";
 import type { Rating } from "./new-note-form/types";
 import { RATING_BADGE_CLASSES, RATING_OPTIONS } from "./rating";
 
 interface RatingButtonsProps {
   reminderId: number;
   onRated?: () => void;
+  onUndone?: () => void;
+  shortcuts?: boolean;
   className?: string;
 }
 
-export function RatingButtons({ reminderId, onRated, className }: RatingButtonsProps) {
-  const { mutateAsync, isPending } = useUpdateReminder({ reminderId });
+function isTypingTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+  );
+}
 
-  const rate = async (rating: Rating) => {
-    try {
-      await mutateAsync({ action: "review", rating });
+export function RatingButtons({
+  reminderId,
+  onRated,
+  onUndone,
+  shortcuts = false,
+  className,
+}: RatingButtonsProps) {
+  const { rate, isPending } = useRateReminder({ reminderId, onUndone });
+  const submitting = useRef(false);
+
+  const submit = async (rating: Rating) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    const rated = await rate(rating);
+    if (rated) {
       onRated?.();
-    } catch (error) {
-      console.error("error:", error);
-      toast.add({
-        type: "error",
-        priority: "high",
-        description: "Failed to update",
-      });
+    } else {
+      submitting.current = false;
     }
   };
 
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (isTypingTarget(event.target)) return;
+    const option = RATING_OPTIONS[Number(event.key) - 1];
+    if (!option) return;
+    event.preventDefault();
+    submit(option.value);
+  });
+
+  useEffect(() => {
+    if (!shortcuts) return;
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [shortcuts]);
+
   return (
-    <div className="flex w-full flex-col gap-2">
-      <div className={cn("grid grid-cols-2 gap-2 sm:grid-cols-4", className)}>
-        {RATING_OPTIONS.map((option) => (
-          <Button
-            key={option.value}
-            size="sm"
-            variant="outline"
-            disabled={isPending}
-            onClick={() => rate(option.value)}
-            className={cn("h-auto flex-col gap-0 py-1.5", RATING_BADGE_CLASSES[option.value])}
-          >
-            <span className="font-medium">{option.label}</span>
-            <span className="text-[10px] font-normal">{option.caption}</span>
-          </Button>
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Rates your recall this time, not the note's Easy/Medium/Hard label.
-      </p>
+    <div className={cn("grid grid-cols-4 gap-1.5", className)}>
+      {RATING_OPTIONS.map((option, index) => (
+        <Button
+          key={option.value}
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          onClick={() => submit(option.value)}
+          aria-keyshortcuts={shortcuts ? String(index + 1) : undefined}
+          className={cn(
+            "relative h-auto flex-col gap-0 px-1 py-2",
+            RATING_BADGE_CLASSES[option.value],
+          )}
+        >
+          {shortcuts && (
+            <kbd className="absolute top-1 right-1.5 font-sans text-[10px] font-medium tabular-nums opacity-60">
+              {index + 1}
+            </kbd>
+          )}
+          <span className="font-medium">{option.label}</span>
+          <span className="text-[10px] font-normal">{option.caption}</span>
+        </Button>
+      ))}
     </div>
   );
 }

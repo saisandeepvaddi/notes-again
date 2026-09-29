@@ -7,6 +7,7 @@ import { useState } from "react";
 import { NoteContent } from "../NoteContent";
 import { NoteTitle } from "../NoteTitle";
 import { RatingButtons } from "../RatingButtons";
+import type { NoteItem } from "../new-note-form/types";
 import { fetchDueNotes, useDueNotes } from "../notes-list/useDueNotes";
 
 export function ReviewSession() {
@@ -43,6 +44,12 @@ export function ReviewSession() {
     }
   };
 
+  const restore = (note: NoteItem) => {
+    setQueue((notes) => [note, ...notes.filter((n) => n.id !== note.id)]);
+    setRemaining((count) => count + 1);
+    setReviewedCount((count) => Math.max(0, count - 1));
+  };
+
   if (loadingMore) {
     return (
       <div className="flex flex-col gap-4 w-full max-w-2xl">
@@ -72,6 +79,7 @@ export function ReviewSession() {
     );
   }
 
+  const reviewing = current;
   const pendingReminder = current.reminders.find((reminder) => reminder.reviewed_at === null);
 
   return (
@@ -88,7 +96,17 @@ export function ReviewSession() {
           {pendingReminder && (
             <div className="flex w-full flex-col gap-2">
               <p className="text-sm font-medium">How well did you remember this?</p>
-              <RatingButtons reminderId={pendingReminder.id} onRated={advance} />
+              <RatingButtons
+                key={pendingReminder.id}
+                reminderId={pendingReminder.id}
+                onRated={advance}
+                onUndone={() => restore(reviewing)}
+                shortcuts
+              />
+              <p className="text-xs text-muted-foreground">
+                Rates your recall this time, not the note's Easy/Medium/Hard label. Press 1–4 to
+                rate.
+              </p>
             </div>
           )}
         </CardFooter>

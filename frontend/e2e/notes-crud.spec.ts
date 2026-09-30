@@ -26,6 +26,7 @@ test.describe("note lifecycle", () => {
     await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await expect(page.getByText("Original content for the CRUD test.")).toBeVisible();
 
+    await page.getByRole("button", { name: "Edit title" }).click();
     await noteDetailNameInput(page).fill(editedName);
     await contentEditor(page).click();
     await page.keyboard.press("Control+A");
@@ -33,7 +34,7 @@ test.describe("note lifecycle", () => {
     await expect(page.getByText("Saved", { exact: true })).toBeVisible({ timeout: 5000 });
 
     await page.reload();
-    await expect(noteDetailNameInput(page)).toHaveValue(editedName);
+    await expect(page.getByRole("heading", { level: 1, name: editedName })).toBeVisible();
     await expect(page.getByText("Edited content for the CRUD test.")).toBeVisible();
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();

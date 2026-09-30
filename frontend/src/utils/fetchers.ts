@@ -10,10 +10,9 @@ export const getURL = () => {
     return "/api";
   }
 
-  const PROTOCOL = isDev ? "http" : "https";
-  const SERVER_IP = isDev ? import.meta.env.VITE_SERVER_IP : "";
-  const SERVER_PORT = isDev ? import.meta.env.VITE_SERVER_PORT : "";
-  return `${PROTOCOL}://${SERVER_IP}:${SERVER_PORT}/api`;
+  const SERVER_IP = import.meta.env.VITE_SERVER_IP || "localhost";
+  const SERVER_PORT = import.meta.env.VITE_SERVER_PORT || "8000";
+  return `http://${SERVER_IP}:${SERVER_PORT}/api`;
 };
 
 export const getHeaders = async (customHeaders?: Record<string, string>) => {

@@ -91,8 +91,8 @@ export function SystemSettings() {
           ) : null}
         </Row>
         <Row label="Size">
-          {formatBytes(info.database_size_bytes)} · {info.note_count.toLocaleString()} notes ·
-          SQLite {info.sqlite_version}
+          {formatBytes(info.database_size_bytes)} · {info.note_count.toLocaleString()}{" "}
+          {info.note_count === 1 ? "note" : "notes"} · SQLite {info.sqlite_version}
         </Row>
         <Row label="Local snapshots">
           {backups.interval_hours === 0 ? (

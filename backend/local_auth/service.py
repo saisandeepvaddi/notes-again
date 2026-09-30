@@ -35,6 +35,16 @@ def _hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def env_or_file(name: str) -> str:
+    path = os.environ.get(f"{name}_FILE", "").strip()
+    if path:
+        try:
+            return open(path, encoding="utf-8").read().rstrip("\r\n")
+        except OSError as exc:
+            raise RuntimeError(f"Couldn't read {name}_FILE ({path}): {exc}") from exc
+    return os.environ.get(name, "")
+
+
 def get_local_auth(session: Session) -> LocalAuth | None:
     return session.get(LocalAuth, 1)
 
@@ -55,8 +65,8 @@ def ensure_local_auth(engine: Engine) -> None:
     with Session(engine) as session:
         record = get_local_auth(session)
         if record is None:
-            username = os.environ.get("ADMIN_USERNAME", "").strip() or DEFAULT_USERNAME
-            password = os.environ.get("ADMIN_PASSWORD", "")
+            username = env_or_file("ADMIN_USERNAME").strip() or DEFAULT_USERNAME
+            password = env_or_file("ADMIN_PASSWORD")
             if password:
                 record = LocalAuth(
                     username=username,

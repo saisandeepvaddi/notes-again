@@ -6,7 +6,7 @@ import { toast } from "@/components/ui/toast";
 import { downloadDatabase, formatBytes, useSnapshotNow, useSystemInfo } from "./systemApi";
 
 const DEPLOY_DOCS_URL =
-  "https://github.com/saisandeepvaddi/notes-again/blob/main/DEPLOY.md#backups";
+  "https://github.com/saisandeepvaddi/notes-again/blob/main/docs/self-hosting.md#off-site-backup-with-litestream";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (

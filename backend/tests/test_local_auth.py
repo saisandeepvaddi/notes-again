@@ -208,3 +208,18 @@ def test_unknown_auth_mode_is_rejected(monkeypatch):
     monkeypatch.setenv("AUTH_MODE", "ldap")
     with pytest.raises(RuntimeError, match="AUTH_MODE must be one of"):
         auth._resolve_auth_mode()
+
+
+def test_admin_password_can_come_from_a_file(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    import auth
+    from main import app
+
+    secret = tmp_path / "admin-password"
+    secret.write_text("from a secret file\n")
+    monkeypatch.setattr(auth, "AUTH_MODE", "local")
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "file.db"))
+    monkeypatch.setenv("ADMIN_PASSWORD_FILE", str(secret))
+    with TestClient(app) as client:
+        assert login(client, "admin", "from a secret file").status_code == 204

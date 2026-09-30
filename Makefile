@@ -1,6 +1,6 @@
 .PHONY: help run install install-backend install-frontend install-extension \
 	dev-backend dev-frontend dev-extension dev-extension-firefox \
-	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build \
+	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
 	check check-backend check-frontend check-extension \
 	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	reset-login snapshot doctor deploy
@@ -27,6 +27,7 @@ help:
 	@echo "  make build-extension-firefox  - Firefox extension into extension/dist/firefox-mv3"
 	@echo "  make zip-extension            - zipped Chrome and Firefox packages in extension/dist"
 	@echo "  make docker-build             - build the production image locally"
+	@echo "  make update                   - pull the latest code and rebuild/restart the Docker app"
 	@echo ""
 	@echo "Check:"
 	@echo "  make check                    - lint + typecheck everything"
@@ -93,6 +94,10 @@ zip-extension:
 
 docker-build:
 	docker compose build
+
+update:
+	git pull --ff-only
+	docker compose up -d --build
 
 check: check-backend check-frontend check-extension
 

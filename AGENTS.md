@@ -4,8 +4,8 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 - Product intent and audience: [PRODUCT.md](PRODUCT.md)
 - Visual system (colors, type, components): [DESIGN.md](DESIGN.md)
-- Docker, Litestream, R2, production env: [DEPLOY.md](DEPLOY.md)
-- `README.md` is leftover TanStack starter boilerplate; ignore it.
+- Running and self-hosting (make run, install.sh, Docker, sign-in, backups): [docs/self-hosting.md](docs/self-hosting.md)
+- `README.md` is the public overview; `install.sh` is the guided Docker installer (POSIX sh, test changes under `dash`).
 
 ## Layout
 

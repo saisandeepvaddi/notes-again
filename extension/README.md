@@ -75,7 +75,7 @@ Known gaps of the existing-routes approach: three round-trips per save, and no s
 - **Never bake a token into a build.** `WXT_*` values end up in the published bundle; only put non-secret defaults (server and app URLs) there.
 - **The token goes only to the server you configured**, and only after the browser has asked you to allow that origin. It's kept in the extension's own storage, which web pages can't read.
 - **https is required** for any server that isn't this machine or a private network (localhost, 127.x, 10.x, 172.16-31.x, 192.168.x, `*.local`), because the token travels on every request.
-- **Server side** (see `DEPLOY.md`): keep Firebase "Enable create (sign-up)" off and consider `ALLOWED_EMAILS`, since any account in your Firebase project can read all notes.
+- **Server side**: keep sign-in on (the default username and password, or Firebase). With Firebase (see `docs/firebase-auth.md`), keep "Enable create (sign-up)" off and consider `ALLOWED_EMAILS`, since any account in your Firebase project can read all notes.
 
 ## Known limitations
 

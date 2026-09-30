@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Sai Sandeep Vaddi, the sole primary user — a personal, self-hosted tool built for his own daily use. The code is open source and others can self-host their own instance, but the product is not designed or prioritized for a third-party audience; decisions optimize for the builder's own workflow. Access is deliberately locked down: Firebase auth plus an optional `ALLOWED_EMAILS` allowlist, no open sign-up.
+Sai Sandeep Vaddi, the sole primary user — a personal, self-hosted tool built for his own daily use. The code is open source and others can self-host their own instance, but the product is not designed or prioritized for a third-party audience; decisions optimize for the builder's own workflow. Access is deliberately locked down: a single owner account with username and password by default (Firebase with an `ALLOWED_EMAILS` allowlist optional), no open sign-up.
 
 ## Product Purpose
 
@@ -25,14 +25,14 @@ Spaced repetition applied to freeform markdown notes rather than Anki-style flas
 - Review happens as a dedicated session with SM2/FSRS-scheduled cards, rated Again/Hard/Good/Easy (recall confidence — distinct from a note's own difficulty tag).
 - Capture happens outside the app via a browser extension (Chrome/Edge/Brave/Firefox) that saves a page or text selection using a scoped `capture`-only API token; notes are later organized inside the web app.
 - Bulk import accepts an Anki-like JSON structure (decks, per-day limits, notes with tags/difficulty) with a dry-run/summary step before committing.
-- Self-hosted via Docker; API served same-origin as the SPA in production, SQLite with Litestream backup to Cloudflare R2 optional.
+- Self-hosted via `make run` or Docker, built from source; API served same-origin as the SPA, SQLite with daily local snapshots and optional Litestream off-site backup.
 - Deleted notes go to a trash with restore/empty-trash rather than deleting immediately.
 
 ## Capabilities and Constraints
 
-- Single-tenant per deployment: auth is Firebase + allowlist, not multi-tenant account management.
+- Single-tenant per deployment: one owner account (local username/password, or Firebase + allowlist), not multi-tenant account management.
 - API tokens are scoped (e.g. `capture`-only tokens used by the extension can create notes/projects/tags but not read, edit, or delete).
-- Local dev supports `AUTH_DISABLED=1` to bypass Firebase entirely.
+- Login can be turned off (`AUTH_MODE=none`, or from Settings), and local dev uses `AUTH_DISABLED=1`.
 - Two scheduling algorithms exist in the backend (SM2 and FSRS) — which is authoritative for new reviews is a codebase fact to confirm at implementation time, not asserted here.
 - Markdown editor uses CodeMirror with its own theme; content supports code blocks.
 

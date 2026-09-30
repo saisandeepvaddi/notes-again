@@ -4,10 +4,10 @@ services:
   app:
     build:
       context: .
-    image: notes-again
     ports:
-      # Bound to loopback: reach it only via the reverse proxy / tunnel.
-      - "127.0.0.1:8000:8000"
+      # Loopback by default: reach it through a reverse proxy or tunnel.
+      # BIND_ADDRESS=0.0.0.0 in .env opens it to other devices on the network.
+      - "${BIND_ADDRESS:-127.0.0.1}:${HOST_PORT:-8000}:8000"
     volumes:
       - db:/data
     env_file:

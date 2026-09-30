@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { browser } from "wxt/browser";
-import { callBackground, type LookupsResult } from "../../lib/messaging";
+import { createCaptureApi } from "../../lib/api";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from "../../lib/settings";
 import { hostPermissionPattern, normalizeBaseUrl } from "../../lib/url";
 
@@ -39,19 +39,24 @@ export function OptionsApp() {
     })();
   }, []);
 
+  const readForm = async () => {
+    const base = normalizeBaseUrl(serverUrl);
+    const token = apiToken.trim();
+    if (token && !token.startsWith(TOKEN_PREFIX)) {
+      throw new Error(`That doesn't look like a Notes Again token: they start with ${TOKEN_PREFIX}.`);
+    }
+    const granted = await browser.permissions.request({ origins: [hostPermissionPattern(base)] });
+    if (!granted) {
+      throw new Error(`Access to ${base} was not granted, so the extension can't reach your server.`);
+    }
+    return { base, token };
+  };
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setStatus(null);
     try {
-      const base = normalizeBaseUrl(serverUrl);
-      const token = apiToken.trim();
-      if (token && !token.startsWith(TOKEN_PREFIX)) {
-        throw new Error(`That doesn't look like a Notes Again token: they start with ${TOKEN_PREFIX}.`);
-      }
-      const granted = await browser.permissions.request({ origins: [hostPermissionPattern(base)] });
-      if (!granted) {
-        throw new Error(`Access to ${base} was not granted, so the extension can't reach your server.`);
-      }
+      const { base, token } = await readForm();
       const app = appUrl.trim() ? normalizeBaseUrl(appUrl) : "";
       await saveSettings({ serverUrl: base, appUrl: app, apiToken: token });
       setServerUrl(base);
@@ -66,8 +71,9 @@ export function OptionsApp() {
   const test = async () => {
     setStatus({ text: "Testing…" });
     try {
-      const result = await callBackground<LookupsResult>({ type: "lookups" });
-      setStatus({ text: `Connected: ${result.projects.length} project(s), ${result.tags.length} tag(s).` });
+      const { base, token } = await readForm();
+      const result = await createCaptureApi({ baseUrl: base, token }).lookups();
+      setStatus({ text: `Connected: ${result.projects.length} project(s), ${result.tags.length} tag(s). Save to keep these settings.` });
     } catch (err) {
       setStatus({ text: messageOf(err), error: true });
     }

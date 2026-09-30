@@ -3,6 +3,7 @@ import { ClientOnly } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { ApiTokens } from "./api-tokens/ApiTokens";
 import { SettingsForm } from "./SettingsForm";
+import { SignInSettings } from "./sign-in/SignInSettings";
 
 export function SettingsContainer() {
   return (
@@ -10,6 +11,9 @@ export function SettingsContainer() {
       <Suspense fallback={<SettingsSkeleton />}>
         <ClientOnly>
           <SettingsForm />
+          <div className="mt-8">
+            <SignInSettings />
+          </div>
           <div className="mt-8">
             <ApiTokens />
           </div>

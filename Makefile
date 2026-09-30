@@ -1,11 +1,15 @@
-.PHONY: help install install-backend install-frontend install-extension \
+.PHONY: help run install install-backend install-frontend install-extension \
 	dev-backend dev-frontend dev-extension dev-extension-firefox \
 	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build \
 	check check-backend check-frontend check-extension \
 	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
-	deploy
+	reset-login deploy
 
 help:
+	@echo "Run:"
+	@echo "  make run                      - install, build the SPA and serve the app on http://127.0.0.1:8000"
+	@echo "  make run DB=path/to/notes.db  - same, with the database at a path you choose"
+	@echo ""
 	@echo "Setup:"
 	@echo "  make install                  - install backend, frontend and extension deps"
 	@echo ""
@@ -35,8 +39,15 @@ help:
 	@echo "  make test-e2e-ui              - e2e suite in Playwright's interactive UI mode"
 	@echo "  make test-e2e-headed          - e2e suite with a visible browser window"
 	@echo ""
+	@echo "Auth:"
+	@echo "  make reset-login              - reset sign-in to a temporary admin password (local DB)"
+	@echo ""
 	@echo "Deploy:"
 	@echo "  make deploy                   - push main and rebuild on the VPS (needs VPS_USER, VPS_HOST)"
+
+run: install-backend install-frontend build-frontend
+	env -u AUTH_MODE -u AUTH_DISABLED -u CORS_ORIGINS -u FRONTEND_DIST $(if $(DB),DB_PATH=$(DB),-u DB_PATH) \
+		backend/.venv/bin/uvicorn --app-dir backend main:app --host 127.0.0.1 --port 8000
 
 install: install-backend install-frontend install-extension
 
@@ -108,6 +119,9 @@ test-e2e-ui:
 
 test-e2e-headed:
 	cd frontend && pnpm exec playwright test --headed
+
+reset-login:
+	cd backend && .venv/bin/python -m local_auth.reset
 
 deploy:
 	./deploy.sh

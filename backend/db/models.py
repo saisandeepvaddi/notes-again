@@ -114,3 +114,23 @@ class ApiToken(SQLModel, table=True):
     last_used_at: datetime.datetime | None = Field(default=None)
     expires_at: datetime.datetime | None = Field(default=None)
     revoked_at: datetime.datetime | None = Field(default=None)
+
+
+class LocalAuth(SQLModel, table=True):
+    __tablename__ = "local_auth"  # type: ignore
+    id: int = Field(default=1, primary_key=True)
+    username: str
+    password_hash: str
+    enabled: bool = Field(default=True)
+    setup_completed: bool = Field(default=False)
+    initial_password: str | None = Field(default=None)
+    updated_at: datetime.datetime = Field(default_factory=utcnow)
+
+
+class AuthSession(SQLModel, table=True):
+    __tablename__ = "auth_sessions"  # type: ignore
+    id: int = Field(default=None, primary_key=True)
+    token_hash: str = Field(unique=True, index=True)
+    created_at: datetime.datetime = Field(default_factory=utcnow)
+    last_used_at: datetime.datetime = Field(default_factory=utcnow)
+    expires_at: datetime.datetime

@@ -34,8 +34,16 @@ def real_auth(monkeypatch) -> None:
             raise ValueError("not a valid Firebase token")
         return dict(FIREBASE_SESSIONS[token])
 
-    monkeypatch.setattr(auth, "AUTH_DISABLED", False)
+    monkeypatch.setattr(auth, "AUTH_MODE", "firebase")
     monkeypatch.setattr(auth.firebase_auth, "verify_id_token", fake_verify)
+
+
+@pytest.fixture
+def local_client(tmp_path, monkeypatch) -> Iterator[TestClient]:
+    monkeypatch.setattr(auth, "AUTH_MODE", "local")
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def bearer(token: str) -> dict[str, str]:

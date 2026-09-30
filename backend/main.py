@@ -8,8 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import auth
 from api import router as api_router
 from db.setup import setup_db
+from local_auth.router import router as auth_router
+from local_auth.service import ensure_local_auth
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -21,6 +24,8 @@ async def lifespan(app: FastAPI):
     if not engine:
         log.error("error setting up db. stopping")
         raise RuntimeError("DB setup failed")
+    if auth.AUTH_MODE == "local":
+        ensure_local_auth(engine)
     app.state.engine = engine
     yield
     engine.dispose()
@@ -29,7 +34,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+cors_origins = [
+    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
+]
 cors_origin_regex = os.environ.get("CORS_ORIGIN_REGEX") or None
 if cors_origins or cors_origin_regex:
     app.add_middleware(
@@ -41,12 +48,14 @@ if cors_origins or cors_origin_regex:
         allow_headers=["*"],
     )
 
+app.include_router(router=auth_router)
 app.include_router(router=api_router, tags=["api"])
 
 
 @app.get("/healthz")
 async def healthz() -> dict:
     return {"status": "ok"}
+
 
 default_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist" / "client"
 frontend_dist = Path(os.environ.get("FRONTEND_DIST", default_dist))

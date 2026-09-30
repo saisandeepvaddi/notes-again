@@ -43,9 +43,6 @@ export default defineConfig({
       env: {
         VITE_SERVER_IP: "127.0.0.1",
         VITE_SERVER_PORT: String(BACKEND_PORT),
-        VITE_FIREBASE_API_KEY: "",
-        VITE_FIREBASE_AUTH_DOMAIN: "",
-        VITE_FIREBASE_PROJECT_ID: "",
       },
     },
   ],

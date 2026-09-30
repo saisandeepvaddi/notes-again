@@ -1,7 +1,7 @@
 # Deploying Notes Again
 
 Single container: FastAPI serves the API **and** the prebuilt SPA on one port.
-SQLite lives on a mounted volume; Litestream streams it to Cloudflare R2.
+SQLite lives on a mounted volume; optionally, Litestream streams it to Cloudflare R2.
 
 ## What's in the box
 
@@ -17,18 +17,41 @@ SQLite lives on a mounted volume; Litestream streams it to Cloudflare R2.
 
 ## One-time setup
 
-1. **Cloudflare R2** — create a bucket (e.g. `notes-again-backups`) and an
-   R2 API token with *Object Read & Write*. That gives you an S3-style
-   access key id + secret and an account-scoped endpoint
-   (`<account-id>.r2.cloudflarestorage.com`).
-2. `cp .env.example .env` and fill in the R2 values. Leave `CORS_ORIGINS`
-   empty (the SPA is same-origin in the container).
+Nothing is required: `docker compose up -d --build` works without a `.env`.
+Sign-in defaults to a local username and password (see [Auth](#auth)).
 
-## Run
+Optional:
+
+- **Backups to Cloudflare R2**: create a bucket (e.g. `notes-again-backups`)
+  and an R2 API token with *Object Read & Write*. That gives you an S3-style
+  access key id + secret and an account-scoped endpoint
+  (`<account-id>.r2.cloudflarestorage.com`). `cp .env.example .env` and fill
+  in the R2 values.
+- Leave `CORS_ORIGINS` empty: the SPA is same-origin in the container.
+
+## Run without Docker
+
+Needs [uv](https://docs.astral.sh/uv/), Node 22+ and pnpm.
 
 ```sh
-docker compose build
-docker compose up -d
+make run
+```
+
+This installs dependencies, builds the frontend into `frontend/dist/client`, and
+starts the backend on http://127.0.0.1:8000, serving the API and the frontend
+from one port. The database goes in the OS app-data folder
+(`~/Library/Application Support/notes-again/` on macOS,
+`~/.local/share/notes-again/` on Linux). Put it somewhere else with
+`make run DB=/path/to/notes.db`. The first-launch password is printed in the
+same terminal. It always uses username and password sign-in, and ignores
+`AUTH_MODE`, `DB_PATH` and `FRONTEND_DIST` from your shell, since those usually
+come from a container `.env` (VS Code's Python extension loads the repo-root
+`.env` into its terminals).
+
+## Run with Docker
+
+```sh
+docker compose up -d --build
 ```
 
 App is on `http://<host>:8000`. Put a reverse proxy / Cloudflare Tunnel in
@@ -73,70 +96,58 @@ docker run --rm -v notes-again_db:/data -v "$HOME/Library/Application Support/no
 
 ## Auth
 
-Email/password login via **Firebase Auth**. The frontend gets an ID token; the
-backend verifies it with the Firebase Admin SDK on every `/api` request. Only
-users you create in the Firebase console can sign in — that console is the whole
-user-management surface.
+Pick one with `AUTH_MODE`:
 
-### Firebase setup
+| `AUTH_MODE` | What it does |
+|---|---|
+| `local` (default) | Username and password stored in the database (scrypt-hashed). Sign-in sets an HttpOnly session cookie. |
+| `firebase` | Firebase email/password. See [docs/firebase-auth.md](docs/firebase-auth.md). |
+| `none` | No login at all. Only for a server nobody else can reach. |
 
-1. **Firebase console** → create a project (`console.firebase.google.com`).
-2. **Build → Authentication → Get started → Sign-in method** → enable
-   **Email/Password**.
-3. **Authentication → Users → Add user** — your email + a password.
-4. **Project settings → General → Your apps** → add a **Web app**; copy the SDK
-   config into `.env`:
+Firebase is only used with an explicit `AUTH_MODE=firebase`; a `FIREBASE_CREDENTIALS_FILE` on its own is ignored. `AUTH_DISABLED=1` still means `none` when `AUTH_MODE` is unset.
 
-   ```sh
-   VITE_FIREBASE_API_KEY=AIza...
-   VITE_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=<project-id>
-   ```
+### First launch (local mode)
 
-   (These are client config, not secrets — they're compiled into the SPA.)
-5. **Project settings → Service accounts → Generate new private key** → save the
-   JSON as `./firebase-service-account.json` (git-ignored). `docker-compose.yml`
-   mounts it read-only at `/run/secrets/firebase.json`, which is what
-   `FIREBASE_CREDENTIALS_FILE` points at.
-6. **Authentication → Settings → Authorized domains** — add your production
-   hostname (e.g. `notes.example.com`).
-7. **Authentication → Settings → User actions** — turn **off** "Enable create
-   (sign-up)". Firebase's web API key is public (it ships in the SPA), and with
-   sign-up on, anyone can use it to create an account and get a token the
-   backend will accept. With it off, only users you add in step 3 can sign in.
+The first start creates an `admin` account with a random password and prints both to the logs:
+
+```sh
+docker compose logs app | grep -A3 "first launch"
+```
+
+The banner is printed again on every start until setup is finished. After signing in, a setup screen asks you to choose:
+
+- **Username & password**: set your own. You can change them later in Settings → Sign-in.
+- **No login**: turns login off. You can turn it back on in Settings.
+- **Firebase**: links to the Firebase guide. The server keeps using the temporary password until you restart it with `AUTH_MODE=firebase`.
+
+To skip the temporary password, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` before the first start. They are used only when the account is created, never afterwards.
+
+### Locked out
+
+Reset to a fresh temporary `admin` password. This also signs everyone out:
+
+```sh
+docker compose exec -w /app/backend app python -m local_auth.reset
+```
+
+Without Docker: `make reset-login`, which uses the same `DB_PATH` the server uses.
 
 ### Behavior
 
-The API returns 401 for any request without a valid Firebase token, so a direct
-hit on the container is rejected even if the port leaks. `docker-compose.yml`
-also binds the published port to `127.0.0.1` — point `cloudflared` (or your
-reverse proxy) at `http://localhost:8000`.
-
-A production build **fails** if `VITE_FIREBASE_*` are missing, so an
-unauthenticated image can't ship by accident.
-
-For local dev there is no Firebase in front: set `AUTH_DISABLED=1` (the `Backend`
-VS Code debug config already does) and leave `VITE_FIREBASE_*` unset. Never set
-`AUTH_DISABLED` in the container.
-
-Data is still single-user (`user_id` hardcoded to 1) — Firebase just controls
-who gets in, and **any** account in your Firebase project can read all notes.
-As a second lock, set `ALLOWED_EMAILS` (comma-separated). When set, only those
-addresses are accepted even if sign-up is ever re-enabled by mistake. Leave it
-unset for no extra restriction.
+Every `/api` request without a valid session (or API token) gets a 401, so a direct hit on the container is rejected even if the port leaks. `docker-compose.yml` also binds the published port to `127.0.0.1`; point `cloudflared` or your reverse proxy at `http://localhost:8000`. Serve over HTTPS: the session cookie is marked `Secure` whenever the request arrives over HTTPS.
 
 ### API tokens (browser extension and other tools)
 
 Tools that can't sign in interactively, such as the browser extension, use a
-personal API token instead of a Firebase login. Create one in **Settings → API
+personal API token instead of a login. Tokens work in every auth mode. Create one in **Settings → API
 tokens**; it is shown once, so copy it straight into the tool.
 
 - A token can only save notes: list projects/tags, create projects/tags, create
   notes. It can't read, edit or delete notes, use import, or manage tokens.
 - Only a hash is stored. Revoke a token in Settings and it stops working
   immediately; tokens can also expire.
-- If you set `ALLOWED_EMAILS`, tokens minted by an address that is later
-  removed from it stop working too.
+- In Firebase mode with `ALLOWED_EMAILS` set, tokens minted by an address that
+  is later removed from it stop working too.
 - Tokens are bearer credentials: serve the API over HTTPS.
 
 ## Restoring a backup manually
@@ -146,8 +157,8 @@ docker compose run --rm --entrypoint "" app \
   litestream restore -config /etc/litestream.yml -o /data/restored.db /data/notes-again.db
 ```
 
-## Local dev (unchanged)
+## Local dev
 
-`pnpm dev` (frontend, :5173) + the "Backend" VS Code debug config (:8000).
-The debug config sets `CORS_ORIGINS` so the split-origin dev setup works;
-production leaves it empty.
+For working on the code, not for running it: `make dev-backend` (:8000, login
+off, CORS for the dev server) plus `make dev-frontend` (Vite with hot reload on
+:5273). Production leaves `CORS_ORIGINS` empty.

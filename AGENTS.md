@@ -15,8 +15,9 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 ## Running locally
 
+- As a user would: `make run` builds the SPA and serves it from the backend on 127.0.0.1:8000 with local sign-in (`make run DB=...` for a throwaway database).
 - Backend: `AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 backend/.venv/bin/uvicorn --app-dir backend main:app --reload`. The repo-root `.env` holds container/production values (`DB_PATH=/data/...`, secrets); keep it out of local runs. With `DB_PATH` unset, the DB lives in the OS app-data dir (`~/Library/Application Support/notes-again/` on macOS).
-- Frontend: `pnpm dev` in `frontend/` (port 5273). `frontend/.env` sets `VITE_SERVER_IP`/`VITE_SERVER_PORT` for the API; empty `VITE_FIREBASE_*` vars disable the login screen in dev (a production build throws without them).
+- Frontend: `pnpm dev` in `frontend/` (port 5273). `frontend/.env` sets `VITE_SERVER_IP`/`VITE_SERVER_PORT` for the API. The login screen follows whatever auth mode the backend reports at `/api/auth/status`, so `AUTH_DISABLED=1` on the backend means no login in dev.
 
 ## Verifying changes
 
@@ -30,10 +31,11 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 - Code carries no comments. Tool directives stay because they change behaviour: `eslint-disable`, `@ts-*`, `/// <reference>`, `# type: ignore`, `// @vitest-environment`.
 - Schema changes: there is no migration tool. A new column on an existing table must also be added to `add_missing_columns` in `backend/db/setup.py`, or existing databases break.
-- Single user: rows default to `user_id=1`. Auth is Firebase plus an optional `ALLOWED_EMAILS` allowlist; `AUTH_DISABLED=1` bypasses it.
+- Single user: rows default to `user_id=1`.
+- Auth: `AUTH_MODE` is `local` (default; username/password in the `local_auth` table, HttpOnly session cookie backed by `auth_sessions`), `firebase` (runtime web config from `VITE_FIREBASE_*` on the backend, optional `ALLOWED_EMAILS`), or `none`. Firebase needs an explicit `AUTH_MODE=firebase`; unset `AUTH_MODE` means `local`, or `none` with `AUTH_DISABLED=1`. In local mode the owner can also turn login off from the UI. `/api/auth/*` is public; everything else under `/api` goes through `require_user`. Firebase setup lives in [docs/firebase-auth.md](docs/firebase-auth.md).
 - API tokens are scoped. The extension's `capture` tokens can only list/create projects and tags and create notes.
 - Scheduling: each note stores its own `algorithm` (`sm2` or `fsrs`); new notes follow `Settings.default_algorithm` (defaults to `fsrs`).
-- Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`. Mutations invalidate by prefix.
+- Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`, `["auth-status"]`. Mutations invalidate by prefix.
 
 ## URL state on the notes list
 

@@ -1,44 +1,116 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { onIdTokenChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { auth, firebaseEnabled } from "@/lib/firebase";
+import { useQueryClient } from "@tanstack/react-query";
+import type { User } from "firebase/auth";
+import { getFirebaseAuth, initFirebase, signInWithFirebase } from "@/lib/firebase";
+import { UNAUTHORIZED_EVENT } from "@/utils/fetchers";
+import {
+  AUTH_STATUS_KEY,
+  type AuthStatus,
+  localSignIn,
+  localSignOut,
+  useAuthStatus,
+} from "./authStatus";
 
 interface AuthState {
-  user: User | null;
+  status: AuthStatus | undefined;
+  error: Error | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  firebaseUser: User | null;
+  signIn: (identifier: string, password: string) => Promise<void>;
   signOutUser: () => Promise<void>;
+  retry: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(firebaseEnabled);
+  const queryClient = useQueryClient();
+  const { data: status, error: statusError, isPending, refetch } = useAuthStatus();
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [firebaseReady, setFirebaseReady] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<Error | null>(null);
+
+  const mode = status?.mode;
+  const firebaseConfig = status?.firebase;
 
   useEffect(() => {
-    if (!auth) {
+    if (mode !== "firebase") {
       return;
     }
-    return onIdTokenChanged(auth, (nextUser) => {
-      setUser(nextUser);
-      setLoading(false);
-    });
-  }, []);
+    if (!firebaseConfig) {
+      setFirebaseError(
+        new Error(
+          "The server is set to Firebase sign-in but its VITE_FIREBASE_* settings are missing.",
+        ),
+      );
+      return;
+    }
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+    initFirebase(firebaseConfig)
+      .then((auth) => {
+        if (cancelled) {
+          return;
+        }
+        unsubscribe = auth.onIdTokenChanged((user) => {
+          setFirebaseUser(user);
+          setFirebaseReady(true);
+        });
+      })
+      .catch((error: unknown) => {
+        setFirebaseError(error instanceof Error ? error : new Error("Couldn't load Firebase"));
+      });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [mode, firebaseConfig]);
+
+  useEffect(() => {
+    const onUnauthorized = () => {
+      if (mode === "firebase") {
+        void getFirebaseAuth()
+          ?.signOut()
+          .catch(() => {});
+      } else {
+        void queryClient.invalidateQueries({ queryKey: AUTH_STATUS_KEY });
+      }
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, [mode, queryClient]);
+
+  const resetAfterAuthChange = async () => {
+    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== AUTH_STATUS_KEY[0] });
+    await queryClient.invalidateQueries({ queryKey: AUTH_STATUS_KEY });
+  };
 
   const value: AuthState = {
-    user,
-    loading,
-    signIn: async (email, password) => {
-      if (!auth) {
+    status,
+    error: statusError ?? firebaseError,
+    loading: isPending || (mode === "firebase" && !firebaseReady && !firebaseError),
+    firebaseUser,
+    signIn: async (identifier, password) => {
+      if (mode === "firebase") {
+        await signInWithFirebase(identifier, password);
         return;
       }
-      await signInWithEmailAndPassword(auth, email, password);
+      await localSignIn(identifier, password);
+      await resetAfterAuthChange();
     },
     signOutUser: async () => {
-      if (!auth) {
+      if (mode === "firebase") {
+        await getFirebaseAuth()?.signOut();
+        queryClient.removeQueries({
+          predicate: (query) => query.queryKey[0] !== AUTH_STATUS_KEY[0],
+        });
         return;
       }
-      await signOut(auth);
+      await localSignOut();
+      await resetAfterAuthChange();
+    },
+    retry: () => {
+      void refetch();
     },
   };
 

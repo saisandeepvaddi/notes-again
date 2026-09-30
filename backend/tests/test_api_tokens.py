@@ -170,7 +170,7 @@ def test_removing_someone_from_the_allowlist_also_kills_their_tokens(client, mon
     assert client.get("/api/projects/list", headers=headers).status_code == 401
 
 
-def test_auth_disabled_still_means_open(client, monkeypatch):
-    monkeypatch.setattr("auth.AUTH_DISABLED", True)
+def test_auth_mode_none_still_means_open(client, monkeypatch):
+    monkeypatch.setattr("auth.AUTH_MODE", "none")
     assert client.get("/api/projects/list").status_code == 200
     assert client.get("/api/tokens/list").status_code == 200

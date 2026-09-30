@@ -1,37 +1,39 @@
-import { type FirebaseApp, initializeApp } from "firebase/app";
-import { type Auth, getAuth } from "firebase/auth";
+import type { Auth } from "firebase/auth";
 
-const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-};
-
-export const firebaseEnabled = Boolean(config.apiKey && config.authDomain && config.projectId);
-
-if (import.meta.env.PROD && !firebaseEnabled && typeof window !== "undefined") {
-  throw new Error(
-    "Firebase config missing in production build — set VITE_FIREBASE_API_KEY / " +
-      "VITE_FIREBASE_AUTH_DOMAIN / VITE_FIREBASE_PROJECT_ID at build time.",
-  );
+export interface FirebaseWebConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
 }
 
-let app: FirebaseApp | undefined;
-let authInstance: Auth | undefined;
+let authInstance: Auth | null = null;
 
-if (firebaseEnabled) {
-  app = initializeApp({
-    apiKey: config.apiKey,
-    authDomain: config.authDomain,
-    projectId: config.projectId,
-  });
-  authInstance = getAuth(app);
+export async function initFirebase(config: FirebaseWebConfig): Promise<Auth> {
+  if (authInstance) {
+    return authInstance;
+  }
+  const [{ initializeApp }, { getAuth }] = await Promise.all([
+    import("firebase/app"),
+    import("firebase/auth"),
+  ]);
+  authInstance = getAuth(initializeApp(config));
+  return authInstance;
 }
 
-export const auth = authInstance;
+export function getFirebaseAuth(): Auth | null {
+  return authInstance;
+}
+
+export async function signInWithFirebase(email: string, password: string) {
+  if (!authInstance) {
+    throw new Error("Firebase isn't initialised");
+  }
+  const { signInWithEmailAndPassword } = await import("firebase/auth");
+  await signInWithEmailAndPassword(authInstance, email, password);
+}
 
 export async function getAuthToken(): Promise<string | null> {
-  const user = auth?.currentUser;
+  const user = authInstance?.currentUser;
   if (!user) {
     return null;
   }

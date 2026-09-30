@@ -27,6 +27,7 @@ export async function downloadExport(options: ExportOptions): Promise<void> {
   const response = await fetch(`${getURL()}/export/notes`, {
     method: "POST",
     headers: await getHeaders(),
+    credentials: "include",
     body: JSON.stringify(options),
   });
   if (!response.ok) throw new Error(`Export failed with ${response.status}`);

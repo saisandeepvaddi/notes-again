@@ -1,5 +1,4 @@
 import { useAuth } from "@/auth/AuthProvider";
-import { firebaseEnabled } from "@/lib/firebase";
 import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -35,15 +34,21 @@ const NAV_ITEMS = [
 ] as const;
 
 function SignOutButton() {
-  const { user, signOutUser } = useAuth();
-  if (!user) {
+  const { status, firebaseUser, signOutUser } = useAuth();
+  const label =
+    status?.mode === "firebase"
+      ? firebaseUser?.email
+      : status?.mode === "local" && status.authenticated
+        ? status.username
+        : null;
+  if (!label) {
     return null;
   }
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={user.email ?? "Sign out"}
+          tooltip={label}
           onClick={() => {
             void signOutUser();
           }}
@@ -87,7 +92,7 @@ function AppSidebar() {
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />
         </div>
-        {firebaseEnabled ? <SignOutButton /> : null}
+        <SignOutButton />
       </SidebarFooter>
     </Sidebar>
   );

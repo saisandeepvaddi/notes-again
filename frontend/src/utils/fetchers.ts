@@ -1,4 +1,6 @@
-import { auth, getAuthToken } from "@/lib/firebase";
+import { getAuthToken } from "@/lib/firebase";
+
+export const UNAUTHORIZED_EVENT = "notes-again:unauthorized";
 
 export const isDevEnv = () => import.meta.env.MODE === "development";
 
@@ -27,8 +29,8 @@ export const getHeaders = async (customHeaders?: Record<string, string>) => {
 };
 
 const handleResponse = async (response: Response, url: string) => {
-  if (response.status === 401 && !isDevEnv()) {
-    await auth?.signOut().catch(() => {});
+  if (response.status === 401 && typeof window !== "undefined") {
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   }
   if (!response.ok) {
     const detail = await response
@@ -54,6 +56,7 @@ interface FetcherOptions {
 export const getFetcher = (url: string, options?: FetcherOptions) => async () => {
   const response = await fetch(`${getURL()}${url}`, {
     headers: await getHeaders(options?.headers),
+    credentials: "include",
   });
   return handleResponse(response, url);
 };
@@ -62,6 +65,7 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
   const response = await fetch(`${getURL()}${url}`, {
     method: "POST",
     headers: await getHeaders(options?.headers),
+    credentials: "include",
     body,
   });
   return handleResponse(response, url);
@@ -71,6 +75,17 @@ export const patchFetcher = (url: string, options?: FetcherOptions) => async (bo
   const response = await fetch(`${getURL()}${url}`, {
     method: "PATCH",
     headers: await getHeaders(options?.headers),
+    credentials: "include",
+    body,
+  });
+  return handleResponse(response, url);
+};
+
+export const putFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
+  const response = await fetch(`${getURL()}${url}`, {
+    method: "PUT",
+    headers: await getHeaders(options?.headers),
+    credentials: "include",
     body,
   });
   return handleResponse(response, url);
@@ -80,6 +95,7 @@ export const deleteFetcher = (url: string, options?: FetcherOptions) => async (b
   const response = await fetch(`${getURL()}${url}`, {
     method: "DELETE",
     headers: await getHeaders(options?.headers),
+    credentials: "include",
     body,
   });
   return handleResponse(response, url);

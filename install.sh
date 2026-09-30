@@ -190,8 +190,8 @@ ask_auth() {
     "Username and password (you pick them on first launch)" \
     "No login" \
     "Firebase (accounts managed in a Firebase project)" \
-    "A login in front of it: Authelia, Authentik, oauth2-proxy, Tailscale Serve..." \
-    "Cloudflare Access"
+    "My reverse proxy already asks for a login (Authelia, Authentik, oauth2-proxy, Tailscale Serve)" \
+    "Cloudflare Access already asks for a login for this hostname"
   case "$auth_pick" in
     2) AUTH=none ;;
     3) AUTH=firebase ;;

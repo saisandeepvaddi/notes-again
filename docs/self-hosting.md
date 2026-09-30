@@ -149,17 +149,35 @@ docker compose up -d
 
 ## Sign-in
 
-Choose with `AUTH_MODE`:
+Choose with `AUTH_MODE`. **Most people should keep the default, `local`.**
 
-| `AUTH_MODE` | What it does |
+| `AUTH_MODE` | Use it when |
 | --- | --- |
-| `local` (default) | Username and password stored in the database (scrypt-hashed). Signing in sets an HttpOnly session cookie. |
-| `none` | No login. Only for a server nobody else can reach, or one behind a login you already run (VPN, reverse-proxy auth). |
-| `firebase` | Firebase email/password sign-in. See [firebase-auth.md](firebase-auth.md). |
-| `proxy` | Your reverse proxy signs people in (Authelia, Authentik, oauth2-proxy, Tailscale Serve) and passes the username in a header. See [Sign-in through your proxy](#sign-in-through-your-proxy). |
-| `cloudflare-access` | Cloudflare Access signs people in. See [Cloudflare Access](#cloudflare-access). |
+| `local` (default) | Almost always. Notes Again asks for its own username and password (stored scrypt-hashed; signing in sets an HttpOnly session cookie). Works on its own, and behind any reverse proxy or tunnel. |
+| `none` | The network is the lock: it runs on your own computer, or is reachable only over your VPN or Tailscale network. |
+| `proxy` | You already put a login page in front of your self-hosted apps with Authelia, Authentik, oauth2-proxy or Tailscale Serve. See [Sign-in through your proxy](#sign-in-through-your-proxy). |
+| `cloudflare-access` | You already protect this hostname with a Cloudflare Access application. See [Cloudflare Access](#cloudflare-access). |
+| `firebase` | You want accounts managed in a Firebase project. See [firebase-auth.md](firebase-auth.md). |
 
 Firebase is used only with an explicit `AUTH_MODE=firebase`.
+
+### Why `proxy` and `cloudflare-access` exist
+
+Some self-hosters sign in once, at the edge, for all their apps: a login
+service (Authelia, Authentik, Cloudflare Access…) sits in front, and a
+request only reaches the app after that login. Notes Again's own password is
+then a second login on top of the first.
+
+These two modes remove that second login: Notes Again trusts the identity the
+login in front has already checked, and Sign out goes through it too. They
+don't add security; the login in front provides it. If you don't already run
+such a login, you don't need them, and `local` works fine behind any proxy or
+tunnel.
+
+A Cloudflare Tunnel on its own is not a login: it only carries traffic to your
+server, and anyone with the address reaches the app. With just a tunnel, keep
+`local`. Use `cloudflare-access` only once a Cloudflare Access application
+shows its own login page for that hostname.
 
 `ALLOWED_EMAILS` (comma-separated) limits who gets in with `firebase`,
 `proxy` and `cloudflare-access`, even if the provider lets more people sign in.

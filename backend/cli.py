@@ -86,6 +86,23 @@ def doctor(_args: argparse.Namespace) -> int:
             problems.append(
                 "AUTH_MODE is firebase but the VITE_FIREBASE_* web config is missing."
             )
+        if auth.AUTH_MODE == "proxy":
+            from external_auth import proxy_header
+            from trusted_proxies import trusted_proxy_entries
+
+            proxies = trusted_proxy_entries()
+            line("user header", proxy_header())
+            line("trusted proxies", ", ".join(proxies))
+            if "*" in proxies:
+                problems.append(
+                    "TRUSTED_PROXIES is *, so anyone who can reach the server "
+                    "can claim any user."
+                )
+        if auth.AUTH_MODE == "cloudflare-access":
+            from external_auth import cloudflare_audience, cloudflare_team_domain
+
+            line("team domain", cloudflare_team_domain())
+            line("audience", cloudflare_audience())
 
     from backups.service import (
         backup_dir,

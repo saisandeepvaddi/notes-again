@@ -181,16 +181,22 @@ ask_auth() {
   case "$(current AUTH_MODE local)" in
     none) auth_default=2 ;;
     firebase) auth_default=3 ;;
+    proxy) auth_default=4 ;;
+    cloudflare-access) auth_default=5 ;;
     *) auth_default=1 ;;
   esac
   say "How should people sign in?"
   choose auth_pick "$auth_default" \
     "Username and password (you pick them on first launch)" \
     "No login" \
-    "Firebase (accounts managed in a Firebase project)"
+    "Firebase (accounts managed in a Firebase project)" \
+    "A login in front of it: Authelia, Authentik, oauth2-proxy, Tailscale Serve..." \
+    "Cloudflare Access"
   case "$auth_pick" in
     2) AUTH=none ;;
     3) AUTH=firebase ;;
+    4) AUTH=proxy ;;
+    5) AUTH=cloudflare-access ;;
     *) AUTH=local ;;
   esac
   if [ "$AUTH" = none ] && [ "$BIND" = 0.0.0.0 ]; then
@@ -209,6 +215,35 @@ ask_auth() {
     ask FB_ALLOWED "Allowed emails, comma-separated (optional)" "$(current ALLOWED_EMAILS "")"
     [ -f firebase-service-account.json ] || firebase_ready=0
   fi
+  if [ "$AUTH" = proxy ]; then
+    say ""
+    say "Your proxy signs people in and passes the username in a header."
+    ask PROXY_HEADER "Header with the username" "$(current AUTH_PROXY_HEADER Remote-User)"
+    ask PROXY_LOGOUT "Sign-out URL on your proxy (optional)" "$(current AUTH_PROXY_LOGOUT_URL "")"
+    say "The header is only trusted from your proxy's address."
+    if [ "$METHOD" = docker ] && [ "$BIND" = 127.0.0.1 ]; then
+      say "Leave this empty to trust proxies on this machine automatically."
+    fi
+    ask PROXY_TRUSTED "Proxy addresses or networks, comma-separated" "$(current TRUSTED_PROXIES "")"
+    if [ -z "$PROXY_TRUSTED" ] && [ "$BIND" = 0.0.0.0 ]; then
+      say "Without a proxy address only 127.0.0.1 is trusted, and your proxy may not be."
+    fi
+  fi
+  if [ "$AUTH" = cloudflare-access ]; then
+    say ""
+    say "From the Cloudflare Zero Trust dashboard (Access > Applications > your app):"
+    while :; do
+      ask CF_TEAM "Team domain (e.g. myteam.cloudflareaccess.com)" "$(current CF_ACCESS_TEAM_DOMAIN "")"
+      [ -n "$CF_TEAM" ] && break
+      say "The team domain is required."
+    done
+    while :; do
+      ask CF_AUD "Application Audience (AUD) tag" "$(current CF_ACCESS_AUD "")"
+      [ -n "$CF_AUD" ] && break
+      say "The AUD tag is required."
+    done
+    ask FB_ALLOWED "Allowed emails, comma-separated (optional)" "$(current ALLOWED_EMAILS "")"
+  fi
   say ""
 }
 
@@ -220,6 +255,16 @@ save_auth() {
     env_set VITE_FIREBASE_API_KEY "$FB_API_KEY"
     env_set VITE_FIREBASE_AUTH_DOMAIN "$FB_DOMAIN"
     env_set VITE_FIREBASE_PROJECT_ID "$FB_PROJECT"
+    if [ -n "$FB_ALLOWED" ]; then env_set ALLOWED_EMAILS "$FB_ALLOWED"; else env_unset ALLOWED_EMAILS; fi
+  fi
+  if [ "$AUTH" = proxy ]; then
+    env_set AUTH_PROXY_HEADER "$PROXY_HEADER"
+    if [ -n "$PROXY_LOGOUT" ]; then env_set AUTH_PROXY_LOGOUT_URL "$PROXY_LOGOUT"; else env_unset AUTH_PROXY_LOGOUT_URL; fi
+    if [ -n "$PROXY_TRUSTED" ]; then env_set TRUSTED_PROXIES "$PROXY_TRUSTED"; else env_unset TRUSTED_PROXIES; fi
+  fi
+  if [ "$AUTH" = cloudflare-access ]; then
+    env_set CF_ACCESS_TEAM_DOMAIN "$CF_TEAM"
+    env_set CF_ACCESS_AUD "$CF_AUD"
     if [ -n "$FB_ALLOWED" ]; then env_set ALLOWED_EMAILS "$FB_ALLOWED"; else env_unset ALLOWED_EMAILS; fi
   fi
 }
@@ -240,6 +285,7 @@ print_first_launch() {
 
 setup_docker() {
   ENV_FILE=.env
+  METHOD=docker
   ask_network
   ask_auth
 
@@ -347,6 +393,7 @@ print_lan_address() {
 
 setup_direct() {
   ENV_FILE=.env.local
+  METHOD=direct
   ask_network
 
   db_default=$(current DB_PATH "$(default_db_path)")

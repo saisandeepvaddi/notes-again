@@ -17,7 +17,19 @@ for name in LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY; do
   fi
 done
 
-APP="uvicorn --app-dir backend main:app --host 0.0.0.0 --port ${PORT:-8000}"
+if [ -z "${TRUSTED_PROXIES:-}" ] && { [ -z "${BIND_ADDRESS:-}" ] || [ "${BIND_ADDRESS}" = "127.0.0.1" ]; }; then
+  gateway=$(python -c 'import socket, struct
+for line in open("/proc/net/route").readlines()[1:]:
+    f = line.split()
+    if f[1] == "00000000":
+        print(socket.inet_ntoa(struct.pack("<L", int(f[2], 16))))
+        break' 2>/dev/null || true)
+  if [ -n "$gateway" ]; then
+    export TRUSTED_PROXIES="127.0.0.1,::1,$gateway"
+  fi
+fi
+
+APP="uvicorn --app-dir backend main:app --no-proxy-headers --host 0.0.0.0 --port ${PORT:-8000}"
 
 if [ -z "${BACKUP_REPLICA_URL:-}" ] && [ -n "${R2_BUCKET:-}" ] && [ -n "${R2_ENDPOINT:-}" ] \
   && [ -n "${LITESTREAM_ACCESS_KEY_ID:-}" ]; then

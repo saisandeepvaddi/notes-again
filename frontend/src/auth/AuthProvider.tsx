@@ -99,6 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await resetAfterAuthChange();
     },
     signOutUser: async () => {
+      if (mode === "proxy" || mode === "cloudflare-access") {
+        if (status?.logout_url) {
+          window.location.href = status.logout_url;
+        }
+        return;
+      }
       if (mode === "firebase") {
         await getFirebaseAuth()?.signOut();
         queryClient.removeQueries({

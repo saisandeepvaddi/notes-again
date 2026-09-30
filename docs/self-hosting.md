@@ -111,7 +111,8 @@ with comments.
 | --- | --- | --- |
 | `BIND_ADDRESS` | `127.0.0.1` | `0.0.0.0` lets other devices on the network connect |
 | `HOST_PORT` | `8000` | Port on the host |
-| `AUTH_MODE` | `local` | `local`, `none` or `firebase`; see [Sign-in](#sign-in) |
+| `AUTH_MODE` | `local` | `local`, `none`, `firebase`, `proxy` or `cloudflare-access`; see [Sign-in](#sign-in) |
+| `TRUSTED_PROXIES` | this machine | Addresses or networks of your reverse proxy, comma-separated; see [Reaching it from other devices](#reaching-it-from-other-devices) |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | | Create the account with these instead of a temporary password (first start only) |
 | `BACKUP_INTERVAL_HOURS` | `24` | How often to take a local snapshot; `0` turns snapshots off |
 | `BACKUP_KEEP` | `7` | How many local snapshots to keep |
@@ -155,8 +156,14 @@ Choose with `AUTH_MODE`:
 | `local` (default) | Username and password stored in the database (scrypt-hashed). Signing in sets an HttpOnly session cookie. |
 | `none` | No login. Only for a server nobody else can reach, or one behind a login you already run (VPN, reverse-proxy auth). |
 | `firebase` | Firebase email/password sign-in. See [firebase-auth.md](firebase-auth.md). |
+| `proxy` | Your reverse proxy signs people in (Authelia, Authentik, oauth2-proxy, Tailscale Serve) and passes the username in a header. See [Sign-in through your proxy](#sign-in-through-your-proxy). |
+| `cloudflare-access` | Cloudflare Access signs people in. See [Cloudflare Access](#cloudflare-access). |
 
 Firebase is used only with an explicit `AUTH_MODE=firebase`.
+
+`ALLOWED_EMAILS` (comma-separated) limits who gets in with `firebase`,
+`proxy` and `cloudflare-access`, even if the provider lets more people sign in.
+In `proxy` mode it is compared with the header value.
 
 ### First launch
 
@@ -175,6 +182,52 @@ Reset to a fresh temporary `admin` password. This also signs everyone out.
 
 - Docker: `docker compose exec app python backend/cli.py reset-login`
 - Without Docker: `make reset-login` (add `DB=...` if you use one)
+
+### Sign-in through your proxy
+
+With `AUTH_MODE=proxy`, Notes Again trusts a username header set by your
+reverse proxy after it has signed the person in.
+
+| Variable | Default | |
+| --- | --- | --- |
+| `AUTH_PROXY_HEADER` | `Remote-User` | Header with the username, e.g. `Tailscale-User-Login` for Tailscale Serve |
+| `AUTH_PROXY_LOGOUT_URL` | | Where Sign out sends people; without it, there's no Sign out button |
+| `TRUSTED_PROXIES` | this machine | Only requests from these addresses may set the header |
+
+The header is ignored unless the request comes straight from a trusted proxy
+address, so nobody can set it themselves by reaching the app directly. In the
+Docker setup with the default loopback binding, proxies on the same machine
+are trusted automatically. If the proxy runs elsewhere, or you set
+`BIND_ADDRESS=0.0.0.0`, set `TRUSTED_PROXIES` to its address. Never set it to
+`*`.
+
+The browser extension's requests carry an API token, not a proxy login; let
+requests to `/api/` that have an `Authorization: Bearer nal_…` header through
+your proxy without its login step. Notes Again still checks the token.
+
+### Cloudflare Access
+
+With `AUTH_MODE=cloudflare-access`, Notes Again checks the signed token that
+Cloudflare Access adds to every request, so it's safe even if someone reaches
+the server another way.
+
+1. In the Cloudflare Zero Trust dashboard, add a self-hosted Access application
+   for the hostname that serves Notes Again (usually through a Cloudflare
+   Tunnel), with a policy for who may sign in.
+2. Copy the application's **Audience (AUD) tag**, and your team domain
+   (`<team>.cloudflareaccess.com`).
+3. Set:
+
+   ```sh
+   AUTH_MODE=cloudflare-access
+   CF_ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com
+   CF_ACCESS_AUD=<audience tag>
+   ```
+
+Sign out goes to Cloudflare's `/cdn-cgi/access/logout`. For the browser
+extension, add a second Access policy with the **Bypass** action for the
+`/api/` path: extension requests carry an API token, which Notes Again checks,
+and the app's own requests still need a valid Access sign-in.
 
 ### API tokens
 
@@ -200,6 +253,16 @@ By default the app only accepts connections from the machine it runs on.
   Tailscale) in front, pointing at `http://localhost:8000`. Serve over HTTPS:
   the session cookie is only marked `Secure` when the request arrives over
   HTTPS, and API tokens are bearer credentials.
+
+Notes Again reads the client address and `https` from the proxy's
+`X-Forwarded-For` and `X-Forwarded-Proto` headers only when the request comes
+from `TRUSTED_PROXIES`. That list defaults to this machine; in Docker with the
+default loopback binding it also covers proxies on the host. A proxy on another
+machine needs its address in `TRUSTED_PROXIES`.
+
+If your proxy or tunnel can sign people in, it can replace Notes Again's own
+login: see [Sign-in through your proxy](#sign-in-through-your-proxy) and
+[Cloudflare Access](#cloudflare-access).
 
 ### Cloudflare Tunnel in its own container
 

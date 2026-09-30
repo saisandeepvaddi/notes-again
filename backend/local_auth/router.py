@@ -29,6 +29,7 @@ class AuthStatus(BaseModel):
     setup_required: bool
     username: str | None = None
     firebase: dict[str, str] | None = None
+    logout_url: str | None = None
 
 
 @router.get("/status", response_model=AuthStatus)
@@ -51,6 +52,15 @@ def auth_status(request: Request, session: SessionDep):
             status_body.username = identity["username"]
     elif mode == "firebase":
         status_body.firebase = auth.firebase_web_config()
+    elif mode in auth.EXTERNAL_MODES:
+        status_body.logout_url = auth.external_logout_url()
+        try:
+            identity = auth.external_identity(request)
+        except HTTPException:
+            identity = None
+        status_body.authenticated = identity is not None
+        if identity is not None:
+            status_body.username = identity["username"]
     return status_body
 
 

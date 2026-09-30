@@ -107,6 +107,14 @@ export function SignInSettings() {
         .
       </Description>
     );
+  } else if (status.configured_mode === "proxy" || status.configured_mode === "cloudflare-access") {
+    body = (
+      <Description>
+        Signed in as {status.username ?? "an unknown user"} through{" "}
+        {status.configured_mode === "proxy" ? "your reverse proxy" : "Cloudflare Access"}. Who can
+        sign in is managed there, not here.
+      </Description>
+    );
   } else if (status.configured_mode === "none") {
     body = (
       <Description>

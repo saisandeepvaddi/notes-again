@@ -40,7 +40,9 @@ function SignOutButton() {
       ? firebaseUser?.email
       : status?.mode === "local" && status.authenticated
         ? status.username
-        : null;
+        : (status?.mode === "proxy" || status?.mode === "cloudflare-access") && status.logout_url
+          ? status.username
+          : null;
   if (!label) {
     return null;
   }

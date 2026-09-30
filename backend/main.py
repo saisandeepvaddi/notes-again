@@ -15,6 +15,7 @@ from backups.service import run_snapshot_schedule
 from db.setup import setup_db
 from local_auth.router import router as auth_router
 from local_auth.service import ensure_local_auth
+from trusted_proxies import ForwardedHeadersMiddleware
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -51,6 +52,8 @@ if cors_origins or cors_origin_regex:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+app.add_middleware(ForwardedHeadersMiddleware)
 
 app.include_router(router=auth_router)
 app.include_router(router=api_router, tags=["api"])

@@ -20,5 +20,5 @@ if [ ! -x backend/.venv/bin/uvicorn ] || [ ! -f frontend/dist/client/index.html 
   exit 1
 fi
 
-exec backend/.venv/bin/uvicorn --app-dir backend main:app \
+exec backend/.venv/bin/uvicorn --app-dir backend main:app --no-proxy-headers \
   --host "${BIND_ADDRESS:-127.0.0.1}" --port "${HOST_PORT:-8000}"

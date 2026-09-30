@@ -7,7 +7,8 @@ export const AUTH_STATUS_KEY = ["auth-status"] as const;
 export const FIREBASE_DOCS_URL =
   "https://github.com/saisandeepvaddi/notes-again/blob/main/docs/firebase-auth.md";
 
-const AuthModeSchema = z.enum(["local", "firebase", "none"]);
+export const AuthModeSchema = z.enum(["local", "firebase", "none", "proxy", "cloudflare-access"]);
+export type AuthMode = z.infer<typeof AuthModeSchema>;
 
 export const AuthStatusSchema = z.object({
   mode: AuthModeSchema,
@@ -19,6 +20,7 @@ export const AuthStatusSchema = z.object({
     .object({ apiKey: z.string(), authDomain: z.string(), projectId: z.string() })
     .nullable()
     .optional(),
+  logout_url: z.string().nullable().optional(),
 });
 export type AuthStatus = z.infer<typeof AuthStatusSchema>;
 

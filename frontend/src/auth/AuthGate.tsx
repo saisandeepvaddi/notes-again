@@ -4,6 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { ReactNode } from "react";
 import { useAuth } from "./AuthProvider";
 import LoginScreen from "./LoginScreen";
+import ExternalSignInScreen from "./ExternalSignInScreen";
 import SetupScreen from "./SetupScreen";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -31,6 +32,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }
   if (status.mode === "firebase") {
     return firebaseUser ? <>{children}</> : <LoginScreen mode="firebase" />;
+  }
+  if (status.mode === "proxy" || status.mode === "cloudflare-access") {
+    return status.authenticated ? <>{children}</> : <ExternalSignInScreen mode={status.mode} />;
   }
   if (status.mode === "local") {
     if (!status.authenticated) {

@@ -10,13 +10,28 @@ from firebase_admin import credentials
 from sqlmodel import Session
 
 from db.setup import SessionDep
+from external_auth import (
+    CLOUDFLARE_LOGOUT_URL,
+    check_cloudflare_config,
+    cloudflare_email,
+    proxy_logout_url,
+    proxy_user,
+)
 from local_auth.service import SESSION_COOKIE, find_session, get_local_auth
 from tokens.service import TOKEN_PREFIX, find_active_token, record_use, scope_allows
 
 log = logging.getLogger(__name__)
 
-AuthMode = Literal["local", "firebase", "none"]
-AUTH_MODES: tuple[AuthMode, ...] = ("local", "firebase", "none")
+AuthMode = Literal["local", "firebase", "none", "proxy", "cloudflare-access"]
+AUTH_MODES: tuple[AuthMode, ...] = (
+    "local",
+    "firebase",
+    "none",
+    "proxy",
+    "cloudflare-access",
+)
+EXTERNAL_MODES: tuple[AuthMode, ...] = ("proxy", "cloudflare-access")
+EMAIL_MODES: tuple[AuthMode, ...] = ("firebase", "proxy", "cloudflare-access")
 
 FIREBASE_CREDENTIALS_FILE = os.environ.get("FIREBASE_CREDENTIALS_FILE", "").strip()
 
@@ -53,7 +68,10 @@ elif AUTH_MODE == "firebase":
             "and password sign-in."
         )
     firebase_admin.initialize_app(credentials.Certificate(FIREBASE_CREDENTIALS_FILE))
-elif FIREBASE_CREDENTIALS_FILE:
+elif AUTH_MODE == "cloudflare-access":
+    check_cloudflare_config()
+
+if AUTH_MODE != "firebase" and FIREBASE_CREDENTIALS_FILE:
     log.info(
         "FIREBASE_CREDENTIALS_FILE is set but AUTH_MODE isn't firebase; ignoring it."
     )
@@ -82,7 +100,7 @@ def allowed_emails() -> set[str]:
 
 
 def _is_allowed(email: str | None) -> bool:
-    if AUTH_MODE != "firebase":
+    if AUTH_MODE not in EMAIL_MODES:
         return True
     allowed = allowed_emails()
     return not allowed or (email or "").lower() in allowed
@@ -124,6 +142,31 @@ def local_identity(request: Request, session: Session) -> dict | None:
     }
 
 
+def external_identity(request: Request) -> dict | None:
+    if AUTH_MODE == "proxy":
+        user = proxy_user(request)
+        kind = "proxy"
+    elif AUTH_MODE == "cloudflare-access":
+        user = cloudflare_email(request)
+        kind = "cloudflare"
+    else:
+        return None
+    if user is None:
+        return None
+    if not _is_allowed(user):
+        log.warning("Rejected sign-in from a user not in ALLOWED_EMAILS: %s", user)
+        raise HTTPException(status_code=403, detail="This account is not allowed")
+    return {"email": user, "uid": f"{kind}:{user}", "username": user, "auth": "session"}
+
+
+def external_logout_url() -> str | None:
+    if AUTH_MODE == "proxy":
+        return proxy_logout_url()
+    if AUTH_MODE == "cloudflare-access":
+        return CLOUDFLARE_LOGOUT_URL
+    return None
+
+
 def _identity_from_api_token(request: Request, session: SessionDep, token: str) -> dict:
     record = find_active_token(session, token)
     if record is None or not _is_allowed(record.created_by):
@@ -150,8 +193,12 @@ def require_user(request: Request, session: SessionDep) -> dict:
     if token and token.startswith(TOKEN_PREFIX):
         return _identity_from_api_token(request, session, token)
 
-    if mode == "local":
-        identity = local_identity(request, session)
+    if mode == "local" or mode in EXTERNAL_MODES:
+        identity = (
+            local_identity(request, session)
+            if mode == "local"
+            else external_identity(request)
+        )
         if identity is None:
             raise HTTPException(status_code=401, detail="Not authenticated")
         return identity

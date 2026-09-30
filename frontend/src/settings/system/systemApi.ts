@@ -1,6 +1,7 @@
 import { getFetcher, getHeaders, getURL, postFetcher } from "@/utils/fetchers";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { AuthModeSchema } from "@/auth/authStatus";
 import { z } from "zod";
 
 const SnapshotSchema = z.object({
@@ -15,7 +16,7 @@ export const SystemInfoSchema = z.object({
   sqlite_version: z.string(),
   note_count: z.number(),
   in_container: z.boolean(),
-  auth_mode: z.enum(["local", "firebase", "none"]),
+  auth_mode: AuthModeSchema,
   backups: z.object({
     directory: z.string(),
     interval_hours: z.number(),

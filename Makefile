@@ -1,4 +1,4 @@
-.PHONY: help run install install-backend install-frontend install-extension \
+.PHONY: help run serve install install-backend install-frontend install-extension \
 	dev-backend dev-frontend dev-extension dev-extension-firefox \
 	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
 	check check-backend check-frontend check-extension \
@@ -7,8 +7,10 @@
 
 help:
 	@echo "Run:"
-	@echo "  make run                      - install, build the SPA and serve the app on http://127.0.0.1:8000"
+	@echo "  make run                      - install, build the SPA and serve the app (default http://127.0.0.1:8000)"
 	@echo "  make run DB=path/to/notes.db  - same, with the database at a path you choose"
+	@echo "  make serve                    - serve without reinstalling or rebuilding"
+	@echo "  (settings come from .env.local, which ./install.sh writes)"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make install                  - install backend, frontend and extension deps"
@@ -49,8 +51,10 @@ help:
 	@echo "  make deploy                   - push main and rebuild on the VPS (needs VPS_USER, VPS_HOST)"
 
 run: install-backend install-frontend build-frontend
-	env -u AUTH_MODE -u AUTH_DISABLED -u CORS_ORIGINS -u FRONTEND_DIST $(if $(DB),DB_PATH=$(DB),-u DB_PATH) \
-		backend/.venv/bin/uvicorn --app-dir backend main:app --host 127.0.0.1 --port 8000
+	DB='$(DB)' scripts/serve.sh
+
+serve:
+	DB='$(DB)' scripts/serve.sh
 
 install: install-backend install-frontend install-extension
 

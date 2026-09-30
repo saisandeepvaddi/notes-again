@@ -9,7 +9,7 @@ and no accounts to create elsewhere.
 | You want to… | Use |
 | --- | --- |
 | Use it on this computer | [Run without Docker](#run-without-docker): `make run` |
-| Run it on a home server or VPS | [Guided install](#guided-install): `./install.sh` |
+| Run it on a home server or VPS | [Guided install](#guided-install): `./install.sh`, with Docker or without |
 | Run it with Docker, configured by hand | [Docker Compose](#docker-compose-by-hand) |
 | Reach it from anywhere over HTTPS | Either Docker setup, plus a [reverse proxy or tunnel](#reaching-it-from-other-devices) |
 
@@ -34,15 +34,22 @@ terminal (see [First launch](#first-launch)).
   (`~/Library/Application Support/notes-again/` on macOS,
   `~/.local/share/notes-again/` on Linux). Choose another path with
   `make run DB=/path/to/notes.db`.
-- It is reachable from this computer only.
-- `make run` always uses username and password sign-in, and ignores
-  `AUTH_MODE`, `DB_PATH` and `FRONTEND_DIST` from your shell (those usually
-  come from a Docker `.env`).
+- It is reachable from this computer only, unless you change that in
+  `.env.local`.
+- `make serve` (or `scripts/serve.sh`, which doesn't need `make`) starts it
+  again without reinstalling or rebuilding.
 - To update: stop it, `git pull`, and `make run` again.
+
+Settings for this setup live in `.env.local` in the repo folder, which the
+[guided install](#guided-install) writes for you: `BIND_ADDRESS`, `HOST_PORT`,
+`DB_PATH`, `AUTH_MODE` and the backup settings from [Settings](#settings).
+Settings in your shell are ignored, because a Docker `.env` is often loaded
+there (VS Code's Python extension does this by default).
 
 ## Guided install
 
-Needs git and Docker with Compose v2. On the server:
+Needs git, plus either Docker with Compose v2, or uv, Node.js 22+ and pnpm.
+On the server:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/saisandeepvaddi/notes-again/main/install.sh | sh
@@ -51,18 +58,30 @@ curl -fsSL https://raw.githubusercontent.com/saisandeepvaddi/notes-again/main/in
 Or, from a clone: `./install.sh`.
 
 The script clones the repo into `./notes-again` (or uses the checkout it's run
-from), then asks:
+from), then asks how to run it:
+
+- **Docker** (the default when Docker is available): runs in a container that
+  restarts on reboot, and can add off-site backup.
+- **Directly on this machine**: runs with uv and Node, no containers. You
+  start it with `scripts/serve.sh`.
+
+Then it asks:
 
 1. Whether other devices on your network may open it, or only this machine and
    your reverse proxy or tunnel.
 2. Which port to use (default 8000).
-3. How to sign in: username and password, no login, or Firebase.
-4. Whether to add off-site backup to S3-compatible storage.
+3. Where the database lives (direct setup only).
+4. How to sign in: username and password, no login, or Firebase.
+5. Whether to add off-site backup to S3-compatible storage (Docker only).
 
-It writes your answers to `.env`, builds the image from source, starts it, and
-prints the address and the first-launch password. Run it again at any time to
-change an answer: it only rewrites its own settings and keeps everything else
-in `.env`.
+It writes your answers to `.env` (Docker) or `.env.local` (direct), builds from
+source, and prints the address and the first-launch password. The Docker setup
+starts right away; the direct one offers to. Run the script again at any time
+to change an answer: it only rewrites its own settings and keeps everything
+else in the file.
+
+If the chosen method is missing something, the script lists what to install
+and stops without changing anything.
 
 ## Docker Compose by hand
 
@@ -278,7 +297,7 @@ Other maintenance commands in `backend/cli.py`: `reset-login`, `snapshot`,
 `make doctor`, each taking `DB=...`.
 
 - **Port already in use**: another program has port 8000. Set `HOST_PORT` in
-  `.env` (Docker), or stop the other program.
+  `.env` (Docker) or `.env.local` (direct), or stop the other program.
 - **Firebase errors on a machine that isn't set up for Firebase**: a Docker
   `.env` is probably loaded into your terminal (VS Code's Python extension
   does this by default). `make run` ignores those settings; running `uvicorn`

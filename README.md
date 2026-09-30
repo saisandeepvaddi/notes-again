@@ -30,7 +30,7 @@ git clone https://github.com/saisandeepvaddi/notes-again && cd notes-again
 make run
 ```
 
-**On a server, guided** (needs git and Docker):
+**On a server, guided** (needs git, plus Docker or uv/Node/pnpm; it asks which):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/saisandeepvaddi/notes-again/main/install.sh | sh

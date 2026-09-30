@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ApiTokens } from "./api-tokens/ApiTokens";
 import { SettingsForm } from "./SettingsForm";
 import { SignInSettings } from "./sign-in/SignInSettings";
+import { SystemSettings } from "./system/SystemSettings";
 
 export function SettingsContainer() {
   return (
@@ -16,6 +17,9 @@ export function SettingsContainer() {
           </div>
           <div className="mt-8">
             <ApiTokens />
+          </div>
+          <div className="mt-8">
+            <SystemSettings />
           </div>
         </ClientOnly>
       </Suspense>

@@ -2,22 +2,27 @@
 set -e
 
 DB_PATH="${DB_PATH:-/data/notes-again.db}"
+export DB_PATH
 mkdir -p "$(dirname "$DB_PATH")"
 
-run_app() {
-  exec uvicorn --app-dir backend main:app --host 0.0.0.0 --port "${PORT:-8000}"
-}
+APP="uvicorn --app-dir backend main:app --host 0.0.0.0 --port ${PORT:-8000}"
 
-# Litestream is optional: only kicks in when R2 credentials are provided.
-if [ -n "${LITESTREAM_ACCESS_KEY_ID:-}" ]; then
-  if [ ! -f "$DB_PATH" ]; then
-    echo "No local DB at $DB_PATH — restoring latest snapshot from R2 (if any)..."
-    litestream restore -if-replica-exists -config /etc/litestream.yml "$DB_PATH"
-  fi
-  echo "Running under Litestream replication."
-  exec litestream replicate -config /etc/litestream.yml -exec \
-    "uvicorn --app-dir backend main:app --host 0.0.0.0 --port ${PORT:-8000}"
-else
-  echo "LITESTREAM_ACCESS_KEY_ID not set — running without backup."
-  run_app
+if [ -z "${BACKUP_REPLICA_URL:-}" ] && [ -n "${R2_BUCKET:-}" ] && [ -n "${R2_ENDPOINT:-}" ] \
+  && [ -n "${LITESTREAM_ACCESS_KEY_ID:-}" ]; then
+  R2_HOST="${R2_ENDPOINT#https://}"
+  R2_HOST="${R2_HOST#http://}"
+  BACKUP_REPLICA_URL="s3://${R2_BUCKET}/${R2_PATH:-}?endpoint=${R2_HOST}"
 fi
+
+if [ -z "${BACKUP_REPLICA_URL:-}" ]; then
+  echo "BACKUP_REPLICA_URL not set; running without off-site backup."
+  exec $APP
+fi
+
+export BACKUP_REPLICA_URL
+if [ ! -f "$DB_PATH" ]; then
+  echo "No local DB at $DB_PATH; restoring the latest off-site backup, if there is one..."
+  litestream restore -if-replica-exists -config /etc/litestream.yml "$DB_PATH"
+fi
+echo "Running under Litestream replication."
+exec litestream replicate -config /etc/litestream.yml -exec "$APP"

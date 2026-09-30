@@ -22,13 +22,18 @@ WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Litestream: continuous SQLite backup to an S3-compatible target (R2).
-ARG LITESTREAM_VERSION=0.3.13
+# Litestream: optional continuous SQLite backup to S3-compatible storage, SFTP, etc.
+ARG LITESTREAM_VERSION=0.5.17
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates wget \
+    && case "$(dpkg --print-architecture)" in \
+         amd64) ls_arch=x86_64 ;; \
+         arm64) ls_arch=arm64 ;; \
+         *) echo "No Litestream build for $(dpkg --print-architecture)" >&2; exit 1 ;; \
+       esac \
     && wget -qO /tmp/litestream.tar.gz \
-       "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-$(dpkg --print-architecture).tar.gz" \
-    && tar -C /usr/local/bin -xzf /tmp/litestream.tar.gz \
+       "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-${ls_arch}.tar.gz" \
+    && tar -C /usr/local/bin -xzf /tmp/litestream.tar.gz litestream \
     && rm /tmp/litestream.tar.gz \
     && apt-get purge -y --auto-remove wget \
     && rm -rf /var/lib/apt/lists/*

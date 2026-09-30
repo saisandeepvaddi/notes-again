@@ -8,6 +8,7 @@ import pytest
 os.environ["AUTH_DISABLED"] = "1"
 os.environ["DB_PATH"] = str(Path(tempfile.mkdtemp(prefix="nal-tests-")) / "import.db")
 os.environ.pop("ALLOWED_EMAILS", None)
+os.environ["BACKUP_INTERVAL_HOURS"] = "0"
 
 from fastapi.testclient import TestClient
 

@@ -1,7 +1,7 @@
 # Deploying Notes Again
 
 Single container: FastAPI serves the API **and** the prebuilt SPA on one port.
-SQLite lives on a mounted volume; optionally, Litestream streams it to Cloudflare R2.
+SQLite lives on a mounted volume, with daily local snapshots; optionally, Litestream streams every change to off-site storage.
 
 ## What's in the box
 
@@ -11,23 +11,16 @@ SQLite lives on a mounted volume; optionally, Litestream streams it to Cloudflar
 - **Backend** — `uvicorn --app-dir backend main:app`. Serves `/api/*`, and
   everything else falls back to the SPA `index.html`.
 - **DB** — `DB_PATH` env var (default `/data/notes-again.db`).
-- **Backups** — `docker-entrypoint.sh` runs the app under
-  `litestream replicate` when R2 creds are present, and restores from R2 on
-  first boot if the volume is empty.
+- **Backups** — daily local snapshots next to the DB, plus optional Litestream
+  off-site replication. See [Backups](#backups).
 
 ## One-time setup
 
 Nothing is required: `docker compose up -d --build` works without a `.env`.
 Sign-in defaults to a local username and password (see [Auth](#auth)).
 
-Optional:
-
-- **Backups to Cloudflare R2**: create a bucket (e.g. `notes-again-backups`)
-  and an R2 API token with *Object Read & Write*. That gives you an S3-style
-  access key id + secret and an account-scoped endpoint
-  (`<account-id>.r2.cloudflarestorage.com`). `cp .env.example .env` and fill
-  in the R2 values.
-- Leave `CORS_ORIGINS` empty: the SPA is same-origin in the container.
+Optional: off-site backups (see [Backups](#backups)). Leave `CORS_ORIGINS`
+empty: the SPA is same-origin in the container.
 
 ## Run without Docker
 
@@ -127,7 +120,7 @@ To skip the temporary password, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` before
 Reset to a fresh temporary `admin` password. This also signs everyone out:
 
 ```sh
-docker compose exec -w /app/backend app python -m local_auth.reset
+docker compose exec app python backend/cli.py reset-login
 ```
 
 Without Docker: `make reset-login`, which uses the same `DB_PATH` the server uses.
@@ -150,12 +143,96 @@ tokens**; it is shown once, so copy it straight into the tool.
   is later removed from it stop working too.
 - Tokens are bearer credentials: serve the API over HTTPS.
 
-## Restoring a backup manually
+## Backups
+
+Settings → Data & backups shows where the database file is, the latest
+snapshot, and whether off-site backup is on. It also has **Download database**
+(a consistent copy of the live file) and **Snapshot now**.
+
+### Local snapshots (on by default)
+
+Every 24 hours the server writes a copy of the database to a `backups/` folder
+next to it (`/data/backups/` in the container) and keeps the last 7. The copy
+is taken with SQLite's `VACUUM INTO`, so it's safe while the app runs.
+
+| Variable | Default | |
+|---|---|---|
+| `BACKUP_INTERVAL_HOURS` | `24` | `0` turns snapshots off |
+| `BACKUP_KEEP` | `7` | how many to keep |
+| `BACKUP_DIR` | `backups/` next to the DB | |
+
+Local snapshots live on the same disk as the database, so they protect against
+mistakes, not a lost disk or volume. Copy them off the machine now and then,
+or add off-site backup.
+
+### Off-site backup with Litestream (optional)
+
+Litestream streams every change to object storage, and on a container start
+with an empty volume it restores the latest copy before the app starts. Set a
+replica URL and, for S3-compatible storage, the credentials:
+
+```sh
+BACKUP_REPLICA_URL=s3://notes-again-backups/db?endpoint=<account-id>.r2.cloudflarestorage.com
+LITESTREAM_ACCESS_KEY_ID=...
+LITESTREAM_SECRET_ACCESS_KEY=...
+```
+
+- **Cloudflare R2**: create a bucket and an R2 API token with *Object Read &
+  Write*; the token gives the key id and secret. Endpoint:
+  `<account-id>.r2.cloudflarestorage.com`.
+- **Backblaze B2**: `s3://<bucket>/db?endpoint=s3.<region>.backblazeb2.com`.
+- **AWS S3**: `s3://<bucket>/db`.
+- Other Litestream targets (SFTP, GCS, Azure) take their own URL schemes; see
+  the [Litestream docs](https://litestream.io/reference/config/).
+
+The older `R2_BUCKET` / `R2_PATH` / `R2_ENDPOINT` variables still work in place
+of `BACKUP_REPLICA_URL`. Litestream 0.5 reads backups written by 0.3, so an
+existing R2 bucket carries over.
+
+Off-site backup runs only in the Docker image, where Litestream is installed.
+
+### Restoring
+
+Restore replaces the database with a snapshot or a downloaded `.db` file. It
+checks the file first and keeps the current database next to it as
+`notes-again.db.before-restore-<time>`. Stop the server before restoring.
+
+Docker, from a snapshot in the volume:
+
+```sh
+docker compose stop app
+docker compose run --rm --entrypoint "" app \
+  python backend/cli.py restore /data/backups/notes-again-<time>.db
+docker compose start app
+```
+
+Docker, from a file on the host:
+
+```sh
+docker compose stop app
+docker compose run --rm --entrypoint "" -v "$PWD/notes-again.db:/tmp/restore.db:ro" app \
+  python backend/cli.py restore /tmp/restore.db
+docker compose start app
+```
+
+Without Docker, stop `make run` and run
+`backend/.venv/bin/python backend/cli.py restore <file>` (with `DB_PATH` set
+if you use `make run DB=...`).
+
+From off-site, restoring into a file you can inspect first:
 
 ```sh
 docker compose run --rm --entrypoint "" app \
   litestream restore -config /etc/litestream.yml -o /data/restored.db /data/notes-again.db
 ```
+
+### Maintenance commands
+
+`backend/cli.py` has `reset-login`, `snapshot`, `restore` and `doctor`. `doctor`
+prints the effective setup (auth mode, database, frontend, backups) and lists
+likely mistakes. In the container: `docker compose exec app python backend/cli.py doctor`.
+Without Docker: `make doctor`, `make snapshot`, `make reset-login` (each takes
+`DB=...`).
 
 ## Local dev
 

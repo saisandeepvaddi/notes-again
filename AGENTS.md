@@ -32,10 +32,11 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - Code carries no comments. Tool directives stay because they change behaviour: `eslint-disable`, `@ts-*`, `/// <reference>`, `# type: ignore`, `// @vitest-environment`.
 - Schema changes: there is no migration tool. A new column on an existing table must also be added to `add_missing_columns` in `backend/db/setup.py`, or existing databases break.
 - Single user: rows default to `user_id=1`.
+- Backups: `backups/service.py` takes `VACUUM INTO` snapshots on a schedule started in `main.py`'s lifespan (tests set `BACKUP_INTERVAL_HOURS=0`). Maintenance commands live in `backend/cli.py` (`reset-login`, `snapshot`, `restore`, `doctor`).
 - Auth: `AUTH_MODE` is `local` (default; username/password in the `local_auth` table, HttpOnly session cookie backed by `auth_sessions`), `firebase` (runtime web config from `VITE_FIREBASE_*` on the backend, optional `ALLOWED_EMAILS`), or `none`. Firebase needs an explicit `AUTH_MODE=firebase`; unset `AUTH_MODE` means `local`, or `none` with `AUTH_DISABLED=1`. In local mode the owner can also turn login off from the UI. `/api/auth/*` is public; everything else under `/api` goes through `require_user`. Firebase setup lives in [docs/firebase-auth.md](docs/firebase-auth.md).
 - API tokens are scoped. The extension's `capture` tokens can only list/create projects and tags and create notes.
 - Scheduling: each note stores its own `algorithm` (`sm2` or `fsrs`); new notes follow `Settings.default_algorithm` (defaults to `fsrs`).
-- Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`, `["auth-status"]`. Mutations invalidate by prefix.
+- Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`, `["auth-status"]`, `["system"]`. Mutations invalidate by prefix.
 
 ## URL state on the notes list
 

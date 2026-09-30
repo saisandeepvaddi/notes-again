@@ -3,7 +3,7 @@
 	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build \
 	check check-backend check-frontend check-extension \
 	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
-	reset-login deploy
+	reset-login snapshot doctor deploy
 
 help:
 	@echo "Run:"
@@ -39,8 +39,10 @@ help:
 	@echo "  make test-e2e-ui              - e2e suite in Playwright's interactive UI mode"
 	@echo "  make test-e2e-headed          - e2e suite with a visible browser window"
 	@echo ""
-	@echo "Auth:"
-	@echo "  make reset-login              - reset sign-in to a temporary admin password (local DB)"
+	@echo "Maintenance (add DB=path to target another database):"
+	@echo "  make reset-login              - reset sign-in to a temporary admin password"
+	@echo "  make snapshot                 - write a local database snapshot now"
+	@echo "  make doctor                   - print the effective setup and check it"
 	@echo ""
 	@echo "Deploy:"
 	@echo "  make deploy                   - push main and rebuild on the VPS (needs VPS_USER, VPS_HOST)"
@@ -121,7 +123,13 @@ test-e2e-headed:
 	cd frontend && pnpm exec playwright test --headed
 
 reset-login:
-	cd backend && .venv/bin/python -m local_auth.reset
+	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py reset-login
+
+snapshot:
+	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py snapshot
+
+doctor:
+	env -u DB_PATH -u FRONTEND_DIST $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py doctor
 
 deploy:
 	./deploy.sh

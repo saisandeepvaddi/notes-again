@@ -2,7 +2,7 @@
 
 Status: proposal. Branch: `simplify-self-hosting`.
 
-Done so far: `AUTH_MODE` with `local` (default), `firebase` and `none`, runtime Firebase config, an argument-free `docker build`, the first-launch setup screen, and `make run` (Tier 0). First launch works differently from what section 2 proposed: instead of a setup code, it creates an `admin` account with a random password printed to the logs, and after that sign-in the owner picks username/password, no login, or Firebase (which links to `docs/firebase-auth.md`). Everything else below is still to do.
+Done so far: `AUTH_MODE` with `local` (default), `firebase` and `none`, runtime Firebase config, an argument-free `docker build`, the first-launch setup screen, `make run` (Tier 0), the Settings → Data & backups panel, daily local snapshots, database download, Litestream 0.5.17 with `BACKUP_REPLICA_URL`, and `backend/cli.py` (`reset-login`, `snapshot`, `restore`, `doctor`). Not done from phases 1–3: `_FILE` variants for secrets, and showing whether the server is bound to loopback. First launch works differently from what section 2 proposed: instead of a setup code, it creates an `admin` account with a random password printed to the logs, and after that sign-in the owner picks username/password, no login, or Firebase (which links to `docs/firebase-auth.md`). Everything else below is still to do.
 
 ## Problem
 

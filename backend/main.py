@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -10,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 import auth
 from api import router as api_router
+from backups.service import run_snapshot_schedule
 from db.setup import setup_db
 from local_auth.router import router as auth_router
 from local_auth.service import ensure_local_auth
@@ -27,7 +29,9 @@ async def lifespan(app: FastAPI):
     if auth.AUTH_MODE == "local":
         ensure_local_auth(engine)
     app.state.engine = engine
+    snapshots = asyncio.create_task(run_snapshot_schedule(engine))
     yield
+    snapshots.cancel()
     engine.dispose()
     log.info("DB Engine disposed")
 

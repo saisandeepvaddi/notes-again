@@ -1,6 +1,6 @@
 .PHONY: help install install-backend install-frontend install-extension \
 	dev-backend dev-frontend dev-extension dev-extension-firefox \
-	build build-frontend build-extension build-extension-firefox zip-extension docker-build \
+	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build \
 	check check-backend check-frontend check-extension \
 	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	deploy
@@ -18,7 +18,8 @@ help:
 	@echo "Build:"
 	@echo "  make build                    - frontend SPA + Chrome and Firefox extensions"
 	@echo "  make build-frontend           - SPA into frontend/dist/client"
-	@echo "  make build-extension          - Chrome extension into extension/dist/chrome-mv3"
+	@echo "  make build-extension          - Chrome and Firefox extensions"
+	@echo "  make build-extension-chrome   - Chrome extension into extension/dist/chrome-mv3"
 	@echo "  make build-extension-firefox  - Firefox extension into extension/dist/firefox-mv3"
 	@echo "  make zip-extension            - zipped Chrome and Firefox packages in extension/dist"
 	@echo "  make docker-build             - build the production image locally"
@@ -61,12 +62,14 @@ dev-extension:
 dev-extension-firefox:
 	cd extension && pnpm dev:firefox
 
-build: build-frontend build-extension build-extension-firefox
+build: build-frontend build-extension
 
 build-frontend:
 	cd frontend && pnpm build
 
-build-extension:
+build-extension: build-extension-chrome build-extension-firefox
+
+build-extension-chrome:
 	cd extension && pnpm build
 
 build-extension-firefox:

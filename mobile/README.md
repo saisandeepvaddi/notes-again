@@ -38,6 +38,12 @@ From a phone, the server address must be reachable from the phone, so use your
 computer's LAN address rather than `localhost`. For a local backend that phones can
 reach, start it with `--host 0.0.0.0`.
 
+If the phone can't reach your computer over Wi-Fi (Expo Go keeps "taking much longer
+than it should"), the router is probably isolating devices from each other. With
+[Tailscale](https://tailscale.com) on both, run `pnpm start:tailscale` so the QR code
+points at the computer's Tailscale address, and use `http://<that address>:8000` as
+the server in the app.
+
 ## Checks
 
 ```sh

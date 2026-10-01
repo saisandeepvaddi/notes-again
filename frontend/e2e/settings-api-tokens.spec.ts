@@ -55,7 +55,8 @@ test.describe("settings", () => {
     await dialog.getByLabel("Name").fill(tokenName);
     await dialog.getByRole("button", { name: "Create token" }).click();
     await expect(dialog.getByLabel("API token")).toHaveValue(/^nal_/);
-    await expect(dialog.getByText("Paste it into the mobile app")).toBeVisible();
+    await expect(dialog.getByRole("img", { name: "QR code to connect the mobile app" })).toBeVisible();
+    await expect(dialog.getByLabel("Server address the phone uses")).toHaveValue(/^http/);
     await dialog.getByRole("button", { name: "Done" }).click();
 
     const tokenRow = page.locator("li").filter({ hasText: tokenName });

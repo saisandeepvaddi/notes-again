@@ -12,7 +12,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - `backend/`: FastAPI + SQLModel + SQLite, managed with uv (`backend/.venv`). One router package per domain (`notes`, `tags`, `projects`, `settings`, `imports`, `tokens`), all mounted under `/api` behind `require_user` in `api.py`.
 - `frontend/`: TanStack Start in SPA mode (built to static files, served by FastAPI in production), TanStack Router file routes, TanStack Query, shadcn on Base UI (not Radix), Tailwind v4, Zod v4. Before editing TanStack code, run the matching guidance command listed in [frontend/AGENTS.md](frontend/AGENTS.md).
 - `extension/`: WXT browser extension for capture. It is its own pnpm root; see [extension/README.md](extension/README.md).
-- `mobile/`: Expo (React Native) app for review and capture on phones, its own pnpm root. It imports pure modules from `frontend/src` through the `@web/*` alias (Zod schemas, rating/difficulty options, `markdownExcerpt`), so those files must stay free of `@/` imports and DOM or web-only dependencies. See [mobile/AGENTS.md](mobile/AGENTS.md).
+- `mobile/`: Expo (React Native) app for review and capture on phones, its own pnpm root. It imports pure modules from `frontend/src` through the `@web/*` alias (Zod schemas, rating/difficulty options, `markdownExcerpt`, the QR sign-in link format in `settings/api-tokens/connectLink.ts`), so those files must stay free of `@/` imports and DOM or web-only dependencies. See [mobile/AGENTS.md](mobile/AGENTS.md).
 
 ## Running locally
 

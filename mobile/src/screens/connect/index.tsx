@@ -1,11 +1,20 @@
+import { parseConnectLink, type ConnectLink } from "@web/settings/api-tokens/connectLink";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { ScrollView, TextInput, View } from "react-native";
 import { normalizeServerUrl } from "@/api/client";
-import { probeServer, signInForToken, verifyAccess, type AuthStatus } from "@/api/connect";
+import {
+  connectionFromLink,
+  probeServer,
+  signInForToken,
+  verifyAccess,
+  type AuthStatus,
+} from "@/api/connect";
 import { useConnection } from "@/api/connection";
 import { AppText } from "@/components/app-text";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { Icon } from "@/components/icon";
 import { InlineError } from "@/components/screen-state";
 import { TextField } from "@/components/text-field";
 import { useTheme } from "@/hooks/use-theme";
@@ -19,9 +28,41 @@ const methodFor = (status: AuthStatus): Method =>
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong. Try again.";
 
+function linkFromParams(params: { server?: string; token?: string }): ConnectLink | null {
+  if (!params.server || !params.token) return null;
+  return parseConnectLink(
+    `notesagain://connect?server=${encodeURIComponent(params.server)}&token=${encodeURIComponent(params.token)}`,
+  );
+}
+
+function ScanButton() {
+  const { colors } = useTheme();
+  const router = useRouter();
+  return (
+    <Button
+      variant="outline"
+      onPress={() => router.push("/scan")}
+      icon={
+        <Icon
+          ios="qrcode.viewfinder"
+          android="qr_code_scanner"
+          size={18}
+          color={colors.foreground}
+        />
+      }
+    >
+      Scan QR code
+    </Button>
+  );
+}
+
 export function ConnectScreen() {
   const { colors } = useTheme();
   const { connect, notice } = useConnection();
+  const params = useLocalSearchParams<{ server?: string; token?: string }>();
+  const [dismissedToken, setDismissedToken] = useState<string | null>(null);
+  const incomingLink = linkFromParams(params);
+  const pendingLink = incomingLink?.token === dismissedToken ? null : incomingLink;
   const [address, setAddress] = useState("");
   const [server, setServer] = useState<{ url: string; status: AuthStatus } | null>(null);
   const [method, setMethod] = useState<Method>("password");
@@ -68,6 +109,11 @@ export function ConnectScreen() {
       }
     });
 
+  const connectWithLink = (link: ConnectLink) =>
+    run(async () => {
+      await connect(await connectionFromLink(link));
+    });
+
   const canSubmit =
     method === "password"
       ? username.trim().length > 0 && password.length > 0
@@ -100,7 +146,32 @@ export function ConnectScreen() {
 
       {notice ? <InlineError message={notice} /> : null}
 
-      {server === null ? (
+      {pendingLink ? (
+        <Card>
+          <AppText variant="heading">Connect with this code?</AppText>
+          <AppText tone="muted">
+            The link you opened signs this phone in to{" "}
+            <AppText style={{ color: colors.foreground }}>
+              {pendingLink.server.replace(/^https?:\/\//, "")}
+            </AppText>
+            . Only continue if you made it in your own Notes Again.
+          </AppText>
+          {error ? <InlineError message={error} /> : null}
+          <Button onPress={() => connectWithLink(pendingLink)} loading={busy}>
+            Connect
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => {
+              setDismissedToken(pendingLink.token);
+              setError(null);
+            }}
+          >
+            Not now
+          </Button>
+        </Card>
+      ) : server === null ? (
         <Card>
           <TextField
             label="Server address"
@@ -120,6 +191,17 @@ export function ConnectScreen() {
           <Button onPress={findServer} loading={busy} disabled={!address.trim()}>
             Continue
           </Button>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+            <AppText variant="caption" tone="muted">
+              or
+            </AppText>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+          </View>
+          <ScanButton />
+          <AppText variant="caption" tone="muted" style={{ textAlign: "center" }}>
+            Create a Full access token in the web app’s Settings → API tokens to get a code.
+          </AppText>
         </Card>
       ) : (
         <Card>
@@ -172,19 +254,22 @@ export function ConnectScreen() {
               />
             </>
           ) : method === "token" ? (
-            <TextField
-              label="API token"
-              placeholder="nal_…"
-              value={token}
-              onChangeText={setToken}
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              mono
-              returnKeyType="go"
-              onSubmitEditing={() => canSubmit && signIn()}
-              hint="On the web app, open Settings → API tokens and create a token with Full access."
-            />
+            <>
+              <TextField
+                label="API token"
+                placeholder="nal_…"
+                value={token}
+                onChangeText={setToken}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                mono
+                returnKeyType="go"
+                onSubmitEditing={() => canSubmit && signIn()}
+                hint="On the web app, open Settings → API tokens and create a token with Full access."
+              />
+              <ScanButton />
+            </>
           ) : (
             <AppText tone="muted">
               Sign-in is turned off on this server, so anyone who can reach it can use it.

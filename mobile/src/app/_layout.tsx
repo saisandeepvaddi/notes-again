@@ -74,6 +74,7 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={connection === null}>
           <Stack.Screen name="connect" />
+          <Stack.Screen name="scan" options={{ presentation: "fullScreenModal" }} />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>

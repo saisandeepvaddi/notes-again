@@ -15,8 +15,9 @@ The app checks how the server signs people in:
 - **Username and password** (the default `local` sign-in): sign in as you would on
   the web. The app gets its own token, listed under Settings → API tokens as
   "Mobile app (device name)". Signing out of the app revokes it.
-- **API token**: in the web app, open Settings → API tokens, create a token with
-  **Full access**, and paste it into the app. Use this for Firebase, proxy or
+- **QR code or API token**: in the web app, open Settings → API tokens and create a
+  token with **Full access**. The dialog shows a QR code; tap **Scan QR code** in the
+  app and point the camera at it. You can also paste the token by hand. Use this for Firebase, proxy or
   Cloudflare Access sign-in, or if you'd rather not type your password on the phone.
   Capture-only tokens made for the browser extension won't work here.
 - **Sign-in turned off**: the app connects straight away.

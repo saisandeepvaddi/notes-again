@@ -19,6 +19,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { CheckIcon, CopyIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
+import { ConnectQrCode } from "./ConnectQrCode";
 import { EXPIRY_OPTIONS, SCOPE_OPTIONS, type CreatedApiToken, type TokenScope } from "./types";
 import { useCreateApiToken } from "./useCreateApiToken";
 
@@ -104,7 +105,7 @@ export function CreateTokenDialog() {
               <DialogDescription>
                 This is the only time it's shown.{" "}
                 {created.scope === "app"
-                  ? "Paste it into the mobile app along with this server's address."
+                  ? "Scan the code with the mobile app, or paste the token into it."
                   : "Paste it into the extension's options page."}{" "}
                 If you lose it, revoke it and create a new one.
               </DialogDescription>
@@ -121,6 +122,7 @@ export function CreateTokenDialog() {
                 {copied ? <CheckIcon /> : <CopyIcon />}
               </Button>
             </div>
+            {created.scope === "app" ? <ConnectQrCode token={created.token} /> : null}
             <DialogFooter>
               <Button onClick={() => setOpen(false)}>Done</Button>
             </DialogFooter>

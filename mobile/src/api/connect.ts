@@ -1,7 +1,9 @@
 import { NotePageSchema } from "@web/notes/new-note-form/types";
+import type { ConnectLink } from "@web/settings/api-tokens/connectLink";
 import * as Device from "expo-device";
 import { z } from "zod";
-import { ApiError, api } from "./client";
+import { ApiError, api, normalizeServerUrl } from "./client";
+import type { Connection } from "./connection-store";
 
 const AuthStatusSchema = z.object({
   mode: z.enum(["local", "firebase", "none", "proxy", "cloudflare-access"]),
@@ -63,4 +65,10 @@ export async function verifyAccess(serverUrl: string, token: string | null) {
 
 export async function revokeOwnToken(serverUrl: string, token: string) {
   await api(z.null(), "/auth/token", { serverUrl, token, method: "DELETE" });
+}
+
+export async function connectionFromLink(link: ConnectLink): Promise<Connection> {
+  const serverUrl = normalizeServerUrl(link.server);
+  await verifyAccess(serverUrl, link.token);
+  return { serverUrl, token: link.token, method: "token", username: null };
 }

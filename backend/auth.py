@@ -106,7 +106,7 @@ def _is_allowed(email: str | None) -> bool:
     return not allowed or (email or "").lower() in allowed
 
 
-def _extract_token(request: Request) -> str | None:
+def bearer_token(request: Request) -> str | None:
     header = request.headers.get("Authorization", "")
     if header.startswith("Bearer "):
         return header.removeprefix("Bearer ").strip() or None
@@ -189,7 +189,7 @@ def require_user(request: Request, session: SessionDep) -> dict:
     if mode == "none":
         return _NO_AUTH_IDENTITY
 
-    token = _extract_token(request)
+    token = bearer_token(request)
     if token and token.startswith(TOKEN_PREFIX):
         return _identity_from_api_token(request, session, token)
 

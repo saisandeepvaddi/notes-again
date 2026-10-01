@@ -8,6 +8,8 @@ from db.models import ApiToken, utcnow
 
 TOKEN_PREFIX = "nal_"
 CAPTURE_SCOPE = "capture"
+APP_SCOPE = "app"
+TOKEN_SCOPES = (CAPTURE_SCOPE, APP_SCOPE)
 
 CAPTURE_ROUTES: frozenset[tuple[str, str]] = frozenset(
     {
@@ -36,6 +38,8 @@ def display_prefix(token: str) -> str:
 
 
 def scope_allows(scope: str, method: str, path: str) -> bool:
+    if scope == APP_SCOPE:
+        return True
     routes = SCOPE_ROUTES.get(scope, frozenset())
     return (method.upper(), path.rstrip("/") or "/") in routes
 
@@ -53,6 +57,37 @@ def find_active_token(session: Session, token: str) -> ApiToken | None:
     if record.expires_at is not None and _aware(record.expires_at) <= utcnow():
         return None
     return record
+
+
+def issue_token(
+    session: Session,
+    *,
+    name: str,
+    scope: str,
+    created_by: str | None,
+    expires_in_days: int | None = None,
+) -> tuple[ApiToken, str]:
+    token = generate_token()
+    record = ApiToken(
+        name=name,
+        token_hash=hash_token(token),
+        prefix=display_prefix(token),
+        scope=scope,
+        created_by=created_by,
+        expires_at=(
+            utcnow() + datetime.timedelta(days=expires_in_days) if expires_in_days else None
+        ),
+    )
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return record, token
+
+
+def revoke(session: Session, record: ApiToken) -> None:
+    record.revoked_at = utcnow()
+    session.add(record)
+    session.commit()
 
 
 def record_use(session: Session, record: ApiToken) -> None:

@@ -15,6 +15,8 @@ accounts.
   you can restore from.
 - **Browser extension** to save a page or a selection with one hotkey
   ([extension/](extension/README.md)).
+- **Mobile app** for iOS and Android to review what's due and jot notes down
+  away from the desk ([mobile/](mobile/README.md)).
 - **Import** Anki-style decks from JSON, and export your notes back out.
 - **Backups built in**: daily local snapshots, a one-click database download,
   and optional off-site streaming with Litestream.
@@ -56,6 +58,7 @@ off, or switch to Firebase sign-in.
 - Frontend: TanStack Start in SPA mode, TanStack Router and Query, Tailwind
   (`frontend/`).
 - Extension: WXT (`extension/`).
+- Mobile: Expo + React Native (`mobile/`).
 
 ```sh
 make install

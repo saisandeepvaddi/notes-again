@@ -20,3 +20,26 @@ export const EXPIRY_OPTIONS = [
   { value: "30", label: "30 days" },
   { value: "never", label: "No expiry" },
 ];
+
+export type TokenScope = "capture" | "app";
+
+export const SCOPE_OPTIONS: {
+  value: TokenScope;
+  label: string;
+  defaultName: string;
+  description: string;
+}[] = [
+  {
+    value: "capture",
+    label: "Capture only",
+    defaultName: "Browser extension",
+    description: "Can save notes, projects and tags. It can't read, edit or delete anything.",
+  },
+  {
+    value: "app",
+    label: "Full access",
+    defaultName: "Mobile app",
+    description:
+      "Can read, review, edit and delete notes, like signing in. It can't manage tokens or backups.",
+  },
+];

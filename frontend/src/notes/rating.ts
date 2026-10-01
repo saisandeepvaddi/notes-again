@@ -1,4 +1,4 @@
-import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "@/lib/statusColors";
+import { SUCCESS_TINT_CLASSES, WARNING_TINT_CLASSES } from "../lib/statusColors";
 import type { Rating } from "./new-note-form/types";
 
 export const RATING_OPTIONS: { value: Rating; label: string; caption: string }[] = [

@@ -9,19 +9,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { CheckIcon, CopyIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
-import { EXPIRY_OPTIONS, type CreatedApiToken } from "./types";
+import { EXPIRY_OPTIONS, SCOPE_OPTIONS, type CreatedApiToken, type TokenScope } from "./types";
 import { useCreateApiToken } from "./useCreateApiToken";
 
-const DEFAULT_NAME = "Browser extension";
+const DEFAULT_SCOPE: TokenScope = "capture";
 const DEFAULT_EXPIRY = "365";
+
+const scopeOption = (scope: TokenScope) =>
+  SCOPE_OPTIONS.find((option) => option.value === scope) ?? SCOPE_OPTIONS[0];
 
 export function CreateTokenDialog() {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(DEFAULT_NAME);
+  const [scope, setScope] = useState<TokenScope>(DEFAULT_SCOPE);
+  const [name, setName] = useState(scopeOption(DEFAULT_SCOPE).defaultName);
   const [expiry, setExpiry] = useState(DEFAULT_EXPIRY);
   const [created, setCreated] = useState<CreatedApiToken | null>(null);
   const [copied, setCopied] = useState(false);
@@ -30,7 +40,8 @@ export function CreateTokenDialog() {
   const onOpenChange = (next: boolean) => {
     setOpen(next);
     if (next) {
-      setName(DEFAULT_NAME);
+      setScope(DEFAULT_SCOPE);
+      setName(scopeOption(DEFAULT_SCOPE).defaultName);
       setExpiry(DEFAULT_EXPIRY);
       setCreated(null);
       setCopied(false);
@@ -44,6 +55,7 @@ export function CreateTokenDialog() {
         await mutateAsync({
           name: name.trim(),
           expiresInDays: expiry === "never" ? null : Number(expiry),
+          scope,
         }),
       );
     } catch (error) {
@@ -55,13 +67,23 @@ export function CreateTokenDialog() {
     }
   };
 
+  const changeScope = (next: TokenScope) => {
+    if (name.trim() === scopeOption(scope).defaultName) {
+      setName(scopeOption(next).defaultName);
+    }
+    setScope(next);
+  };
+
   const copy = async () => {
     if (!created) return;
     try {
       await navigator.clipboard.writeText(created.token);
       setCopied(true);
     } catch {
-      toast.add({ type: "error", description: "Couldn't copy. Select the token and copy it by hand." });
+      toast.add({
+        type: "error",
+        description: "Couldn't copy. Select the token and copy it by hand.",
+      });
     }
   };
 
@@ -80,8 +102,11 @@ export function CreateTokenDialog() {
             <DialogHeader>
               <DialogTitle>Copy your token now</DialogTitle>
               <DialogDescription>
-                This is the only time it's shown. Paste it into the extension's options page. If you
-                lose it, revoke it and create a new one.
+                This is the only time it's shown.{" "}
+                {created.scope === "app"
+                  ? "Paste it into the mobile app along with this server's address."
+                  : "Paste it into the extension's options page."}{" "}
+                If you lose it, revoke it and create a new one.
               </DialogDescription>
             </DialogHeader>
             <div className="flex gap-2">
@@ -111,13 +136,37 @@ export function CreateTokenDialog() {
             <DialogHeader>
               <DialogTitle>Create an API token</DialogTitle>
               <DialogDescription>
-                For tools that can't sign in, like the browser extension. It can save notes, projects
-                and tags. It can't read, edit or delete anything.
+                For tools that can't sign in, like the browser extension or the mobile app.
               </DialogDescription>
             </DialogHeader>
+            <div className="grid gap-1.5 text-xs font-medium">
+              Access
+              <Select
+                items={SCOPE_OPTIONS}
+                value={scope}
+                onValueChange={(value) => value && changeScope(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCOPE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="font-normal text-muted-foreground">{scopeOption(scope).description}</p>
+            </div>
             <label className="grid gap-1.5 text-xs font-medium">
               Name
-              <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} autoFocus />
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                maxLength={80}
+                autoFocus
+              />
             </label>
             <div className="grid gap-1.5 text-xs font-medium">
               Expires

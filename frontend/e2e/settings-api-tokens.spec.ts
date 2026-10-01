@@ -41,4 +41,24 @@ test.describe("settings", () => {
 
     await expect(page.locator("li").filter({ hasText: tokenName })).toHaveCount(0);
   });
+
+  test("creating a full-access token for the mobile app", async ({ page }) => {
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "Create token" }).click();
+
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("combobox").first().click();
+    await page.getByRole("option", { name: "Full access" }).click();
+    await expect(dialog.getByLabel("Name")).toHaveValue("Mobile app");
+
+    const tokenName = uniqueName("E2E phone");
+    await dialog.getByLabel("Name").fill(tokenName);
+    await dialog.getByRole("button", { name: "Create token" }).click();
+    await expect(dialog.getByLabel("API token")).toHaveValue(/^nal_/);
+    await expect(dialog.getByText("Paste it into the mobile app")).toBeVisible();
+    await dialog.getByRole("button", { name: "Done" }).click();
+
+    const tokenRow = page.locator("li").filter({ hasText: tokenName });
+    await expect(tokenRow.getByText("Full access")).toBeVisible();
+  });
 });

@@ -12,6 +12,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - `backend/`: FastAPI + SQLModel + SQLite, managed with uv (`backend/.venv`). One router package per domain (`notes`, `tags`, `projects`, `settings`, `imports`, `tokens`), all mounted under `/api` behind `require_user` in `api.py`.
 - `frontend/`: TanStack Start in SPA mode (built to static files, served by FastAPI in production), TanStack Router file routes, TanStack Query, shadcn on Base UI (not Radix), Tailwind v4, Zod v4. Before editing TanStack code, run the matching guidance command listed in [frontend/AGENTS.md](frontend/AGENTS.md).
 - `extension/`: WXT browser extension for capture. It is its own pnpm root; see [extension/README.md](extension/README.md).
+- `mobile/`: Expo (React Native) app for review and capture on phones, its own pnpm root. It imports pure modules from `frontend/src` through the `@web/*` alias (Zod schemas, rating/difficulty options, `markdownExcerpt`), so those files must stay free of `@/` imports and DOM or web-only dependencies. See [mobile/AGENTS.md](mobile/AGENTS.md).
 
 ## Running locally
 
@@ -24,6 +25,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - Frontend: `pnpm typecheck`, `pnpm lint` (oxlint).
 - Backend: `.venv/bin/ruff check .`, `.venv/bin/python -m pytest` (from `backend/`).
 - Extension: `pnpm typecheck`, `pnpm test`.
+- Mobile: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm doctor` after dependency changes.
 - E2E: `make test-e2e`. Playwright starts its own backend (8210) and frontend (5290) on a throwaway DB. Specs share that DB and run serially, so seed data with `uniqueName()` from `e2e/support/api.ts`. The first run on a cold Vite server is slow and can time out once.
 - The formatters (oxfmt, `ruff format`) have never been applied repo-wide. Run them only on files you touch, so diffs stay limited to your change.
 
@@ -34,7 +36,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - Single user: rows default to `user_id=1`.
 - Backups: `backups/service.py` takes `VACUUM INTO` snapshots on a schedule started in `main.py`'s lifespan (tests set `BACKUP_INTERVAL_HOURS=0`). Maintenance commands live in `backend/cli.py` (`reset-login`, `snapshot`, `restore`, `doctor`).
 - Auth: `AUTH_MODE` is `local` (default; username/password in the `local_auth` table, HttpOnly session cookie backed by `auth_sessions`), `firebase` (runtime web config from `VITE_FIREBASE_*` on the backend), `proxy` (username header, trusted only from `TRUSTED_PROXIES`), `cloudflare-access` (verifies the Access JWT; `external_auth.py`), or `none`. `ALLOWED_EMAILS` applies to firebase, proxy and cloudflare-access. Uvicorn runs with `--no-proxy-headers`; `trusted_proxies.ForwardedHeadersMiddleware` records the real peer and applies `X-Forwarded-*` itself. Firebase needs an explicit `AUTH_MODE=firebase`; unset `AUTH_MODE` means `local`, or `none` with `AUTH_DISABLED=1`. In local mode the owner can also turn login off from the UI. `/api/auth/*` is public; everything else under `/api` goes through `require_user`. Firebase setup lives in [docs/firebase-auth.md](docs/firebase-auth.md).
-- API tokens are scoped. The extension's `capture` tokens can only list/create projects and tags and create notes.
+- API tokens are scoped. The extension's `capture` tokens can only list/create projects and tags and create notes. `app` tokens (the mobile app) can call everything except token management and `/api/system`, which `require_session_user` keeps to real sessions. In local mode `POST /api/auth/token` trades a username and password for an `app` token, and `DELETE /api/auth/token` revokes the caller's own token.
 - Scheduling: each note stores its own `algorithm` (`sm2` or `fsrs`); new notes follow `Settings.default_algorithm` (defaults to `fsrs`).
 - Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`, `["auth-status"]`, `["system"]`. Mutations invalidate by prefix.
 

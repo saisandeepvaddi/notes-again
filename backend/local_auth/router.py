@@ -4,6 +4,14 @@ from pydantic import BaseModel, Field
 import auth
 from db.models import utcnow
 from db.setup import SessionDep
+from tokens.schema import CreatedTokenResponse
+from tokens.service import (
+    APP_SCOPE,
+    TOKEN_PREFIX,
+    find_active_token,
+    issue_token,
+    revoke,
+)
 
 from .passwords import MIN_PASSWORD_LENGTH, hash_password
 from .service import (
@@ -89,8 +97,7 @@ class LoginBody(BaseModel):
     password: str = Field(max_length=500)
 
 
-@router.post("/login", status_code=status.HTTP_204_NO_CONTENT)
-def login(body: LoginBody, request: Request, response: Response, session: SessionDep):
+def _verify_login(body: LoginBody, request: Request, session: SessionDep) -> None:
     _require_local_mode()
     client_key = request.client.host if request.client else "unknown"
     if login_blocked(client_key):
@@ -103,7 +110,39 @@ def login(body: LoginBody, request: Request, response: Response, session: Sessio
         record_failed_login(client_key)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong username or password")
     clear_failed_logins(client_key)
+
+
+@router.post("/login", status_code=status.HTTP_204_NO_CONTENT)
+def login(body: LoginBody, request: Request, response: Response, session: SessionDep):
+    _verify_login(body, request, session)
     _set_session_cookie(request, response, create_session(session))
+
+
+class TokenLoginBody(LoginBody):
+    device_name: str = Field(default="Mobile app", max_length=80)
+
+
+@router.post("/token", response_model=CreatedTokenResponse)
+def login_for_token(body: TokenLoginBody, request: Request, session: SessionDep):
+    _verify_login(body, request, session)
+    record, token = issue_token(
+        session,
+        name=body.device_name.strip() or "Mobile app",
+        scope=APP_SCOPE,
+        created_by=None,
+    )
+    return CreatedTokenResponse(**record.model_dump(), token=token)
+
+
+@router.delete("/token", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_own_token(request: Request, session: SessionDep):
+    token = auth.bearer_token(request)
+    if not token or not token.startswith(TOKEN_PREFIX):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
+    record = find_active_token(session, token)
+    if record is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
+    revoke(session, record)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

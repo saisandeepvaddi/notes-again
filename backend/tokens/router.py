@@ -1,16 +1,15 @@
-import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import col, select
 
 from auth import require_session_user
-from db.models import ApiToken, utcnow
+from db.models import ApiToken
 from db.setup import SessionDep
 
 from .schema import CreatedTokenResponse, TokenResponse
-from .service import CAPTURE_SCOPE, display_prefix, generate_token, hash_token
+from .service import CAPTURE_SCOPE, issue_token, revoke
 
 router = APIRouter(prefix="/tokens", tags=["tokens"], dependencies=[Depends(require_session_user)])
 
@@ -28,6 +27,7 @@ def list_tokens(session: SessionDep):
 class NewTokenBody(BaseModel):
     name: str = Field(max_length=80)
     expires_in_days: int | None = Field(default=None, ge=1, le=3650)
+    scope: Literal["capture", "app"] = CAPTURE_SCOPE
 
 
 @router.post("/create", response_model=CreatedTokenResponse)
@@ -40,22 +40,13 @@ def create_token(
     if not name:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Token name cannot be empty")
 
-    token = generate_token()
-    record = ApiToken(
+    record, token = issue_token(
+        session,
         name=name,
-        token_hash=hash_token(token),
-        prefix=display_prefix(token),
-        scope=CAPTURE_SCOPE,
-        created_by=(identity.get("email") or None),
-        expires_at=(
-            utcnow() + datetime.timedelta(days=body.expires_in_days)
-            if body.expires_in_days
-            else None
-        ),
+        scope=body.scope,
+        created_by=identity.get("email") or None,
+        expires_in_days=body.expires_in_days,
     )
-    session.add(record)
-    session.commit()
-    session.refresh(record)
     return CreatedTokenResponse(**record.model_dump(), token=token)
 
 
@@ -64,6 +55,4 @@ def revoke_token(token_id: int, session: SessionDep):
     record = session.get(ApiToken, token_id)
     if record is None or record.revoked_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Token not found")
-    record.revoked_at = utcnow()
-    session.add(record)
-    session.commit()
+    revoke(session, record)

@@ -223,3 +223,50 @@ def test_admin_password_can_come_from_a_file(tmp_path, monkeypatch):
     monkeypatch.setenv("ADMIN_PASSWORD_FILE", str(secret))
     with TestClient(app) as client:
         assert login(client, "admin", "from a secret file").status_code == 204
+
+
+def token_login(client, password=None, **body):
+    return client.post(
+        "/api/auth/token",
+        json={
+            "username": "admin",
+            "password": password or initial_password(client),
+            **body,
+        },
+    )
+
+
+def test_signing_in_for_a_token_gives_an_app_token(local_client):
+    response = token_login(local_client, device_name="Pixel")
+    assert response.status_code == 200, response.text
+    created = response.json()
+    assert created["scope"] == "app"
+    assert created["name"] == "Pixel"
+    assert SESSION_COOKIE not in local_client.cookies
+
+    headers = bearer(created["token"])
+    assert local_client.get("/api/notes/due", headers=headers).status_code == 200
+    assert local_client.get("/api/tokens/list", headers=headers).status_code == 403
+
+    login(local_client)
+    listed = local_client.get("/api/tokens/list").json()
+    assert [t["name"] for t in listed] == ["Pixel"]
+
+
+def test_token_sign_in_rejects_wrong_passwords_and_is_throttled(local_client):
+    for _ in range(service.MAX_FAILED_LOGINS):
+        assert token_login(local_client, password="nope nope").status_code == 401
+    assert token_login(local_client).status_code == 429
+
+
+def test_an_app_can_revoke_its_own_token(local_client):
+    headers = bearer(token_login(local_client).json()["token"])
+    assert local_client.delete("/api/auth/token", headers=headers).status_code == 204
+    assert local_client.get("/api/notes/due", headers=headers).status_code == 401
+    assert local_client.delete("/api/auth/token", headers=headers).status_code == 401
+    assert local_client.delete("/api/auth/token").status_code == 401
+
+
+def test_token_sign_in_is_refused_outside_local_mode(client):
+    response = client.post("/api/auth/token", json={"username": "a", "password": "b"})
+    assert response.status_code == 409

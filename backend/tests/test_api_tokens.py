@@ -174,3 +174,29 @@ def test_auth_mode_none_still_means_open(client, monkeypatch):
     monkeypatch.setattr("auth.AUTH_MODE", "none")
     assert client.get("/api/projects/list").status_code == 200
     assert client.get("/api/tokens/list").status_code == 200
+
+
+def test_app_token_can_do_everything_but_manage_tokens(client):
+    created = mint(client, "Phone", scope="app")
+    assert created["scope"] == "app"
+    headers = bearer(created["token"])
+    note = client.post("/api/notes/create", json={"name": "n", "content": "c"}, headers=headers)
+    assert note.status_code == 200, note.text
+    note_id = note.json()["id"]
+    assert client.get("/api/notes/due", headers=headers).status_code == 200
+    assert client.get(f"/api/notes/{note_id}", headers=headers).status_code == 200
+    assert (
+        client.patch(
+            f"/api/notes/{note_id}", json={"name": "m", "content": "d"}, headers=headers
+        ).status_code
+        == 200
+    )
+    assert client.get("/api/settings", headers=headers).status_code == 200
+    assert client.delete(f"/api/notes/{note_id}", headers=headers).status_code == 204
+    assert client.get("/api/tokens/list", headers=headers).status_code == 403
+    assert client.get("/api/system", headers=headers).status_code == 403
+
+
+def test_unknown_scope_is_rejected(client):
+    response = client.post("/api/tokens/create", json={"name": "x", "scope": "root"}, headers=ME)
+    assert response.status_code == 422

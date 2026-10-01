@@ -78,8 +78,8 @@ export function ApiTokens() {
             API tokens
           </h2>
           <p className="text-xs text-muted-foreground">
-            Let tools like the browser extension save notes to your account. A token can only create
-            notes, projects and tags.
+            Connect the browser extension or the mobile app. Capture tokens can only create notes,
+            projects and tags; full-access tokens can do anything except manage tokens.
           </p>
         </div>
         <CreateTokenDialog />
@@ -94,7 +94,12 @@ export function ApiTokens() {
           {tokens.map((token) => (
             <li key={token.id} className="flex items-center justify-between gap-4 p-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{token.name}</p>
+                <p className="truncate text-sm font-medium">
+                  {token.name}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {token.scope === "app" ? "Full access" : "Capture only"}
+                  </span>
+                </p>
                 <p className="text-xs text-muted-foreground">
                   <span className="font-mono">{token.prefix}…</span>
                   {" · "}created {day(token.created_at)}

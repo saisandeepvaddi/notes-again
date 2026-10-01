@@ -1,4 +1,4 @@
-import { WARNING_TINT_CLASSES } from "@/lib/statusColors";
+import { WARNING_TINT_CLASSES } from "../lib/statusColors";
 import type { Difficulty, Tag } from "./new-note-form/types";
 
 export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [

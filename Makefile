@@ -1,7 +1,7 @@
-.PHONY: help run serve install install-backend install-frontend install-extension \
-	dev-backend dev-frontend dev-extension dev-extension-firefox \
+.PHONY: help run serve install install-backend install-frontend install-extension install-mobile \
+	dev-backend dev-frontend dev-extension dev-extension-firefox dev-mobile \
 	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
-	check check-backend check-frontend check-extension \
+	check check-backend check-frontend check-extension check-mobile \
 	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	reset-login snapshot doctor deploy
 
@@ -13,13 +13,14 @@ help:
 	@echo "  (settings come from .env.local, which ./install.sh writes)"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make install                  - install backend, frontend and extension deps"
+	@echo "  make install                  - install backend, frontend, extension and mobile deps"
 	@echo ""
 	@echo "Dev:"
 	@echo "  make dev-backend              - FastAPI on :8000 (auth disabled, CORS for :5273)"
 	@echo "  make dev-frontend             - Vite dev server on :5273"
 	@echo "  make dev-extension            - extension dev mode in Chrome, with reload"
 	@echo "  make dev-extension-firefox    - extension dev mode in Firefox"
+	@echo "  make dev-mobile               - Expo dev server for the mobile app (open in Expo Go)"
 	@echo ""
 	@echo "Build:"
 	@echo "  make build                    - frontend SPA + Chrome and Firefox extensions"
@@ -56,7 +57,7 @@ run: install-backend install-frontend build-frontend
 serve:
 	DB='$(DB)' scripts/serve.sh
 
-install: install-backend install-frontend install-extension
+install: install-backend install-frontend install-extension install-mobile
 
 install-backend:
 	cd backend && uv sync
@@ -66,6 +67,9 @@ install-frontend:
 
 install-extension:
 	cd extension && pnpm install
+
+install-mobile:
+	cd mobile && pnpm install
 
 dev-backend:
 	env -u DB_PATH AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 \
@@ -79,6 +83,9 @@ dev-extension:
 
 dev-extension-firefox:
 	cd extension && pnpm dev:firefox
+
+dev-mobile:
+	cd mobile && pnpm start
 
 build: build-frontend build-extension
 
@@ -103,7 +110,7 @@ update:
 	git pull --ff-only
 	docker compose up -d --build
 
-check: check-backend check-frontend check-extension
+check: check-backend check-frontend check-extension check-mobile
 
 check-backend:
 	cd backend && .venv/bin/ruff check .
@@ -113,6 +120,9 @@ check-frontend:
 
 check-extension:
 	cd extension && pnpm typecheck
+
+check-mobile:
+	cd mobile && pnpm typecheck && pnpm lint
 
 test: test-backend test-extension test-e2e
 

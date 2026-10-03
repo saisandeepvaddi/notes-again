@@ -12,7 +12,6 @@ export default function AppLayout() {
         options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
       />
       <Stack.Screen name="new-note" options={{ presentation: "modal", title: "New note" }} />
-      <Stack.Screen name="edit-note/[id]" options={{ presentation: "modal", title: "Edit note" }} />
     </Stack>
   );
 }

@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { AppState } from "react-native";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ApiError } from "@/api/client";
 import { ConnectionProvider, useConnection } from "@/api/connection";
 import { useTheme } from "@/hooks/use-theme";
@@ -84,10 +85,12 @@ function RootNavigator() {
 export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
   return (
-    <QueryClientProvider client={queryClient}>
-      <ConnectionProvider>
-        <RootNavigator />
-      </ConnectionProvider>
-    </QueryClientProvider>
+    <KeyboardProvider>
+      <QueryClientProvider client={queryClient}>
+        <ConnectionProvider>
+          <RootNavigator />
+        </ConnectionProvider>
+      </QueryClientProvider>
+    </KeyboardProvider>
   );
 }

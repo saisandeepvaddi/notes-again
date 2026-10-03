@@ -4,7 +4,9 @@ import { RATING_OPTIONS } from "@web/notes/rating";
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, Switch, View } from "react-native";
+import { type ReactNode } from "react";
+import { Alert, Switch, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   isDue,
@@ -20,17 +22,25 @@ import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { DifficultyPicker } from "@/components/difficulty-picker";
-import { HeaderButton } from "@/components/header-button";
+import { HeaderTextButton } from "@/components/header-text-button";
 import { NoteBody } from "@/components/note-body";
+import {
+  type RichEditorController,
+  RichEditorBody,
+  RichEditorToolbar,
+  TOOLBAR_HEIGHT,
+  useRichEditor,
+} from "@/components/rich-editor";
 import { NoteMeta } from "@/components/note-meta";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatingBar } from "@/components/rating-bar";
 import { ErrorState, InlineError, LoadingState } from "@/components/screen-state";
 import { Divider, SettingRow } from "@/components/setting-row";
 import { UndoBar } from "@/components/undo-bar";
+import { type SaveStatus, useNoteAutosave } from "@/hooks/use-note-autosave";
 import { useReviewActions } from "@/hooks/use-review-actions";
 import { useTheme } from "@/hooks/use-theme";
-import { ratingTint, space } from "@/theme";
+import { fonts, ratingTint, space } from "@/theme";
 import { dueLabel, noteTitle } from "@/utils/note-format";
 
 const errorText = (error: unknown) =>
@@ -134,40 +144,128 @@ function NoteSettings({ note }: { note: NoteItem }) {
   );
 }
 
-function NoteView({ note }: { note: NoteItem }) {
+function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
+  if (status === "error") return <HeaderTextButton label="Retry save" onPress={onRetry} />;
+  const text =
+    status === "saving" || status === "pending" ? "Saving…" : status === "saved" ? "Saved" : "";
+  if (!text) return null;
+  return (
+    <AppText
+      variant="caption"
+      tone="muted"
+      accessibilityLiveRegion="polite"
+      style={{ paddingHorizontal: 8 }}
+    >
+      {text}
+    </AppText>
+  );
+}
+
+function NoteHeading({ note, children }: { note: NoteItem; children: ReactNode }) {
+  const pending = pendingReminder(note);
+  const label = dueLabel(note);
+  return (
+    <View style={{ gap: 10 }}>
+      {children}
+      <NoteMeta note={note} />
+      <AppText variant="caption" tone={label.due ? "primary" : "muted"}>
+        {label.text}
+        {pending && !label.due && !note.paused_at
+          ? ` · ${format(pending.remind_at, "EEE, MMM d")}`
+          : ""}
+      </AppText>
+    </View>
+  );
+}
+
+function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorController }) {
+  const { colors } = useTheme();
+  const autosave = useNoteAutosave(note);
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerRight:
+            autosave.status === "idle"
+              ? undefined
+              : () => <SaveIndicator status={autosave.status} onRetry={autosave.retry} />,
+        }}
+      />
+      <NoteHeading note={note}>
+        <TextInput
+          value={autosave.name}
+          onChangeText={autosave.setName}
+          placeholder="Untitled"
+          placeholderTextColor={colors.mutedForeground}
+          selectionColor={colors.primary}
+          cursorColor={colors.primary}
+          multiline
+          submitBehavior="blurAndSubmit"
+          returnKeyType="done"
+          accessibilityLabel="Title"
+          style={{
+            color: colors.foreground,
+            fontFamily: fonts.serifSemibold,
+            fontSize: 22,
+            lineHeight: 29,
+            padding: 0,
+          }}
+        />
+      </NoteHeading>
+      {autosave.status === "error" ? (
+        <InlineError message="Couldn’t save your last changes. They’re still here; tap Retry save." />
+      ) : null}
+      <RichEditorBody
+        controller={editor}
+        markdown={note.content}
+        placeholder="Tap to start writing"
+        minHeight={120}
+        onChange={autosave.setContent}
+      />
+    </>
+  );
+}
+
+function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const actions = useReviewActions();
+  const editor = useRichEditor();
+  const { attachScroll, onScroll } = editor.bridge;
   const due = isDue(note);
-  const pending = pendingReminder(note);
-  const label = dueLabel(note);
-  const showPanel = due || actions.last !== null || actions.error !== null;
+  const showPanel =
+    !editor.toolbarVisible && (due || actions.last !== null || actions.error !== null);
 
   const rate = (rating: Rating) => void actions.rate(note, rating);
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView
+      <KeyboardAwareScrollView
+        ref={attachScroll}
         style={{ flex: 1 }}
         contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        bottomOffset={TOOLBAR_HEIGHT + 16}
+        extraKeyboardSpace={TOOLBAR_HEIGHT}
         contentContainerStyle={{ padding: space.gutter, gap: 16, paddingBottom: 32 }}
       >
-        <View style={{ gap: 10 }}>
-          <AppText variant="title" selectable>
-            {noteTitle(note)}
-          </AppText>
-          <NoteMeta note={note} />
-          <AppText variant="caption" tone={label.due ? "primary" : "muted"}>
-            {label.text}
-            {pending && !label.due && !note.paused_at
-              ? ` · ${format(pending.remind_at, "EEE, MMM d")}`
-              : ""}
-          </AppText>
-        </View>
-        <NoteBody markdown={note.content} />
+        {live ? (
+          <EditableNote note={note} editor={editor} />
+        ) : (
+          <>
+            <NoteHeading note={note}>
+              <AppText variant="title" selectable>
+                {noteTitle(note)}
+              </AppText>
+            </NoteHeading>
+            <NoteBody markdown={note.content} />
+          </>
+        )}
         <NoteSettings note={note} />
         <ReviewHistory note={note} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
       {showPanel ? (
         <View
           style={{
@@ -199,37 +297,15 @@ function NoteView({ note }: { note: NoteItem }) {
           ) : null}
         </View>
       ) : null}
+      <RichEditorToolbar controller={editor} />
     </View>
   );
 }
 
 export function NoteDetailScreen({ id }: { id: number }) {
-  const router = useRouter();
   const query = useNote(id);
 
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          headerRight: query.data
-            ? () => (
-                <HeaderButton
-                  ios="pencil"
-                  android="edit"
-                  label="Edit note"
-                  onPress={() => router.push({ pathname: "/edit-note/[id]", params: { id } })}
-                />
-              )
-            : undefined,
-        }}
-      />
-      {query.data ? (
-        <NoteView note={query.data} />
-      ) : query.error ? (
-        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-      ) : (
-        <LoadingState />
-      )}
-    </>
-  );
+  if (query.data) return <NoteView key={id} note={query.data} live={!query.isPlaceholderData} />;
+  if (query.error) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  return <LoadingState />;
 }

@@ -76,6 +76,10 @@ if (frontend_dist / "assets").is_dir():
 async def spa(full_path: str) -> Response:
     if full_path.startswith("api/"):
         return JSONResponse(status_code=404, content={"message": "Not found"})
+    root = frontend_dist.resolve()
+    candidate = (root / full_path).resolve()
+    if full_path and candidate.is_relative_to(root) and candidate.is_file():
+        return FileResponse(candidate)
     if index_file.is_file():
         return FileResponse(index_file, media_type="text/html")
     return JSONResponse(status_code=404, content={"message": "Frontend not built"})

@@ -5,6 +5,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - Product intent and audience: [PRODUCT.md](PRODUCT.md)
 - Visual system (colors, type, components): [DESIGN.md](DESIGN.md)
 - Running and self-hosting (make run, install.sh, Docker, sign-in, backups): [docs/self-hosting.md](docs/self-hosting.md)
+- Brand icons: `assets/` holds the source artwork. `node scripts/build-icons.mjs` (uses the frontend's Playwright Chromium) renders every platform variant into `frontend/public/`, `extension/public/icon/` and `mobile/assets/images/`; edit the sources and rerun rather than editing the generated files.
 - `README.md` is the public overview; `install.sh` is the guided Docker installer (POSIX sh, test changes under `dash`).
 
 ## Layout

@@ -3,25 +3,39 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isToday } from "date-fns";
-import { HistoryIcon, PauseIcon } from "lucide-react";
+import { FileTextIcon, HistoryIcon, PauseIcon } from "lucide-react";
 import { MarkableReminder } from "./MarkableReminder";
 import { ReschedulePopover } from "./ReschedulePopover";
 import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
+import { REVIEW_STATUS_LABELS, type ReviewStatus } from "./reviewStatus";
 import { UndoMarkableReminder } from "./UndoMarkableReminder";
 
 interface NoteReminderListProps {
   noteId: number;
   reminders: NoteReminderType[];
   compact?: boolean;
-  paused?: boolean;
+  status?: ReviewStatus;
 }
 
 export function NoteReminderList({
   noteId,
   reminders,
   compact = false,
-  paused = false,
+  status = "active",
 }: NoteReminderListProps) {
+  if (status === "note-only") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 text-muted-foreground"
+        title="A plain note, not part of review"
+      >
+        <FileTextIcon className="size-2.5" /> {REVIEW_STATUS_LABELS["note-only"]}
+      </Badge>
+    );
+  }
+
+  const paused = status === "paused";
   if (reminders.length === 0) {
     return <span className="text-muted-foreground">No reminders</span>;
   }
@@ -35,7 +49,7 @@ export function NoteReminderList({
 
   const pendingBadge = paused ? (
     <Badge variant="outline" className="gap-1 text-muted-foreground">
-      <PauseIcon className="size-2.5" /> Paused
+      <PauseIcon className="size-2.5" /> {REVIEW_STATUS_LABELS.paused}
     </Badge>
   ) : (
     pending && <MarkableReminder reminder={pending} />

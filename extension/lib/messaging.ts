@@ -8,6 +8,7 @@ export type BackgroundRequest =
 
 export interface LookupsResult extends Lookups {
   lastProject: string;
+  lastNoteOnly: boolean;
 }
 
 export interface SaveResult {

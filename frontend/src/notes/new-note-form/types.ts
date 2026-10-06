@@ -28,10 +28,12 @@ export type Project = z.infer<typeof ProjectSchema>;
 export const ProjectListItemSchema = ProjectSchema.extend({
   note_count: z.number(),
   paused_count: z.number().default(0),
+  note_only_count: z.number().default(0),
 });
 export const TagListItemSchema = TagSchema.extend({
   note_count: z.number(),
   paused_count: z.number().default(0),
+  note_only_count: z.number().default(0),
 });
 
 export const ReminderBaseSchema = z.object({
@@ -64,6 +66,7 @@ export const NoteItemSchema = NoteBaseSchema.extend({
   interval_days: z.number(),
   algorithm: AlgorithmSchema,
   paused_at: z.coerce.date().nullable().optional().default(null),
+  in_review: z.boolean().default(true),
   reminders: z.array(NoteReminderSchema).default([]),
   tags: z.array(TagSchema).default([]),
   project: ProjectSchema.nullable().optional().default(null),
@@ -86,6 +89,7 @@ export const NewNoteBodySchema = NoteBaseSchema.extend({
   difficulty: DifficultySchema.default("medium"),
   project_id: z.number().nullable().optional(),
   paused: z.boolean().optional(),
+  in_review: z.boolean().optional(),
 });
 
 export type NewNoteBody = z.infer<typeof NewNoteBodySchema>;

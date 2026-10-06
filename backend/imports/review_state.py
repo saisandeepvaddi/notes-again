@@ -36,6 +36,7 @@ class PastReview:
 class ReviewState:
     algorithm: Algorithm
     paused: bool
+    in_review: bool
     due_at: datetime.datetime | None
     state: Snapshot
     history: list[PastReview]
@@ -99,6 +100,9 @@ def parse_review(raw: Any) -> ReviewState:
     paused = raw.get("paused", False)
     if not isinstance(paused, bool):
         raise ReviewStateError('"review.paused" must be true or false.')
+    in_review = raw.get("in_review", True)
+    if not isinstance(in_review, bool):
+        raise ReviewStateError('"review.in_review" must be true or false.')
     history_raw = raw.get("history", [])
     if not isinstance(history_raw, list):
         raise ReviewStateError('"review.history" must be a list.')
@@ -130,6 +134,7 @@ def parse_review(raw: Any) -> ReviewState:
     return ReviewState(
         algorithm=algorithm,
         paused=paused,
+        in_review=in_review,
         due_at=_optional_datetime(raw.get("due_at"), "review.due_at"),
         state=_snapshot(raw, " in review", require_card=algorithm == "fsrs"),
         history=history,
@@ -137,7 +142,11 @@ def parse_review(raw: Any) -> ReviewState:
 
 
 def apply_review(
-    note: Note, review: ReviewState, *, fallback_due: datetime.datetime
+    note: Note,
+    review: ReviewState,
+    *,
+    fallback_due: datetime.datetime,
+    in_review: bool = True,
 ) -> None:
     note.algorithm = review.algorithm
     if review.state.ease_factor is not None:
@@ -156,6 +165,9 @@ def apply_review(
         )
         for entry in review.history
     ]
+    if not in_review:
+        note.reminders = past
+        return
     pending = Reminder(
         remind_at=review.due_at or fallback_due, **snapshot_for_new_reminder(note)
     )
@@ -183,6 +195,7 @@ def export_review(note: Note) -> dict:
     return {
         "algorithm": note.algorithm,
         "paused": note.paused_at is not None,
+        "in_review": note.in_review,
         "due_at": _iso(pending[0].remind_at) if pending else None,
         "ease_factor": note.ease_factor,
         "interval_days": note.interval_days,

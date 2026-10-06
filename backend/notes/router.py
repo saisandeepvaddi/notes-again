@@ -9,7 +9,7 @@ from sqlmodel import Session, col, select
 
 from db.models import Note, NoteTag, Project, Reminder, Settings, Tag, utcnow
 from db.setup import SessionDep
-from notes.bulk import MAX_BULK_IDS
+from notes.bulk import MAX_BULK_IDS, ReviewStatus, add_to_review, remove_from_review
 from notes.factory import build_note
 from notes.scheduling import (
     Algorithm,
@@ -137,10 +137,18 @@ def _list_conditions(
     deleted: bool,
     search: str | None = None,
     paused: bool | None = None,
+    status: ReviewStatus | None = None,
 ) -> list:
     conditions: list = [
         col(Note.deleted_at).is_not(None) if deleted else col(Note.deleted_at).is_(None)
     ]
+
+    if status == "active":
+        conditions += [col(Note.in_review).is_(True), col(Note.paused_at).is_(None)]
+    elif status == "paused":
+        conditions.append(col(Note.paused_at).is_not(None))
+    elif status == "note-only":
+        conditions.append(col(Note.in_review).is_(False))
 
     if paused is not None:
         conditions.append(
@@ -158,7 +166,7 @@ def _list_conditions(
         )
 
     if start is not None and end is not None:
-        conditions.append(col(Note.paused_at).is_(None))
+        conditions += [col(Note.in_review).is_(True), col(Note.paused_at).is_(None)]
         start_utc = to_utc(start).replace(tzinfo=None)
         end_utc = to_utc(end).replace(tzinfo=None)
 
@@ -198,6 +206,7 @@ def get_notes(
     deleted: bool = False,
     search: str | None = None,
     paused: bool | None = None,
+    status: ReviewStatus | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
     limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
@@ -211,6 +220,7 @@ def get_notes(
         deleted=deleted,
         search=search,
         paused=paused,
+        status=status,
     )
     return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
 
@@ -230,6 +240,7 @@ def get_note_ids(
     deleted: bool = False,
     search: str | None = None,
     paused: bool | None = None,
+    status: ReviewStatus | None = None,
     sort: NoteSort = "due",
     order: Literal["asc", "desc"] = "asc",
 ):
@@ -241,6 +252,7 @@ def get_note_ids(
         deleted=deleted,
         search=search,
         paused=paused,
+        status=status,
     )
     total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
     key = _sort_key(sort)
@@ -262,6 +274,7 @@ def get_due_notes(
 ):
     conditions: list = [
         col(Note.deleted_at).is_(None),
+        col(Note.in_review).is_(True),
         col(Note.paused_at).is_(None),
         select(Reminder.id)
         .where(
@@ -291,6 +304,7 @@ class NewNoteBody(BaseModel):
     difficulty: Difficulty = "medium"
     project_id: int | None = None
     paused: bool | None = None
+    in_review: bool = True
 
 
 @router.post("/create", response_model=NoteResponse)
@@ -311,6 +325,7 @@ def create_note(body: NewNoteBody, session: SessionDep):
         project=project,
         first_reminder_at=to_utc(body.first_reminder_at),
         paused=paused,
+        in_review=body.in_review,
     )
     session.add(note)
     session.commit()
@@ -444,21 +459,39 @@ def set_note_project(note_id: int, body: SetProjectBody, session: SessionDep):
     return note
 
 
+def _set_review_status(session: Session, note_id: int, review_status: ReviewStatus) -> Note:
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    paused = review_status == "paused"
+    if review_status == "note-only":
+        remove_from_review(session, note_ids=[note.id])
+    elif not note.in_review:
+        add_to_review(session, note_ids=[note.id], paused=paused)
+    elif paused != (note.paused_at is not None):
+        note.paused_at = utcnow() if paused else None
+        session.add(note)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
 class SetPausedBody(BaseModel):
     paused: bool
 
 
 @router.patch("/{note_id}/paused", response_model=NoteResponse)
 def set_note_paused(note_id: int, body: SetPausedBody, session: SessionDep):
-    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
-    if note is None or note.deleted_at is not None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
-    if body.paused != (note.paused_at is not None):
-        note.paused_at = utcnow() if body.paused else None
-        session.add(note)
-        session.commit()
-        session.refresh(note)
-    return note
+    return _set_review_status(session, note_id, "paused" if body.paused else "active")
+
+
+class SetStatusBody(BaseModel):
+    status: ReviewStatus
+
+
+@router.patch("/{note_id}/status", response_model=NoteResponse)
+def set_note_status(note_id: int, body: SetStatusBody, session: SessionDep):
+    return _set_review_status(session, note_id, body.status)
 
 
 class RescheduleReminderBody(BaseModel):
@@ -503,6 +536,9 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
     note = reminder.note
     if note is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+
+    if not note.in_review:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Note isn't in review")
 
     if body.action == "review":
         if body.rating is None:

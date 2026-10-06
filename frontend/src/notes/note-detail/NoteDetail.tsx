@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, PauseIcon, PlayIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
@@ -13,7 +13,7 @@ import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
 import { useNote } from "../hooks/useNote";
-import { useSetNotePaused } from "../hooks/usePausing";
+import { useSetNoteStatus } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
@@ -22,9 +22,23 @@ import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteReminderList } from "../NoteReminderList";
 import { NoteTitle } from "../NoteTitle";
 import { ProjectPicker } from "../ProjectPicker";
+import { REVIEW_STATUS_ICONS, ReviewStatusPicker } from "../ReviewStatusPicker";
+import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 
 const AUTOSAVE_DELAY_MS = 800;
+
+const STATUS_TOASTS: Record<ReviewStatus, string> = {
+  active: "In review: it comes up on its schedule",
+  paused: "Paused: kept out of review for now",
+  "note-only": "Note only: no longer part of review",
+};
+
+const STATUS_NOTICES: Record<Exclude<ReviewStatus, "active">, string> = {
+  paused: "Paused: kept out of review for now. Switch back to In review to pick up its schedule.",
+  "note-only":
+    "Note only: a plain note with no reviews or due dates. Switch to In review to start reviewing it.",
+};
 
 interface NoteDetailProps {
   noteId: number;
@@ -38,7 +52,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
-  const { mutateAsync: setPaused, isPending: isPausing } = useSetNotePaused(noteId);
+  const { mutateAsync: setStatus, isPending: isChangingStatus } = useSetNoteStatus(noteId);
 
   const [name, setName] = useState(note.name);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -93,14 +107,12 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
     }
   };
 
-  const isPaused = note.paused_at !== null;
-  const togglePaused = async () => {
+  const status = reviewStatusOf(note);
+  const StatusIcon = REVIEW_STATUS_ICONS[status];
+  const changeStatus = async (next: ReviewStatus) => {
     try {
-      await setPaused(!isPaused);
-      toast.add({
-        type: "success",
-        description: isPaused ? "Resumed: back in review" : "Paused: kept out of review",
-      });
+      await setStatus(next);
+      toast.add({ type: "success", description: STATUS_TOASTS[next] });
     } catch (error) {
       console.error("error:", error);
       toast.add({ type: "error", priority: "high", description: "Failed to update note" });
@@ -134,9 +146,6 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <span className="text-xs text-muted-foreground">
             {isSaving ? "Saving…" : justSaved ? "Saved" : ""}
           </span>
-          <Button size="sm" variant="outline" onClick={togglePaused} disabled={isPausing}>
-            {isPaused ? <PlayIcon /> : <PauseIcon />} {isPaused ? "Resume" : "Pause"}
-          </Button>
           <Button size="sm" variant="destructive" onClick={remove}>
             <Trash2Icon /> Delete
           </Button>
@@ -174,13 +183,16 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       )}
 
       <div className="flex flex-col gap-3">
-        {isPaused && (
+        <ReviewStatusPicker value={status} onChange={changeStatus} disabled={isChangingStatus} />
+        {status !== "active" && (
           <p className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-            <PauseIcon className="size-3.5 shrink-0" />
-            Paused: kept as a note, not in review. Resume to bring it back on its schedule.
+            <StatusIcon className="size-3.5 shrink-0" />
+            {STATUS_NOTICES[status]}
           </p>
         )}
-        <NoteReminderList noteId={note.id} reminders={note.reminders} paused={isPaused} />
+        {status !== "note-only" && (
+          <NoteReminderList noteId={note.id} reminders={note.reminders} status={status} />
+        )}
 
         <Separator />
 

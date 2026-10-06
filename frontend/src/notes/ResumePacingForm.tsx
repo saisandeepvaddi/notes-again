@@ -2,15 +2,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { PlayIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { DEFAULT_RESUME_PER_DAY } from "./hooks/usePausing";
 
 export function ResumePacingForm({
   isPending,
   onResume,
+  submitLabel = "Resume",
+  icon = <PlayIcon />,
+  description = (
+    <>
+      Never-reviewed notes come back this many a day; 0 makes them all due now. Notes you've
+      reviewed before keep their schedule.
+    </>
+  ),
 }: {
   isPending: boolean;
   onResume: (perDay: number) => void;
+  submitLabel?: string;
+  icon?: ReactNode;
+  description?: ReactNode;
 }) {
   const [perDay, setPerDay] = useState(String(DEFAULT_RESUME_PER_DAY));
   const perDayNumber = Number.parseInt(perDay, 10);
@@ -36,12 +47,9 @@ export function ResumePacingForm({
           aria-invalid={!valid}
         />
       </label>
-      <p className="text-xs text-muted-foreground">
-        Never-reviewed notes come back this many a day; 0 makes them all due now. Notes you've
-        reviewed before keep their schedule.
-      </p>
+      <p className="text-xs text-muted-foreground">{description}</p>
       <Button type="submit" size="sm" disabled={isPending || !valid}>
-        {isPending ? <Spinner /> : <PlayIcon />} Resume
+        {isPending ? <Spinner /> : icon} {submitLabel}
       </Button>
     </form>
   );

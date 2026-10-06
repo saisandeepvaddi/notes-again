@@ -51,6 +51,7 @@ import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
 import { markdownExcerpt } from "../markdownExcerpt";
 import { NoteReminderList } from "../NoteReminderList";
+import { reviewStatusOf } from "../reviewStatus";
 import { NoteTitle, noteTitleText } from "../NoteTitle";
 import type { NoteItem, Project } from "../new-note-form/types";
 import { SelectCheckbox, selectionClickCapture } from "../selection/SelectCheckbox";
@@ -337,7 +338,7 @@ export function NotesTable({
           <NoteReminderList
             noteId={note.id}
             reminders={note.reminders}
-            paused={note.paused_at !== null}
+            status={reviewStatusOf(note)}
           />
         );
       },

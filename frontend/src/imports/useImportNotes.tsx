@@ -1,5 +1,6 @@
 import { postFetcher } from "@/utils/fetchers";
 import { useMutation } from "@tanstack/react-query";
+import { newNoteReviewFields, type ReviewStatus } from "@/notes/reviewStatus";
 import { ImportResultSchema } from "./types";
 
 interface ImportArgs {
@@ -7,13 +8,13 @@ interface ImportArgs {
   perDay: number;
   defaultDeck: string;
   dryRun: boolean;
-  paused: boolean;
+  status: ReviewStatus;
 }
 
 export function useImportNotes() {
   return useMutation({
     mutationKey: ["import-notes"],
-    mutationFn: async ({ payload, perDay, defaultDeck, dryRun, paused }: ImportArgs) => {
+    mutationFn: async ({ payload, perDay, defaultDeck, dryRun, status }: ImportArgs) => {
       const fetcher = postFetcher("/import/notes");
       const result = await fetcher(
         JSON.stringify({
@@ -22,7 +23,7 @@ export function useImportNotes() {
           default_deck: defaultDeck.trim() || null,
           tz_offset_minutes: new Date().getTimezoneOffset(),
           dry_run: dryRun,
-          paused,
+          ...newNoteReviewFields(status),
         }),
       );
       return ImportResultSchema.parse(result);

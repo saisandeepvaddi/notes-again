@@ -53,6 +53,7 @@ def add_missing_columns(engine: Engine) -> None:
             ("algorithm", "TEXT NOT NULL DEFAULT 'sm2'"),
             ("fsrs_card", "TEXT"),
             ("paused_at", "DATETIME"),
+            ("in_review", "BOOLEAN NOT NULL DEFAULT 1"),
         ],
         "projects": [
             ("paused", "BOOLEAN NOT NULL DEFAULT 0"),

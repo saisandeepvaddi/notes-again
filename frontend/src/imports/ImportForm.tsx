@@ -1,6 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,11 +8,21 @@ import { toast } from "@/components/ui/toast";
 import { Link } from "@tanstack/react-router";
 import { CheckCircle2Icon, CopyIcon } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
+import { ReviewStatusPicker } from "@/notes/ReviewStatusPicker";
+import type { ReviewStatus } from "@/notes/reviewStatus";
 import { ImportSummary } from "./ImportSummary";
 import { EXAMPLE_IMPORT, type ImportResult } from "./types";
 import { useImportNotes } from "./useImportNotes";
 
 const DEFAULT_PER_DAY = "10";
+
+const IMPORT_STATUS_HINTS: Record<ReviewStatus, string> = {
+  active: "Notes go into review, spread out by the per-day pace below.",
+  paused:
+    "Kept as notes, out of review for now (a deck for later). New decks start paused too. Resume them from Organize when you're ready.",
+  "note-only":
+    "Plain notes with no reviews or due dates, like reference material. Add them to review later from Organize or a selection in Notes.",
+};
 
 function FormatHelp() {
   const copy = async () => {
@@ -42,12 +51,12 @@ function FormatHelp() {
           <li>
             Files from <strong>Export</strong> (on All Notes) include each note's{" "}
             <code>review</code> state, so notes come back with their schedule, rating history and
-            paused state instead of starting over.
+            paused or note-only state instead of starting over.
           </li>
           <li>
             <code>per_day</code> sets how many notes become due each day: at the top of the file,
-            and/or on a deck (a deck's own value wins). <code>0</code> makes them all due now.
-            Each deck is spread out on its own. Without it, the default below (10) is used.
+            and/or on a deck (a deck's own value wins). <code>0</code> makes them all due now. Each
+            deck is spread out on its own. Without it, the default below (10) is used.
           </li>
         </ul>
         <div className="relative">
@@ -75,7 +84,8 @@ export function ImportForm() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [perDay, setPerDay] = useState(DEFAULT_PER_DAY);
   const [defaultDeck, setDefaultDeck] = useState("");
-  const [paused, setPaused] = useState(false);
+  const [status, setStatus] = useState<ReviewStatus>("active");
+  const paced = status === "active";
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<ImportResult | null>(null);
   const [done, setDone] = useState<ImportResult | null>(null);
@@ -114,7 +124,7 @@ export function ImportForm() {
         perDay: perDayNumber,
         defaultDeck,
         dryRun,
-        paused,
+        status,
       });
       if (dryRun) {
         setPreview(result);
@@ -147,7 +157,7 @@ export function ImportForm() {
           <AlertTitle>Import complete</AlertTitle>
           <AlertDescription>
             {done.notes_created.toLocaleString()} note{done.notes_created === 1 ? "" : "s"}{" "}
-            {done.paused ? "added, paused" : "added"}.
+            {done.note_only ? "added as note only" : done.paused ? "added, paused" : "added"}.
           </AlertDescription>
         </Alert>
         <ImportSummary result={done} />
@@ -174,8 +184,9 @@ export function ImportForm() {
           <Input type="file" accept=".json,application/json" onChange={onFile} />
           {fileName && (
             <p className="text-xs text-muted-foreground">
-              {fileName} — {(text.length / 1024).toLocaleString(undefined, { maximumFractionDigits: 0 })}{" "}
-              KB loaded
+              {fileName} —{" "}
+              {(text.length / 1024).toLocaleString(undefined, { maximumFractionDigits: 0 })} KB
+              loaded
             </p>
           )}
         </TabsContent>
@@ -194,23 +205,18 @@ export function ImportForm() {
         </TabsContent>
       </Tabs>
 
-      <label className="flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm">
-        <Checkbox
-          className="mt-0.5"
-          checked={paused}
-          onCheckedChange={(checked) => {
+      <div className="flex flex-col gap-1.5 rounded-md border p-3 text-sm">
+        <span className="font-medium">Import as</span>
+        <ReviewStatusPicker
+          label="Import as"
+          value={status}
+          onChange={(next) => {
             edit();
-            setPaused(checked === true);
+            setStatus(next);
           }}
         />
-        <span className="flex flex-col gap-0.5">
-          <span className="font-medium">Import as paused</span>
-          <span className="text-xs text-muted-foreground">
-            Keep them as notes (reference material, a deck for later) without adding them to
-            review. New decks start paused too. Resume them from Organize when you're ready.
-          </span>
-        </span>
-      </label>
+        <span className="text-xs text-muted-foreground">{IMPORT_STATUS_HINTS[status]}</span>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm">
@@ -226,16 +232,17 @@ export function ImportForm() {
               setPerDay(event.target.value);
             }}
             aria-invalid={!perDayValid}
-            disabled={paused}
+            disabled={!paced}
           />
           <span className="text-xs text-muted-foreground">
-            {paused ? (
+            {status === "paused" ? (
               <>Not used for a paused import: you choose the pace when you resume.</>
+            ) : status === "note-only" ? (
+              <>Not used for note-only notes: you choose the pace if you add them to review.</>
             ) : (
               <>
                 Used wherever the file doesn't set <code>per_day</code>. First reviews are spread
-                out this many per day so you don't get a huge backlog; 0 makes everything due
-                now.
+                out this many per day so you don't get a huge backlog; 0 makes everything due now.
               </>
             )}
           </span>
@@ -270,18 +277,15 @@ export function ImportForm() {
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={preview ? "outline" : "default"}
-          disabled={isPending || !text.trim() || (!paused && !perDayValid)}
+          disabled={isPending || !text.trim() || (paced && !perDayValid)}
           onClick={() => run(true)}
         >
           {isPending && !preview ? <Spinner /> : null} Preview
         </Button>
         {preview && (
-          <Button
-            disabled={isPending || preview.notes_created === 0}
-            onClick={() => run(false)}
-          >
-            {isPending ? <Spinner /> : null} Import{" "}
-            {preview.notes_created.toLocaleString()} note{preview.notes_created === 1 ? "" : "s"}
+          <Button disabled={isPending || preview.notes_created === 0} onClick={() => run(false)}>
+            {isPending ? <Spinner /> : null} Import {preview.notes_created.toLocaleString()} note
+            {preview.notes_created === 1 ? "" : "s"}
           </Button>
         )}
       </div>

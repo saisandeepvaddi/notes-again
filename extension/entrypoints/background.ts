@@ -34,12 +34,19 @@ async function handle(request: BackgroundRequest): Promise<unknown> {
     case "lookups": {
       const { api, settings } = await getApi();
       const lookups = await api.lookups();
-      return { ...lookups, lastProject: settings.lastProject } satisfies LookupsResult;
+      return {
+        ...lookups,
+        lastProject: settings.lastProject,
+        lastNoteOnly: settings.lastNoteOnly,
+      } satisfies LookupsResult;
     }
     case "save": {
       const { api, settings, baseUrl } = await getApi();
       const saved = await api.saveNote(request.draft);
-      await saveSettings({ lastProject: request.draft.project ?? "" });
+      await saveSettings({
+        lastProject: request.draft.project ?? "",
+        lastNoteOnly: request.draft.noteOnly ?? false,
+      });
       return {
         ...saved,
         openUrl: noteUrl(settings.appUrl, baseUrl, saved.id),

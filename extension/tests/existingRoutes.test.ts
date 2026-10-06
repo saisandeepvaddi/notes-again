@@ -54,6 +54,15 @@ describe("saveNote", () => {
     });
   });
 
+  it("asks for a note-only note only when the draft says so", async () => {
+    const { calls, fetchImpl } = fakeServer({ "POST /api/notes/create": () => ({ json: { id: 1, name: "n" } }) });
+    const api = createExistingRoutesApi({ baseUrl: "http://s", token: "", fetch: fetchImpl });
+    await api.saveNote({ name: "n", content: "c", project: null, tags: [], sourceUrl: "" });
+    await api.saveNote({ name: "n", content: "c", project: null, tags: [], noteOnly: true, sourceUrl: "" });
+    expect(calls[0]?.body).not.toHaveProperty("in_review");
+    expect(calls[1]?.body).toMatchObject({ in_review: false });
+  });
+
   it("skips project/tag calls when there are none, and sends no project", async () => {
     const { calls, fetchImpl } = fakeServer({ "POST /api/notes/create": () => ({ json: { id: 1, name: "n" } }) });
     const api = createExistingRoutesApi({ baseUrl: "http://s", token: "", fetch: fetchImpl });

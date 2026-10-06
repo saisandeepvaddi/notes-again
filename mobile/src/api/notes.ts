@@ -9,6 +9,7 @@ import {
   type NotePage,
   type Rating,
 } from "@web/notes/new-note-form/types";
+import { newNoteReviewFields, type ReviewStatus } from "@web/notes/reviewStatus";
 import {
   useInfiniteQuery,
   useMutation,
@@ -44,7 +45,7 @@ export function useDueNotes() {
   });
 }
 
-export type NotesStatus = "active" | "paused";
+export type NotesStatus = ReviewStatus;
 
 export interface NotesFilters {
   search: string;
@@ -64,7 +65,7 @@ export function useNotes(filters: NotesFilters) {
       });
       if (filters.search.trim()) params.set("search", filters.search.trim());
       if (filters.projectId != null) params.set("project_id", String(filters.projectId));
-      if (filters.status) params.set("paused", String(filters.status === "paused"));
+      if (filters.status) params.set("status", filters.status);
       return api(NotePageSchema, `/notes/list?${params}`, { signal });
     },
     initialPageParam: 0,
@@ -114,7 +115,7 @@ export const pendingReminder = (note: NoteItem) =>
 
 export const isDue = (note: NoteItem, now = new Date()) => {
   const pending = pendingReminder(note);
-  return note.paused_at === null && pending !== null && pending.remind_at <= now;
+  return note.in_review && note.paused_at === null && pending !== null && pending.remind_at <= now;
 };
 
 function refreshAfterWrite(queryClient: QueryClient, note?: NoteItem) {
@@ -164,6 +165,7 @@ export interface NewNote {
   difficulty: Difficulty;
   projectId: number | null;
   tagIds: number[];
+  status: ReviewStatus;
 }
 
 export function useCreateNote() {
@@ -176,6 +178,7 @@ export function useCreateNote() {
         difficulty: note.difficulty,
         project_id: note.projectId,
         tag_ids: note.tagIds,
+        ...newNoteReviewFields(note.status),
         first_reminder_at: new Date().toISOString(),
       },
     }),
@@ -194,9 +197,9 @@ export function useSetDifficulty(id: number) {
   );
 }
 
-export function useSetPaused(id: number) {
-  return useNoteMutation((paused: boolean) =>
-    api(NoteItemSchema, `/notes/${id}/paused`, { method: "PATCH", body: { paused } }),
+export function useSetReviewStatus(id: number) {
+  return useNoteMutation((status: ReviewStatus) =>
+    api(NoteItemSchema, `/notes/${id}/status`, { method: "PATCH", body: { status } }),
   );
 }
 

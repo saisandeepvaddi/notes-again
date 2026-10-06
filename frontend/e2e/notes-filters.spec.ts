@@ -14,7 +14,7 @@ test.describe("notes list filters in the URL", () => {
     await expect(page.getByRole("link", { name: tagged.name, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: untagged.name, exact: true })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Active", exact: true }).click();
+    await page.getByRole("button", { name: "In review", exact: true }).click();
     await expect(page).toHaveURL(/status=active/);
     await page.getByRole("button", { name: "Show only today" }).click();
     await expect(page).toHaveURL(/date=\d{4}-\d{2}-\d{2}/);
@@ -27,7 +27,7 @@ test.describe("notes list filters in the URL", () => {
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`tagId=${tag.id}`));
     await expect(page).toHaveURL(/status=active/);
-    await expect(page.getByRole("button", { name: "Active", exact: true })).toHaveAttribute(
+    await expect(page.getByRole("button", { name: "In review", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -86,7 +86,7 @@ test.describe("notes list filters in the URL", () => {
 
   test("changing a filter drops the page, but back restores it", async ({ page }) => {
     await page.goto("/notes?page=3&pageSize=10");
-    await page.getByRole("button", { name: "Active", exact: true }).click();
+    await page.getByRole("button", { name: "In review", exact: true }).click();
     await expect(page).toHaveURL(/status=active/);
     await expect(page).not.toHaveURL(/page=3/);
 

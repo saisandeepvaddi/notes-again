@@ -9,7 +9,14 @@
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["--app-dir", "backend", "main:app", "--reload", "--host", "0.0.0.0"],
+      "args": [
+        "--app-dir",
+        "backend",
+        "main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0"
+      ],
       // VS Code's Python debugger auto-loads ${workspaceFolder}/.env by default,
       // but that file holds container/production values (DB_PATH=/data/...,
       // R2 + Firebase secrets) that must NOT leak into local dev. Point envFile
@@ -18,6 +25,9 @@
       "envFile": "${workspaceFolder}/.vscode/backend.env",
       "env": {
         "AUTH_DISABLED": "1",
+        // Blanked so an inherited AUTH_MODE (it wins over AUTH_DISABLED)
+        // can't turn sign-in back on. Use "Backend (local auth)" for that.
+        "AUTH_MODE": "",
         // Explicitly blanked, not just omitted: VS Code the application can
         // inherit DB_PATH from whatever environment it happened to be
         // launched in (e.g. a terminal that once had it exported), and that
@@ -30,6 +40,32 @@
         // the next free port when its configured one is taken (5173, 5273, ...
         // whatever), so pinning a single port here breaks CORS again the next
         // time that happens.
+        "CORS_ORIGIN_REGEX": "http://(localhost|127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+):\\d+"
+      },
+      "jinja": false
+    },
+    {
+      // Same as "Backend", but with username/password sign-in. The session
+      // cookie is SameSite=Lax, so open the frontend on the same host the API
+      // is reached on (VITE_SERVER_IP in frontend/.env), or sign-in won't stick.
+      "name": "Backend (local auth)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "--app-dir",
+        "backend",
+        "main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0"
+      ],
+      "envFile": "${workspaceFolder}/.vscode/backend.env",
+      "env": {
+        "AUTH_MODE": "local",
+        "AUTH_DISABLED": "",
+        "DB_PATH": "",
+        "CORS_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5273,http://127.0.0.1:5273",
         "CORS_ORIGIN_REGEX": "http://(localhost|127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+):\\d+"
       },
       "jinja": false

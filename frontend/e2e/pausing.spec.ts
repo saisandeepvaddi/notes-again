@@ -28,14 +28,14 @@ test.describe("pausing", () => {
 
     await page.goto("/notes/new");
     await page.getByPlaceholder("Name").fill(noteName);
-    const paused = page.getByRole("checkbox", { name: /Paused/ });
-    await expect(paused).not.toBeChecked();
+    const paused = page.getByRole("radio", { name: "Paused" });
+    await expect(paused).toHaveAttribute("aria-checked", "false");
 
     await page.getByRole("button", { name: "Project", exact: true }).click();
     await page.getByPlaceholder("Search or create project...").fill(project.name);
     await page.getByRole("option", { name: project.name, exact: true }).click();
-    await expect(paused).toBeChecked();
-    await expect(page.getByText(`Checked because “${project.name}” is paused`)).toBeVisible();
+    await expect(paused).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByText(`Paused because “${project.name}” is paused`)).toBeVisible();
 
     await page.getByRole("button", { name: "Create" }).click();
     await expect(page).toHaveURL(/\/notes$/);
@@ -48,13 +48,13 @@ test.describe("pausing", () => {
     const note = await createNote(request, { name: uniqueName("Pause me") });
 
     await page.goto(`/notes/${note.id}`);
-    await page.getByRole("button", { name: "Pause", exact: true }).click();
-    await expect(page.getByText("Paused: kept as a note, not in review.")).toBeVisible();
+    await page.getByRole("radio", { name: "Paused" }).click();
+    await expect(page.getByText("Paused: kept out of review for now.")).toBeVisible();
 
     const due = await (await request.get(`${API_URL}/notes/due?limit=200`)).json();
     expect(due.items.map((item: { id: number }) => item.id)).not.toContain(note.id);
 
-    await page.getByRole("button", { name: "Resume", exact: true }).click();
-    await expect(page.getByText("Paused: kept as a note, not in review.")).toBeHidden();
+    await page.getByRole("radio", { name: "In review" }).click();
+    await expect(page.getByText("Paused: kept out of review for now.")).toBeHidden();
   });
 });

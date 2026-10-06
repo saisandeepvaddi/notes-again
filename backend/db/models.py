@@ -58,6 +58,7 @@ class Note(SQLModel, table=True):
     deleted_at: datetime.datetime | None = Field(default=None)
 
     paused_at: datetime.datetime | None = Field(default=None)
+    in_review: bool = Field(default=True)
 
     ease_factor: float = Field(default=2.5)
     interval_days: int = Field(default=0)

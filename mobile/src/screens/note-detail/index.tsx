@@ -1,11 +1,12 @@
 import { getDifficulty } from "@web/notes/difficulty";
 import type { NoteItem, Rating } from "@web/notes/new-note-form/types";
 import { RATING_OPTIONS } from "@web/notes/rating";
+import { reviewStatusOf, type ReviewStatus } from "@web/notes/reviewStatus";
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { type ReactNode } from "react";
-import { Alert, Switch, TextInput, View } from "react-native";
+import { Alert, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -14,7 +15,7 @@ import {
   useDeleteNote,
   useNote,
   useSetDifficulty,
-  useSetPaused,
+  useSetReviewStatus,
   useSetProject,
 } from "@/api/notes";
 import { AppText } from "@/components/app-text";
@@ -34,6 +35,7 @@ import {
 import { NoteMeta } from "@/components/note-meta";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatingBar } from "@/components/rating-bar";
+import { ReviewStatusPicker } from "@/components/review-status-picker";
 import { ErrorState, InlineError, LoadingState } from "@/components/screen-state";
 import { Divider, SettingRow } from "@/components/setting-row";
 import { UndoBar } from "@/components/undo-bar";
@@ -42,6 +44,12 @@ import { useReviewActions } from "@/hooks/use-review-actions";
 import { useTheme } from "@/hooks/use-theme";
 import { fonts, ratingTint, space } from "@/theme";
 import { dueLabel, noteTitle } from "@/utils/note-format";
+
+const STATUS_HINTS: Record<ReviewStatus, string> = {
+  active: "Comes up for review on its schedule.",
+  paused: "Kept out of review for now. Switch back to pick up its schedule.",
+  "note-only": "A plain note with no reviews or due dates.",
+};
 
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
@@ -77,7 +85,8 @@ function NoteSettings({ note }: { note: NoteItem }) {
   const router = useRouter();
   const setDifficulty = useSetDifficulty(note.id);
   const setProject = useSetProject(note.id);
-  const setPaused = useSetPaused(note.id);
+  const setReviewStatus = useSetReviewStatus(note.id);
+  const status = reviewStatusOf(note);
   const deleteNote = useDeleteNote(note.id);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,16 +135,19 @@ function NoteSettings({ note }: { note: NoteItem }) {
         />
       </SettingRow>
       <Divider color={colors.border} />
-      <SettingRow label="Pause reviews" description="Paused notes don’t come up for review.">
-        <Switch
-          value={note.paused_at !== null}
-          onValueChange={(paused) => void save(() => setPaused.mutateAsync(paused))}
-          disabled={setPaused.isPending}
-          trackColor={{ true: colors.primary, false: colors.secondary }}
-          thumbColor={process.env.EXPO_OS === "android" ? colors.card : undefined}
-          ios_backgroundColor={colors.secondary}
+      <View style={{ gap: 8 }}>
+        <AppText variant="label" tone="muted">
+          Review
+        </AppText>
+        <ReviewStatusPicker
+          value={status}
+          onChange={(next) => void save(() => setReviewStatus.mutateAsync(next))}
+          disabled={setReviewStatus.isPending}
         />
-      </SettingRow>
+        <AppText variant="caption" tone="muted">
+          {STATUS_HINTS[status]}
+        </AppText>
+      </View>
       {error ? <InlineError message={error} /> : null}
       <Button variant="destructive" onPress={confirmDelete} loading={deleteNote.isPending}>
         Move to trash
@@ -170,7 +182,7 @@ function NoteHeading({ note, children }: { note: NoteItem; children: ReactNode }
       <NoteMeta note={note} />
       <AppText variant="caption" tone={label.due ? "primary" : "muted"}>
         {label.text}
-        {pending && !label.due && !note.paused_at
+        {pending && !label.due && note.in_review && !note.paused_at
           ? ` · ${format(pending.remind_at, "EEE, MMM d")}`
           : ""}
       </AppText>

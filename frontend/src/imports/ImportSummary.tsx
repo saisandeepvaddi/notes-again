@@ -46,7 +46,12 @@ export function ImportSummary({ result }: { result: ImportResult }) {
         </p>
       )}
 
-      {result.paused ? (
+      {result.note_only ? (
+        <p className="text-sm text-muted-foreground">
+          {result.dry_run ? "They'll be" : "They're"} note only: plain notes with no reviews or due
+          dates. Add them to review later from Organize (per deck) or from a selection in Notes.
+        </p>
+      ) : result.paused ? (
         <p className="text-sm text-muted-foreground">
           {result.dry_run ? "They'll be" : "They're"} paused: kept as notes, but not in review.
           Resume them from Organize (per deck) or from a selection in Notes when you're ready.
@@ -81,7 +86,9 @@ export function ImportSummary({ result }: { result: ImportResult }) {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead>Deck</TableHead>
-                {!result.paused && <TableHead className="text-right">Per day</TableHead>}
+                {!result.paused && !result.note_only && (
+                  <TableHead className="text-right">Per day</TableHead>
+                )}
                 <TableHead className="text-right">
                   {result.dry_run ? "To import" : "Imported"}
                 </TableHead>
@@ -99,7 +106,7 @@ export function ImportSummary({ result }: { result: ImportResult }) {
                       </Badge>
                     )}
                   </TableCell>
-                  {!result.paused && (
+                  {!result.paused && !result.note_only && (
                     <TableCell className="text-right">
                       {deck.per_day === 0 ? "all now" : deck.per_day}
                     </TableCell>

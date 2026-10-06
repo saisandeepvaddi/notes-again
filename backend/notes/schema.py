@@ -29,6 +29,7 @@ class NoteResponse(SQLModel):
     interval_days: int
     algorithm: Algorithm
     paused_at: UTCDateTime | None = None
+    in_review: bool = True
     reminders: list[ReminderResponse] = []
     tags: list[TagResponse] = []
     project: ProjectResponse | None = None

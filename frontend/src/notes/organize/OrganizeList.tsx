@@ -4,9 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
 import { Link } from "@tanstack/react-router";
-import { FolderIcon, LockIcon, PauseIcon, PlayIcon, TagIcon, Trash2Icon } from "lucide-react";
+import {
+  FileTextIcon,
+  FolderIcon,
+  LockIcon,
+  PauseIcon,
+  PlayIcon,
+  RepeatIcon,
+  TagIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { resumeSummary, usePauseGroup, useResumeGroup } from "../hooks/usePausing";
+import {
+  addedToReviewSummary,
+  resumeSummary,
+  useAddGroupToReview,
+  usePauseGroup,
+  useRemoveGroupFromReview,
+  useResumeGroup,
+} from "../hooks/usePausing";
 import { useProjects } from "../hooks/useProjects";
 import { ResumePacingForm } from "../ResumePacingForm";
 import { useTags } from "../hooks/useTags";
@@ -20,6 +36,7 @@ interface RowProps {
   name: string;
   noteCount: number;
   pausedCount: number;
+  noteOnlyCount: number;
   paused?: boolean;
   locked?: boolean;
 }
@@ -38,12 +55,13 @@ function PauseControls({
   name,
   noteCount,
   pausedCount,
+  noteOnlyCount,
   paused = false,
 }: Omit<RowProps, "locked">) {
   const pause = usePauseGroup(kind);
   const resume = useResumeGroup(kind);
   const [resumeOpen, setResumeOpen] = useState(false);
-  const canPause = pausedCount < noteCount || (kind === "project" && !paused);
+  const canPause = pausedCount + noteOnlyCount < noteCount || (kind === "project" && !paused);
   const canResume = pausedCount > 0 || paused;
 
   const onPause = async () => {
@@ -119,7 +137,96 @@ function PauseControls({
   );
 }
 
-function Row({ kind, id, name, noteCount, pausedCount, paused, locked }: RowProps) {
+function NoteOnlyControls({
+  kind,
+  id,
+  name,
+  noteCount,
+  noteOnlyCount,
+}: Pick<RowProps, "kind" | "id" | "name" | "noteCount" | "noteOnlyCount">) {
+  const remove = useRemoveGroupFromReview(kind);
+  const add = useAddGroupToReview(kind);
+  const [open, setOpen] = useState(false);
+  const inReview = noteCount - noteOnlyCount;
+  const notes = (count: number) => `${count.toLocaleString()} note${count === 1 ? "" : "s"}`;
+
+  const onRemove = async () => {
+    try {
+      const { affected } = await remove.mutateAsync(id);
+      setOpen(false);
+      toast.add({
+        type: "success",
+        description:
+          kind === "project"
+            ? `Made ${notes(affected)} in “${name}” note only.`
+            : `Made ${notes(affected)} tagged “${name}” note only.`,
+      });
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+  const onAdd = async (perDay: number) => {
+    try {
+      const result = await add.mutateAsync({ id, perDay });
+      setOpen(false);
+      toast.add({ type: "success", description: addedToReviewSummary(result) });
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`Note only options for ${kind} ${name}`}
+            title="Note only: take its notes out of review, or add note-only ones back"
+            className="shrink-0 text-muted-foreground"
+          >
+            <FileTextIcon />
+          </Button>
+        }
+      />
+      <PopoverContent align="end" className="w-64 p-3">
+        {inReview > 0 && (
+          <div className="flex flex-col gap-2 text-sm">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={remove.isPending}
+              onClick={onRemove}
+            >
+              <FileTextIcon /> Make {notes(inReview)} note only
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Takes them out of review, paused ones included. Past reviews are kept.
+            </p>
+          </div>
+        )}
+        {noteOnlyCount > 0 && (
+          <div className={inReview > 0 ? "border-t pt-3" : undefined}>
+            <p className="mb-2 text-sm font-medium">Add {notes(noteOnlyCount)} to review</p>
+            <ResumePacingForm
+              isPending={add.isPending}
+              onResume={onAdd}
+              submitLabel="Add to review"
+              icon={<RepeatIcon />}
+              description="They become due this many a day; 0 makes them all due now."
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function Row({ kind, id, name, noteCount, pausedCount, noteOnlyCount, paused, locked }: RowProps) {
   const Icon = kind === "project" ? FolderIcon : TagIcon;
   const search = kind === "project" ? { projectId: id } : { tagId: id };
   return (
@@ -144,6 +251,15 @@ function Row({ kind, id, name, noteCount, pausedCount, paused, locked }: RowProp
           {pausedCount.toLocaleString()} paused
         </Link>
       )}
+      {noteOnlyCount > 0 && (
+        <Link
+          to="/notes"
+          search={{ ...search, status: "note-only" }}
+          className="shrink-0 text-xs text-muted-foreground tabular-nums hover:text-foreground hover:underline"
+        >
+          {noteOnlyCount.toLocaleString()} note only
+        </Link>
+      )}
       <Link
         to="/notes"
         search={search}
@@ -158,9 +274,19 @@ function Row({ kind, id, name, noteCount, pausedCount, paused, locked }: RowProp
           name={name}
           noteCount={noteCount}
           pausedCount={pausedCount}
+          noteOnlyCount={noteOnlyCount}
           paused={paused}
         />
       ) : null}
+      {noteCount > 0 && (
+        <NoteOnlyControls
+          kind={kind}
+          id={id}
+          name={name}
+          noteCount={noteCount}
+          noteOnlyCount={noteOnlyCount}
+        />
+      )}
       {locked ? (
         <Badge variant="outline" className="shrink-0 gap-1 text-muted-foreground">
           <LockIcon className="size-3" /> Built-in
@@ -245,6 +371,7 @@ export function OrganizeList() {
             name={project.name}
             noteCount={project.note_count}
             pausedCount={project.paused_count}
+            noteOnlyCount={project.note_only_count}
             paused={project.paused}
           />
         ))}
@@ -272,6 +399,7 @@ export function OrganizeList() {
             name={tag.name}
             noteCount={tag.note_count}
             pausedCount={tag.paused_count}
+            noteOnlyCount={tag.note_only_count}
             locked={tag.is_difficulty}
           />
         ))}

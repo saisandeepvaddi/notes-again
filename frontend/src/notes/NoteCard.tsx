@@ -10,6 +10,7 @@ import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
 import { NoteReminderList } from "./NoteReminderList";
+import { reviewStatusOf } from "./reviewStatus";
 import { NoteTitle, noteTitleText } from "./NoteTitle";
 import { SelectCheckbox, selectionClickCapture } from "./selection/SelectCheckbox";
 
@@ -101,7 +102,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
         <NoteReminderList
           noteId={note.id}
           reminders={note.reminders}
-          paused={note.paused_at !== null}
+          status={reviewStatusOf(note)}
           compact
         />
         <div className="flex w-full flex-nowrap items-center gap-1.5 overflow-hidden">

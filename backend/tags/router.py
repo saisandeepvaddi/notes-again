@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import delete
+from sqlalchemy import case, delete
 from sqlmodel import Session, col, func, select
 
 from db.models import Note, NoteTag, Tag
@@ -9,7 +9,9 @@ from notes.bulk import (
     GroupDeleteResult,
     ResumeOptions,
     ResumeResult,
+    add_to_review,
     pause_notes,
+    remove_from_review,
     resume_notes,
     trash_notes,
 )
@@ -24,9 +26,14 @@ router = APIRouter(prefix="/tags", tags=["tags"])
 def get_tags(session: SessionDep):
     tags = session.exec(select(Tag).order_by(func.lower(Tag.name))).all()
     counts = {
-        tag_id: (total, paused or 0)
-        for tag_id, total, paused in session.exec(
-            select(NoteTag.tag_id, func.count(), func.count(col(Note.paused_at)))
+        tag_id: (total, paused or 0, note_only or 0)
+        for tag_id, total, paused, note_only in session.exec(
+            select(
+                NoteTag.tag_id,
+                func.count(),
+                func.count(col(Note.paused_at)),
+                func.count(case((col(Note.in_review).is_(False), 1))),
+            )
             .join(Note, col(Note.id) == col(NoteTag.note_id))
             .where(col(Note.deleted_at).is_(None))
             .group_by(NoteTag.tag_id)
@@ -37,8 +44,9 @@ def get_tags(session: SessionDep):
             id=t.id,
             name=t.name,
             is_difficulty=t.is_difficulty,
-            note_count=counts.get(t.id, (0, 0))[0],
-            paused_count=counts.get(t.id, (0, 0))[1],
+            note_count=counts.get(t.id, (0, 0, 0))[0],
+            paused_count=counts.get(t.id, (0, 0, 0))[1],
+            note_only_count=counts.get(t.id, (0, 0, 0))[2],
         )
         for t in tags
     ]
@@ -97,6 +105,25 @@ def pause_tag(tag_id: int, session: SessionDep):
 @router.post("/{tag_id}/resume", response_model=ResumeResult)
 def resume_tag(tag_id: int, body: ResumeOptions, session: SessionDep):
     result = resume_notes(
+        session,
+        _tagged(session, tag_id),
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
+
+
+@router.post("/{tag_id}/remove-from-review", response_model=PauseResult)
+def remove_tag_from_review(tag_id: int, session: SessionDep):
+    affected = remove_from_review(session, _tagged(session, tag_id))
+    session.commit()
+    return PauseResult(affected=affected)
+
+
+@router.post("/{tag_id}/add-to-review", response_model=ResumeResult)
+def add_tag_to_review(tag_id: int, body: ResumeOptions, session: SessionDep):
+    result = add_to_review(
         session,
         _tagged(session, tag_id),
         per_day=body.per_day,

@@ -5,6 +5,7 @@ export interface Settings {
   appUrl: string;
   apiToken: string;
   lastProject: string;
+  lastNoteOnly: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   appUrl: import.meta.env.WXT_APP_URL ?? "",
   apiToken: "",
   lastProject: "",
+  lastNoteOnly: false,
 };
 
 const SETTINGS_KEY = "settings";

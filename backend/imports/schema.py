@@ -12,6 +12,7 @@ class ImportRequest(BaseModel):
     tz_offset_minutes: int = 0
     dry_run: bool = False
     paused: bool = False
+    in_review: bool = True
 
 
 class ImportDeckSummary(BaseModel):
@@ -42,6 +43,7 @@ class ImportResult(BaseModel):
     due_today: int = 0
     days_span: int = 0
     paused: bool = False
+    note_only: bool = False
     restored_reviews: int = 0
     issues: list[ImportIssue]
     issues_truncated: bool = False

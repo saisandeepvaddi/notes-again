@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/toast";
 import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { NoteCard } from "../NoteCard";
+import { REVIEW_STATUS_LABELS } from "../reviewStatus";
 import { fetchNoteIds } from "../selection/fetchNoteIds";
 import { NotesSelectionActions } from "../selection/NotesSelectionActions";
 import { SelectionBar } from "../selection/SelectionBar";
@@ -47,8 +48,17 @@ interface NotesListProps {
 
 const STATUS_OPTIONS: { value: NotesStatus | undefined; label: string; title: string }[] = [
   { value: undefined, label: "All", title: "All notes" },
-  { value: "active", label: "Active", title: "Notes in review" },
-  { value: "paused", label: "Paused", title: "Notes kept out of review" },
+  { value: "active", label: REVIEW_STATUS_LABELS.active, title: "Notes in review" },
+  {
+    value: "paused",
+    label: REVIEW_STATUS_LABELS.paused,
+    title: "Notes kept out of review for now",
+  },
+  {
+    value: "note-only",
+    label: REVIEW_STATUS_LABELS["note-only"],
+    title: "Plain notes that aren't part of review",
+  },
 ];
 
 function StatusFilter({

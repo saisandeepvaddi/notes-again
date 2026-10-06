@@ -6,6 +6,7 @@ export interface NoteDraft {
   project: string | null;
   tags: string[];
   difficulty?: Difficulty;
+  noteOnly?: boolean;
   sourceUrl: string;
 }
 

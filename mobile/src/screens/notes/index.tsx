@@ -1,4 +1,5 @@
 import type { NoteItem } from "@web/notes/new-note-form/types";
+import { REVIEW_STATUS_LABELS } from "@web/notes/reviewStatus";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { FlatList, RefreshControl, ScrollView, View } from "react-native";
@@ -36,13 +37,16 @@ function FilterChips({
         selected={filters.projectId === null && filters.status === null}
         onPress={() => onChange({ projectId: null, status: null })}
       />
-      <Chip
-        label="Paused"
-        selected={filters.status === "paused"}
-        onPress={() =>
-          onChange({ ...filters, status: filters.status === "paused" ? null : "paused" })
-        }
-      />
+      {(["paused", "note-only"] as const).map((status) => (
+        <Chip
+          key={status}
+          label={REVIEW_STATUS_LABELS[status]}
+          selected={filters.status === status}
+          onPress={() =>
+            onChange({ ...filters, status: filters.status === status ? null : status })
+          }
+        />
+      ))}
       {visible.length > 0 ? (
         <View
           style={{ width: 1, height: 20, backgroundColor: colors.border, marginHorizontal: 2 }}

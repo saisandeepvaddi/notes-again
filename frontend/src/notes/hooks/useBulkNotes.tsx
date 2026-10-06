@@ -19,7 +19,9 @@ export type BulkAction =
   | { action: "difficulty"; difficulty: Difficulty }
   | { action: "reschedule"; remind_at: string }
   | { action: "pause" }
-  | { action: "resume"; per_day: number; tz_offset_minutes: number };
+  | { action: "resume"; per_day: number; tz_offset_minutes: number }
+  | { action: "remove-from-review" }
+  | { action: "add-to-review"; per_day: number; tz_offset_minutes: number };
 
 export function useBulkNotes() {
   return useMutation({

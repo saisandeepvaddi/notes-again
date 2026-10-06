@@ -118,6 +118,27 @@
   margin-bottom: 12px;
 }
 
+.nl-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.nl-check input {
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+.nl-check-title {
+  display: block;
+  font-weight: 500;
+}
+.nl-check-hint {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .nl-label {
   display: block;
   margin-bottom: 4px;

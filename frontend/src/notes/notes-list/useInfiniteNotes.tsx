@@ -1,6 +1,7 @@
 import { getFetcher } from "@/utils/fetchers";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { NotePageSchema, type NoteItem } from "../new-note-form/types";
+import { REVIEW_STATUSES, type ReviewStatus } from "../reviewStatus";
 
 export const NOTES_PAGE_SIZE = 60;
 
@@ -8,8 +9,8 @@ export const NOTES_SORTS = ["due", "name", "project", "created", "difficulty"] a
 export type NotesSort = (typeof NOTES_SORTS)[number];
 export const NOTES_SORT_ORDERS = ["asc", "desc"] as const;
 export type NotesSortOrder = (typeof NOTES_SORT_ORDERS)[number];
-export const NOTES_STATUSES = ["active", "paused"] as const;
-export type NotesStatus = (typeof NOTES_STATUSES)[number];
+export const NOTES_STATUSES = REVIEW_STATUSES;
+export type NotesStatus = ReviewStatus;
 
 export interface UseInfiniteNotesArgs {
   date?: Date;
@@ -42,7 +43,7 @@ export function notesFilterParams({
   if (projectId != null) params.set("project_id", String(projectId));
   if (deleted) params.set("deleted", "true");
   if (search?.trim()) params.set("search", search.trim());
-  if (status) params.set("paused", String(status === "paused"));
+  if (status) params.set("status", status);
   return params;
 }
 

@@ -31,9 +31,11 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
   const [content, setContent] = useState(initial.content);
   const [project, setProject] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [noteOnly, setNoteOnly] = useState(false);
   const [lookups, setLookups] = useState<LookupState>({ state: "loading" });
   const [save, setSave] = useState<SaveState>({ state: "idle" });
   const projectTouched = useRef(false);
+  const noteOnlyTouched = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   const dirty = name !== initial.name || content !== initial.content || project.length > 0 || tags.length > 0;
@@ -45,6 +47,9 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
       setLookups({ state: "ready", projects: result.projects, tags: result.tags });
       if (!projectTouched.current && result.lastProject) {
         setProject([result.lastProject]);
+      }
+      if (!noteOnlyTouched.current) {
+        setNoteOnly(result.lastNoteOnly);
       }
     } catch (err) {
       setLookups({ state: "error", error: asCaptureError(err) });
@@ -69,7 +74,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
     try {
       const saved = await callBackground<SaveResult>({
         type: "save",
-        draft: { name: name.trim(), content, project: project[0] ?? null, tags, sourceUrl: ctx.url },
+        draft: { name: name.trim(), content, project: project[0] ?? null, tags, noteOnly, sourceUrl: ctx.url },
       });
       setSave({ state: "saved", saved });
     } catch (err) {
@@ -187,6 +192,22 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
               placeholder="Choose or create a project"
             />
             <Combobox label="Tags" options={options.tags} value={tags} onChange={setTags} multiple placeholder="Add tags" />
+
+            <label className="nl-check">
+              <input
+                type="checkbox"
+                checked={noteOnly}
+                onChange={(e) => {
+                  noteOnlyTouched.current = true;
+                  setNoteOnly(e.target.checked);
+                }}
+                disabled={saving}
+              />
+              <span>
+                <span className="nl-check-title">Note only</span>
+                <span className="nl-check-hint">Save it as a plain note, without adding it to review.</span>
+              </span>
+            </label>
 
             {save.state === "error" && (
               <p className="nl-error" role="alert">

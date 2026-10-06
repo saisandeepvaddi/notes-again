@@ -21,6 +21,7 @@ export const ImportResultSchema = z.object({
   due_today: z.number(),
   days_span: z.number(),
   paused: z.boolean().default(false),
+  note_only: z.boolean().default(false),
   restored_reviews: z.number().default(0),
   issues: z.array(
     z.object({

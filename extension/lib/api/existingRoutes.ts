@@ -122,6 +122,7 @@ export function createExistingRoutesApi(options: ExistingRoutesOptions): Capture
         tag_ids: tags.filter((t) => !t.is_difficulty).map((t) => t.id),
         project_id: project?.id ?? null,
         ...(draft.difficulty && { difficulty: draft.difficulty }),
+        ...(draft.noteOnly && { in_review: false }),
       });
       return { id: note.id, name: note.name };
     },

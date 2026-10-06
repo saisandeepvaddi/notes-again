@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import delete, update
+from sqlalchemy import case, delete, update
 from sqlmodel import Session, col, func, select
 
 from db.models import Note, NoteTag, Project
@@ -9,7 +9,9 @@ from notes.bulk import (
     GroupDeleteResult,
     ResumeOptions,
     ResumeResult,
+    add_to_review,
     pause_notes,
+    remove_from_review,
     resume_notes,
     trash_notes,
 )
@@ -29,9 +31,14 @@ def get_projects(session: SessionDep):
     )
     projects = session.exec(statement).all()
     counts = {
-        project_id: (total, paused or 0)
-        for project_id, total, paused in session.exec(
-            select(Note.project_id, func.count(), func.count(col(Note.paused_at)))
+        project_id: (total, paused or 0, note_only or 0)
+        for project_id, total, paused, note_only in session.exec(
+            select(
+                Note.project_id,
+                func.count(),
+                func.count(col(Note.paused_at)),
+                func.count(case((col(Note.in_review).is_(False), 1))),
+            )
             .where(col(Note.deleted_at).is_(None), col(Note.project_id).is_not(None))
             .group_by(Note.project_id)
         ).all()
@@ -41,8 +48,9 @@ def get_projects(session: SessionDep):
             id=p.id,
             name=p.name,
             paused=p.paused,
-            note_count=counts.get(p.id, (0, 0))[0],
-            paused_count=counts.get(p.id, (0, 0))[1],
+            note_count=counts.get(p.id, (0, 0, 0))[0],
+            paused_count=counts.get(p.id, (0, 0, 0))[1],
+            note_only_count=counts.get(p.id, (0, 0, 0))[2],
         )
         for p in projects
     ]
@@ -102,6 +110,27 @@ def resume_project(project_id: int, body: ResumeOptions, session: SessionDep):
     project.paused = False
     session.add(project)
     result = resume_notes(
+        session,
+        col(Note.project_id) == project_id,
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
+
+
+@router.post("/{project_id}/remove-from-review", response_model=PauseResult)
+def remove_project_from_review(project_id: int, session: SessionDep):
+    _live_project(session, project_id)
+    affected = remove_from_review(session, col(Note.project_id) == project_id)
+    session.commit()
+    return PauseResult(affected=affected)
+
+
+@router.post("/{project_id}/add-to-review", response_model=ResumeResult)
+def add_project_to_review(project_id: int, body: ResumeOptions, session: SessionDep):
+    _live_project(session, project_id)
+    result = add_to_review(
         session,
         col(Note.project_id) == project_id,
         per_day=body.per_day,

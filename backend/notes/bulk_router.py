@@ -11,8 +11,10 @@ from notes.bulk import (
     MAX_BULK_IDS,
     ResumeOptions,
     ResumeResult,
+    add_to_review,
     chunked,
     pause_notes,
+    remove_from_review,
     resume_notes,
     trash_notes,
 )
@@ -103,6 +105,30 @@ def bulk_resume(body: BulkResumeBody, session: SessionDep):
     result = resume_notes(
         session,
         note_ids=_ids(body),
+        per_day=body.per_day,
+        tz_offset_minutes=body.tz_offset_minutes,
+    )
+    session.commit()
+    return result
+
+
+@router.post("/remove-from-review", response_model=BulkResult)
+def bulk_remove_from_review(body: BulkBody, session: SessionDep):
+    affected = remove_from_review(session, note_ids=_ids(body))
+    session.commit()
+    return BulkResult(affected=affected)
+
+
+class BulkAddToReviewBody(BulkResumeBody):
+    paused: bool = False
+
+
+@router.post("/add-to-review", response_model=ResumeResult)
+def bulk_add_to_review(body: BulkAddToReviewBody, session: SessionDep):
+    result = add_to_review(
+        session,
+        note_ids=_ids(body),
+        paused=body.paused,
         per_day=body.per_day,
         tz_offset_minutes=body.tz_offset_minutes,
     )

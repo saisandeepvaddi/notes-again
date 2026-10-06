@@ -194,6 +194,7 @@ class PlannedNote:
     remind_at: datetime.datetime
     day: int
     paused: bool
+    in_review: bool = True
 
 
 @dataclass
@@ -219,6 +220,7 @@ def plan_import(
     tz_offset_minutes: int,
     dry_run: bool,
     paused: bool = False,
+    in_review: bool = True,
 ) -> Plan:
     existing_decks = {
         _key(p.name): p
@@ -313,7 +315,10 @@ def plan_import(
     position_in_group: dict[str | None, int] = {}
     kept: list[PlannedNote] = []
     for row, deck_key, tag_keys in kept_rows:
-        if row.review is not None:
+        note_in_review = in_review and (row.review is None or row.review.in_review)
+        if not note_in_review:
+            remind_at, day = pacer.now, 0
+        elif row.review is not None:
             remind_at = row.review.due_at or pacer.due_at(0)
             day = max(0, (remind_at - pacer.today_start) // datetime.timedelta(days=1))
         else:
@@ -328,10 +333,13 @@ def plan_import(
                 tag_keys=tag_keys,
                 remind_at=remind_at,
                 day=day,
-                paused=paused or (row.review is not None and row.review.paused),
+                paused=note_in_review
+                and (paused or (row.review is not None and row.review.paused)),
+                in_review=note_in_review,
             )
         )
-    in_review = [planned for planned in kept if not planned.paused]
+    scheduled = [planned for planned in kept if planned.in_review]
+    reviewing = [planned for planned in scheduled if not planned.paused]
 
     warnings = [
         f'Tag "{name}" is a built-in difficulty label, so it was ignored on {count} '
@@ -347,18 +355,26 @@ def plan_import(
         new_decks=len(new_decks),
         new_tags=len(new_tags),
         decks=list(per_deck.values()),
-        first_due=min((p.remind_at for p in kept), default=None),
-        last_due=max((p.remind_at for p in kept), default=None),
-        due_today=sum(1 for planned in in_review if planned.day == 0),
-        days_span=max((planned.day for planned in in_review), default=-1) + 1,
-        paused=paused,
+        first_due=min((p.remind_at for p in scheduled), default=None),
+        last_due=max((p.remind_at for p in scheduled), default=None),
+        due_today=sum(1 for planned in reviewing if planned.day == 0),
+        days_span=max((planned.day for planned in reviewing), default=-1) + 1,
+        paused=paused and in_review,
+        note_only=not in_review,
         restored_reviews=sum(1 for planned in kept if planned.row.review is not None),
         issues=all_issues[:MAX_ISSUES],
         issues_truncated=len(all_issues) > MAX_ISSUES,
         warnings=warnings,
     )
     return Plan(
-        kept, new_decks, new_tags, existing_decks, existing_tags, result, paused, rates.paused_decks
+        kept,
+        new_decks,
+        new_tags,
+        existing_decks,
+        existing_tags,
+        result,
+        paused and in_review,
+        rates.paused_decks,
     )
 
 
@@ -390,9 +406,12 @@ def execute_plan(session: Session, plan: Plan) -> None:
             project=decks[planned.deck_key] if planned.deck_key is not None else None,
             first_reminder_at=planned.remind_at,
             paused=planned.paused,
+            in_review=planned.in_review,
         )
         if row.review is not None:
-            apply_review(note, row.review, fallback_due=planned.remind_at)
+            apply_review(
+                note, row.review, fallback_due=planned.remind_at, in_review=planned.in_review
+            )
         if row.created_at is not None:
             note.created_at = row.created_at
         if row.updated_at is not None:

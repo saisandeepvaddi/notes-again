@@ -27,9 +27,11 @@ import { format } from "date-fns";
 import {
   CalendarClockIcon,
   DownloadIcon,
+  FileTextIcon,
   FolderIcon,
   GaugeIcon,
   PauseIcon,
+  RepeatIcon,
   TagIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -37,7 +39,7 @@ import { useState, type ComponentProps, type ReactElement, type ReactNode } from
 import { DIFFICULTY_OPTIONS } from "../difficulty";
 import { useCreateProject } from "../hooks/useCreateProject";
 import { useCreateTag } from "../hooks/useCreateTag";
-import { resumeBody, resumeSummary } from "../hooks/usePausing";
+import { addedToReviewSummary, resumeBody, resumeSummary } from "../hooks/usePausing";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
 import { ExportDialog } from "../export/ExportDialog";
@@ -95,7 +97,7 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
   const tags = allTags.filter((tag) => !tag.is_difficulty);
 
   const [open, setOpen] = useState<
-    "project" | "tags" | "difficulty" | "reschedule" | "review" | null
+    "project" | "tags" | "difficulty" | "reschedule" | "review" | "note-only" | null
   >(null);
   const [tagMode, setTagMode] = useState<"add" | "remove">("add");
   const [query, setQuery] = useState("");
@@ -114,12 +116,10 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
 
   const moveToProject = async (project: { id: number; name: string } | null) => {
     close();
-    await run(
-      { action: "project", project_id: project?.id ?? null },
-      (n) =>
-        project
-          ? `Moved ${notesLabel(n)} to ${project.name}`
-          : `Removed ${notesLabel(n)} from their project`,
+    await run({ action: "project", project_id: project?.id ?? null }, (n) =>
+      project
+        ? `Moved ${notesLabel(n)} to ${project.name}`
+        : `Removed ${notesLabel(n)} from their project`,
     );
   };
 
@@ -138,7 +138,9 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
   const editTag = async (tag: { id: number; name: string }) => {
     close();
     await run(
-      tagMode === "add" ? { action: "tags", add_tag_ids: [tag.id] } : { action: "tags", remove_tag_ids: [tag.id] },
+      tagMode === "add"
+        ? { action: "tags", add_tag_ids: [tag.id] }
+        : { action: "tags", remove_tag_ids: [tag.id] },
       (n) =>
         tagMode === "add"
           ? `Added “${tag.name}” to ${notesLabel(n)}`
@@ -150,7 +152,10 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
     try {
       const tag = await createTag(trimmedQuery);
       close();
-      await run({ action: "tags", add_tag_ids: [tag.id] }, (n) => `Added “${tag.name}” to ${notesLabel(n)}`);
+      await run(
+        { action: "tags", add_tag_ids: [tag.id] },
+        (n) => `Added “${tag.name}” to ${notesLabel(n)}`,
+      );
     } catch (error) {
       toast.add({
         type: "error",
@@ -326,6 +331,52 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
               close();
               await run({ action: "resume", ...resumeBody(perDay) }, (n, result) =>
                 resumeSummary({
+                  affected: n,
+                  due_today: result.due_today ?? 0,
+                  days_span: result.days_span ?? 0,
+                }),
+              );
+            }}
+          />
+        </div>
+      </ActionPopover>
+
+      <ActionPopover
+        open={open === "note-only"}
+        onOpenChange={openPopover("note-only")}
+        className="w-64 p-3"
+        trigger={<ActionButton icon={<FileTextIcon />}>Note only</ActionButton>}
+      >
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={isPending}
+          onClick={async () => {
+            close();
+            await run(
+              { action: "remove-from-review" },
+              (n) => `Made ${notesLabel(n)} note only: no reviews or due dates`,
+            );
+          }}
+        >
+          <FileTextIcon /> Make note only
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Takes them out of review. Their past reviews are kept for if you add them back.
+        </p>
+        <div className="border-t pt-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            Or add note-only notes to review
+          </p>
+          <ResumePacingForm
+            isPending={isPending}
+            submitLabel="Add to review"
+            icon={<RepeatIcon />}
+            description="They become due this many a day; 0 makes them all due now."
+            onResume={async (perDay) => {
+              close();
+              await run({ action: "add-to-review", ...resumeBody(perDay) }, (n, result) =>
+                addedToReviewSummary({
                   affected: n,
                   due_today: result.due_today ?? 0,
                   days_span: result.days_span ?? 0,

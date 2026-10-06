@@ -37,6 +37,7 @@ def import_notes(body: ImportRequest, session: SessionDep):
         tz_offset_minutes=body.tz_offset_minutes,
         dry_run=body.dry_run,
         paused=body.paused,
+        in_review=body.in_review,
     )
     if not body.dry_run and plan.kept:
         execute_plan(session, plan)

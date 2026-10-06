@@ -9,6 +9,7 @@ export const noteTitle = (note: Pick<NoteItem, "name">) =>
 export const noteExcerpt = (note: Pick<NoteItem, "content">) => markdownExcerpt(note.content, 160);
 
 export function dueLabel(note: NoteItem, now = new Date()): { text: string; due: boolean } {
+  if (!note.in_review) return { text: "Note only", due: false };
   if (note.paused_at) return { text: "Paused", due: false };
   const pending = pendingReminder(note);
   if (!pending) return { text: "Not scheduled", due: false };

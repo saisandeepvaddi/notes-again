@@ -13,7 +13,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger className="hidden md:inline-flex" />
         <div className="min-w-0">
-          <h1 className="truncate font-serif text-lg font-semibold">{title}</h1>
+          <h1 className="truncate font-heading text-lg font-semibold tracking-tight">{title}</h1>
           {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
         </div>
       </div>

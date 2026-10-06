@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { PlayIcon } from "lucide-react";
+import { PlayIcon } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { DEFAULT_RESUME_PER_DAY } from "./hooks/usePausing";
 

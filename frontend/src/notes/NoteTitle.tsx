@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import { createMarkdownExit, type Token } from "markdown-exit";
 import type { ReactNode } from "react";
 

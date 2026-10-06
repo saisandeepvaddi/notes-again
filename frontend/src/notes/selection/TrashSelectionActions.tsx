@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2Icon, UndoIcon } from "lucide-react";
+import { ArrowCounterClockwiseIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { notesLabel, useRunBulk } from "./useRunBulk";
 
@@ -35,20 +35,20 @@ export function TrashSelectionActions({ ids, count, onDone }: TrashSelectionActi
         disabled={isPending}
         onClick={() => run({ action: "restore" }, (n) => `Restored ${notesLabel(n)}`)}
       >
-        <UndoIcon /> Restore
+        <ArrowCounterClockwiseIcon /> Restore
       </Button>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogTrigger
           render={
             <Button type="button" size="sm" variant="destructive">
-              <Trash2Icon /> Delete forever
+              <TrashIcon /> Delete forever
             </Button>
           }
         />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <Trash2Icon />
+              <TrashIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>Delete {label} forever?</AlertDialogTitle>
             <AlertDialogDescription>

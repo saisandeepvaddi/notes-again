@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileTextIcon, PauseIcon, RepeatIcon } from "lucide-react";
+import { FileTextIcon, PauseIcon, RepeatIcon } from "@phosphor-icons/react";
 import { REVIEW_STATUSES, REVIEW_STATUS_LABELS, type ReviewStatus } from "./reviewStatus";
 
 export const REVIEW_STATUS_ICONS = {

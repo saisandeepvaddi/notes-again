@@ -21,7 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { DownloadIcon } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react";
 import { useState, type ReactElement } from "react";
 import { useProjects } from "../hooks/useProjects";
 import { useTags } from "../hooks/useTags";
@@ -296,7 +296,7 @@ export function ExportDialog({
                 : "Counting…"}
           </span>
           <Button onClick={runExport} disabled={isExporting || noteCount === 0}>
-            {isExporting ? <Spinner /> : <DownloadIcon />} Export {notesLabel(noteCount)}
+            {isExporting ? <Spinner /> : <DownloadSimpleIcon />} Export {notesLabel(noteCount)}
           </Button>
         </DialogFooter>
       </DialogContent>

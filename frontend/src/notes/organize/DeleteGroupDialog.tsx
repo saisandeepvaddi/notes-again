@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/toast";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react";
 import { useState, type ReactElement } from "react";
 import { useDeleteGroup, type GroupKind } from "../hooks/useDeleteGroup";
 
@@ -67,9 +67,14 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
         parts.push(`moved ${plural(result.notes_trashed)} to Trash`);
       }
       if (result.tags_deleted > 0) {
-        parts.push(`deleted ${result.tags_deleted.toLocaleString()} unused tag${result.tags_deleted === 1 ? "" : "s"}`);
+        parts.push(
+          `deleted ${result.tags_deleted.toLocaleString()} unused tag${result.tags_deleted === 1 ? "" : "s"}`,
+        );
       }
-      toast.add({ type: "success", description: parts.join(", ").replace(/, ([^,]*)$/, " and $1") });
+      toast.add({
+        type: "success",
+        description: parts.join(", ").replace(/, ([^,]*)$/, " and $1"),
+      });
     } catch (error) {
       setOpen(false);
       toast.add({
@@ -95,7 +100,7 @@ export function DeleteGroupDialog({ kind, id, name, noteCount, trigger }: Delete
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <Trash2Icon />
+            <TrashIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>
             Delete {kind} “{name}”?

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { CopyIcon, DownloadIcon } from "lucide-react";
+import { CopyIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { downloadDatabase, formatBytes, useSnapshotNow, useSystemInfo } from "./systemApi";
@@ -128,7 +128,7 @@ export function SystemSettings() {
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" disabled={downloading} onClick={() => void download()}>
-          <DownloadIcon /> {downloading ? "Preparing…" : "Download database"}
+          <DownloadSimpleIcon /> {downloading ? "Preparing…" : "Download database"}
         </Button>
         <Button variant="outline" size="sm" disabled={snapshotting} onClick={() => void snapshot()}>
           {snapshotting ? "Saving…" : "Snapshot now"}

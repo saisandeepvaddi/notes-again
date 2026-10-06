@@ -1,6 +1,6 @@
 import type { NoteReminder } from "./new-note-form/types";
 
-import { CheckIcon, ClockAlertIcon, ClockIcon } from "lucide-react";
+import { CheckIcon, ClockCountdownIcon, ClockIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,7 +32,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
           <Button size="sm" variant={isOverdue || isUpcoming ? "secondary" : "ghost"}>
             {isOverdue ? (
               <>
-                <ClockAlertIcon className={WARNING_TEXT_CLASSES} />
+                <ClockCountdownIcon className={WARNING_TEXT_CLASSES} />
                 {overdueLabel}
               </>
             ) : isUpcoming ? (

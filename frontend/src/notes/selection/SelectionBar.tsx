@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { XIcon } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 
 interface SelectionBarProps {

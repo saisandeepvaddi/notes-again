@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { titleCase } from "@/utils/general";
 import { formatDistanceToNowStrict, isToday } from "date-fns";
-import { FileTextIcon, HistoryIcon, PauseIcon } from "lucide-react";
+import { ClockCounterClockwiseIcon, FileTextIcon, PauseIcon } from "@phosphor-icons/react";
 import { MarkableReminder } from "./MarkableReminder";
 import { ReschedulePopover } from "./ReschedulePopover";
 import type { NoteReminder as NoteReminderType } from "./new-note-form/types";
@@ -77,7 +77,7 @@ export function NoteReminderList({
                 title="Review history"
                 className="tabular-nums"
               >
-                <HistoryIcon />
+                <ClockCounterClockwiseIcon />
                 {reviewed.length}
               </Button>
             }

@@ -5,12 +5,21 @@ import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { isNone } from "@/utils/general";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { format, isToday, parseISO } from "date-fns";
-import { FolderIcon, LayoutGridIcon, SearchIcon, TableIcon, XIcon } from "lucide-react";
+import {
+  FolderIcon,
+  MagnifyingGlassIcon,
+  NotebookIcon,
+  SquaresFourIcon,
+  TableIcon,
+  UploadSimpleIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { toast } from "@/components/ui/toast";
 import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/useProjects";
+import { NewNoteButton } from "../NewNoteButton";
 import { NoteCard } from "../NoteCard";
 import { REVIEW_STATUS_LABELS } from "../reviewStatus";
 import { fetchNoteIds } from "../selection/fetchNoteIds";
@@ -109,7 +118,7 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
         className={cn(mode === "grid" && "bg-muted text-foreground")}
         onClick={() => onChange("grid")}
       >
-        <LayoutGridIcon />
+        <SquaresFourIcon />
       </Button>
       <Button
         type="button"
@@ -122,6 +131,32 @@ function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
       >
         <TableIcon />
       </Button>
+    </div>
+  );
+}
+
+function EmptyNotes() {
+  return (
+    <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed px-6 py-10">
+      <NotebookIcon className="size-6 text-muted-foreground" />
+      <div className="flex flex-col gap-1">
+        <p className="font-heading text-base font-semibold tracking-tight">No notes yet</p>
+        <p className="max-w-[65ch] text-sm text-muted-foreground">
+          Write one here, save pages with the browser extension, or bring in an existing deck.
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <NewNoteButton />
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={
+            <Link to="/import">
+              <UploadSimpleIcon /> Import
+            </Link>
+          }
+        />
+      </div>
     </div>
   );
 }
@@ -252,7 +287,7 @@ function NotesList({
         <TagFilterBar activeTagId={tagId} />
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
-            <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchInput}
               onChange={(e) => onSearchInput(e.target.value)}
@@ -291,11 +326,11 @@ function NotesList({
       ) : isError ? (
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (
-        <p className="text-muted-foreground">
-          {tagId != null || projectId != null || noteDate != null || search || status
-            ? "No notes match this filter."
-            : "No notes yet. Capture one with New Note above, or from the browser extension."}
-        </p>
+        tagId != null || projectId != null || noteDate != null || search || status ? (
+          <p className="text-muted-foreground">No notes match this filter.</p>
+        ) : (
+          <EmptyNotes />
+        )
       ) : (
         <>
           {effectiveMode !== "table" && (

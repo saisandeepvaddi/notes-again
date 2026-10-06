@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "@phosphor-icons/react";
 
 export function NewNoteButton() {
   return (

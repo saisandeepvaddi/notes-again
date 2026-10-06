@@ -1,6 +1,6 @@
 import type { NoteReminder } from "./new-note-form/types";
 
-import { CheckIcon, UndoIcon } from "lucide-react";
+import { ArrowCounterClockwiseIcon, CheckIcon } from "@phosphor-icons/react";
 
 import {
   AlertDialog,
@@ -67,7 +67,7 @@ export function UndoMarkableReminder({ reminder }: UndoMarkableReminderProps) {
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <UndoIcon />
+            <ArrowCounterClockwiseIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>Undo Review?</AlertDialogTitle>
           <AlertDialogDescription>

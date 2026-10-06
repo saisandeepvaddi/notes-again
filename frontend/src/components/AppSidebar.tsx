@@ -4,14 +4,14 @@ import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection"
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  ListTreeIcon,
-  LogOutIcon,
+  GearIcon,
   NotebookIcon,
   RepeatIcon,
-  SettingsIcon,
-  Trash2Icon,
-  UploadIcon,
-} from "lucide-react";
+  SignOutIcon,
+  TrashIcon,
+  TreeStructureIcon,
+  UploadSimpleIcon,
+} from "@phosphor-icons/react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,10 +29,10 @@ import {
 const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
-  { to: "/import", label: "Import", icon: UploadIcon },
-  { to: "/organize", label: "Organize", icon: ListTreeIcon },
-  { to: "/trash", label: "Trash", icon: Trash2Icon },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/import", label: "Import", icon: UploadSimpleIcon },
+  { to: "/organize", label: "Organize", icon: TreeStructureIcon },
+  { to: "/trash", label: "Trash", icon: TrashIcon },
+  { to: "/settings", label: "Settings", icon: GearIcon },
 ] as const;
 
 function SignOutButton() {
@@ -57,7 +57,7 @@ function SignOutButton() {
             void signOutUser();
           }}
         >
-          <LogOutIcon />
+          <SignOutIcon />
           <span>Sign out</span>
         </SidebarMenuButton>
       </SidebarMenuItem>

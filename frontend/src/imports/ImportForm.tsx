@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2Icon, CopyIcon } from "lucide-react";
+import { CheckCircleIcon, CopyIcon } from "@phosphor-icons/react";
 import { useState, type ChangeEvent } from "react";
 import { ReviewStatusPicker } from "@/notes/ReviewStatusPicker";
 import type { ReviewStatus } from "@/notes/reviewStatus";
@@ -153,7 +153,7 @@ export function ImportForm() {
     return (
       <div className="flex max-w-3xl flex-col gap-4">
         <Alert>
-          <CheckCircle2Icon />
+          <CheckCircleIcon />
           <AlertTitle>Import complete</AlertTitle>
           <AlertDescription>
             {done.notes_created.toLocaleString()} note{done.notes_created === 1 ? "" : "s"}{" "}

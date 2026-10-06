@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
-import { Trash2Icon } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useEmptyTrash } from "../hooks/useEmptyTrash";
 import { fetchNoteIds } from "../selection/fetchNoteIds";
@@ -64,14 +64,14 @@ export function TrashList() {
           <AlertDialogTrigger
             render={
               <Button size="sm" variant="destructive" onClick={() => setOpen(true)}>
-                <Trash2Icon /> Empty Trash
+                <TrashIcon /> Empty Trash
               </Button>
             }
           />
           <AlertDialogContent size="sm">
             <AlertDialogHeader>
               <AlertDialogMedia>
-                <Trash2Icon />
+                <TrashIcon />
               </AlertDialogMedia>
               <AlertDialogTitle>Empty trash?</AlertDialogTitle>
               <AlertDialogDescription>

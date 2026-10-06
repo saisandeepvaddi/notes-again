@@ -37,13 +37,13 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsUpDownIcon,
-  FilterIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  CaretUpDownIcon,
   FolderIcon,
-  Trash2Icon,
-} from "lucide-react";
+  FunnelSimpleIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
@@ -103,7 +103,7 @@ function DeleteRowButton({ noteId }: { noteId: number }) {
         deleteNote();
       }}
     >
-      <Trash2Icon />
+      <TrashIcon />
     </Button>
   );
 }
@@ -137,7 +137,7 @@ function ColumnFilter({
             aria-label={`Filter by ${label.toLowerCase()}`}
             className={cn("size-5", active && "text-primary")}
           >
-            <FilterIcon className="size-3" />
+            <FunnelSimpleIcon className="size-3" />
           </Button>
         }
       />
@@ -252,7 +252,7 @@ export function NotesTable({
           />
           <NoteTitle
             title={info.getValue()}
-            className="font-serif font-medium peer-hover:underline"
+            className="font-heading font-medium peer-hover:underline"
           />
         </div>
       ),
@@ -443,7 +443,7 @@ export function NotesTable({
                             ) : sortDirection === "desc" ? (
                               <ArrowDownIcon className="size-3" />
                             ) : (
-                              <ChevronsUpDownIcon className="size-3 opacity-40" />
+                              <CaretUpDownIcon className="size-3 opacity-40" />
                             )}
                           </button>
                         ) : (
@@ -523,7 +523,7 @@ export function NotesTable({
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
           >
-            <ChevronLeftIcon />
+            <CaretLeftIcon />
           </Button>
           <span className="px-1 tabular-nums">
             Page {page} of {pageCount}
@@ -536,7 +536,7 @@ export function NotesTable({
             disabled={page >= pageCount}
             onClick={() => onPageChange(page + 1)}
           >
-            <ChevronRightIcon />
+            <CaretRightIcon />
           </Button>
         </div>
       </div>

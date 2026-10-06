@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DownloadIcon } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react";
 import { ExportDialog } from "./ExportDialog";
 
 interface ExportButtonProps {
@@ -14,7 +14,7 @@ export function ExportButton({ projectId, tagId }: ExportButtonProps) {
       defaultTagId={tagId}
       trigger={
         <Button variant="outline">
-          <DownloadIcon /> Export
+          <DownloadSimpleIcon /> Export
         </Button>
       }
     />

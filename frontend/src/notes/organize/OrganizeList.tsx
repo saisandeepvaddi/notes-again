@@ -12,8 +12,8 @@ import {
   PlayIcon,
   RepeatIcon,
   TagIcon,
-  Trash2Icon,
-} from "lucide-react";
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import {
   addedToReviewSummary,
@@ -308,7 +308,7 @@ function Row({ kind, id, name, noteCount, pausedCount, noteOnlyCount, paused, lo
               aria-label={`Delete ${kind} ${name}`}
               className="shrink-0 text-muted-foreground hover:text-destructive"
             >
-              <Trash2Icon />
+              <TrashIcon />
             </Button>
           }
         />
@@ -336,7 +336,7 @@ function Section({
     <section className="flex flex-col gap-2">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-serif text-base font-semibold">{title}</h2>
+          <h2 className="font-heading text-base font-semibold tracking-tight">{title}</h2>
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         {actions}

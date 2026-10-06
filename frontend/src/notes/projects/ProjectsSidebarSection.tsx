@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { FolderIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { FolderIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useCreateProject } from "../hooks/useCreateProject";
 import { useProjects } from "../hooks/useProjects";
@@ -69,7 +69,7 @@ export function ProjectsSidebarSection() {
                 noteCount={project.note_count}
                 trigger={
                   <SidebarMenuAction showOnHover title={`Delete ${project.name}`}>
-                    <Trash2Icon />
+                    <TrashIcon />
                   </SidebarMenuAction>
                 }
               />

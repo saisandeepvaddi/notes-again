@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarClockIcon } from "lucide-react";
+import { CalendarDotsIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useRescheduleReminder } from "./hooks/useRescheduleReminder";
 
@@ -26,7 +26,7 @@ export function ReschedulePopover({ noteId, currentRemindAt }: ReschedulePopover
       <PopoverTrigger
         render={
           <Button size="icon-sm" variant="outline" aria-label="Reschedule review">
-            <CalendarClockIcon />
+            <CalendarDotsIcon />
           </Button>
         }
       />

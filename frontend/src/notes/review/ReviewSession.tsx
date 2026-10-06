@@ -1,8 +1,7 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import { ReviewSkeleton } from "@/components/PageSkeletons";
 import { toast } from "@/components/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2Icon } from "lucide-react";
+import { CheckCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { NoteContent } from "../NoteContent";
 import { NoteTitle } from "../NoteTitle";
@@ -71,23 +70,14 @@ export function ReviewSession() {
   };
 
   if (loadingMore) {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-        <SessionProgress reviewed={reviewedCount} remaining={remaining} />
-        <Card>
-          <CardContent className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
-            <Spinner /> Loading the next batch...
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <ReviewSkeleton />;
   }
 
   if (!current) {
     return (
-      <Card className="mx-auto w-full max-w-2xl items-center gap-2 px-6 py-12 text-center animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none">
-        <CheckCircle2Icon className="size-8 text-primary" aria-hidden="true" />
-        <p className="font-serif text-lg font-semibold">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-2 px-6 py-16 text-center animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none">
+        <CheckCircleIcon className="size-8 text-primary" aria-hidden="true" />
+        <p className="font-heading text-lg font-semibold tracking-tight">
           {reviewedCount > 0 ? "Session complete" : "All caught up"}
         </p>
         <p className="text-sm text-muted-foreground">
@@ -95,7 +85,7 @@ export function ReviewSession() {
             ? `Reviewed ${reviewedCount.toLocaleString()} note${reviewedCount === 1 ? "" : "s"}. Nothing else is due right now.`
             : "Nothing's due right now. Check back later."}
         </p>
-      </Card>
+      </div>
     );
   }
 
@@ -105,16 +95,14 @@ export function ReviewSession() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <SessionProgress reviewed={reviewedCount} remaining={remaining} />
-      <Card>
-        <CardHeader className="font-serif font-semibold text-xl">
+      <article className="flex flex-col gap-4 py-2">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">
           <NoteTitle title={current.name} />
-        </CardHeader>
-        <CardContent>
-          <NoteContent markdown={current.content} />
-        </CardContent>
-      </Card>
+        </h2>
+        <NoteContent markdown={current.content} />
+      </article>
       {pendingReminder && (
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-2 bg-background/95 px-1 pt-1 pb-3 backdrop-blur-sm">
+        <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-2 border-t bg-background/95 px-1 pt-4 pb-3 backdrop-blur-sm">
           <p className="text-sm font-medium">How well did you remember this?</p>
           <RatingButtons
             key={pendingReminder.id}

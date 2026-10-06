@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
-import { BrushCleaningIcon } from "lucide-react";
+import { BroomIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useDeleteUnusedTags } from "../hooks/useDeleteUnusedTags";
 
@@ -54,22 +54,22 @@ export function DeleteUnusedTagsButton({ unusedTagNames }: DeleteUnusedTagsButto
       <AlertDialogTrigger
         render={
           <Button type="button" size="sm" variant="outline">
-            <BrushCleaningIcon /> Delete {count.toLocaleString()} unused
+            <BroomIcon /> Delete {count.toLocaleString()} unused
           </Button>
         }
       />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <BrushCleaningIcon />
+            <BroomIcon />
           </AlertDialogMedia>
           <AlertDialogTitle>
             Delete {count.toLocaleString()} unused tag{count === 1 ? "" : "s"}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             {listed}
-            {more}. None of them is on any note. Notes in Trash that had one will come back
-            without it if restored.
+            {more}. None of them is on any note. Notes in Trash that had one will come back without
+            it if restored.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

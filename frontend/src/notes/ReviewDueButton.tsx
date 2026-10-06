@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { RepeatIcon } from "lucide-react";
+import { RepeatIcon } from "@phosphor-icons/react";
 import { useDueCount } from "./notes-list/useDueNotes";
 
 export function ReviewDueButton() {

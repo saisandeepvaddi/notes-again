@@ -12,7 +12,13 @@ import {
   useCellValues,
   usePublisher,
 } from "@mdxeditor/editor";
-import { CheckIcon, CopyIcon, ExternalLinkIcon, PencilIcon, UnlinkIcon } from "lucide-react";
+import {
+  ArrowSquareOutIcon,
+  CheckIcon,
+  CopyIcon,
+  LinkBreakIcon,
+  PencilSimpleIcon,
+} from "@phosphor-icons/react";
 import { useState, type FormEvent } from "react";
 
 export function LinkPopover() {
@@ -66,7 +72,7 @@ export function LinkPopover() {
               className="flex min-w-0 items-center gap-1.5 px-2 text-primary underline-offset-4 hover:underline"
             >
               <span className="truncate">{state.url}</span>
-              <ExternalLinkIcon className="size-3.5 shrink-0" />
+              <ArrowSquareOutIcon className="size-3.5 shrink-0" />
             </a>
             <Button
               size="icon-sm"
@@ -75,7 +81,7 @@ export function LinkPopover() {
               title="Edit link"
               onClick={() => switchToEdit()}
             >
-              <PencilIcon />
+              <PencilSimpleIcon />
             </Button>
             <CopyUrlButton url={state.url} />
             <Button
@@ -85,7 +91,7 @@ export function LinkPopover() {
               title="Remove link"
               onClick={() => removeLink()}
             >
-              <UnlinkIcon />
+              <LinkBreakIcon />
             </Button>
           </>
         )}

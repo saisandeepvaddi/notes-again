@@ -25,16 +25,16 @@ import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
-  CalendarClockIcon,
-  DownloadIcon,
+  CalendarDotsIcon,
+  DownloadSimpleIcon,
   FileTextIcon,
   FolderIcon,
   GaugeIcon,
   PauseIcon,
   RepeatIcon,
   TagIcon,
-  Trash2Icon,
-} from "lucide-react";
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { useState, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { DIFFICULTY_OPTIONS } from "../difficulty";
 import { useCreateProject } from "../hooks/useCreateProject";
@@ -179,7 +179,7 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
       <ExportDialog
         noteIds={ids}
         selectedCount={count}
-        trigger={<ActionButton icon={<DownloadIcon />}>Export</ActionButton>}
+        trigger={<ActionButton icon={<DownloadSimpleIcon />}>Export</ActionButton>}
       />
       <ActionPopover
         open={open === "project"}
@@ -289,7 +289,7 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
         open={open === "reschedule"}
         onOpenChange={openPopover("reschedule")}
         className="w-auto p-2"
-        trigger={<ActionButton icon={<CalendarClockIcon />}>Reschedule</ActionButton>}
+        trigger={<ActionButton icon={<CalendarDotsIcon />}>Reschedule</ActionButton>}
       >
         <Button
           size="sm"
@@ -391,14 +391,14 @@ export function NotesSelectionActions({ ids, count, onDone }: NotesSelectionActi
         <AlertDialogTrigger
           render={
             <Button type="button" size="sm" variant="destructive">
-              <Trash2Icon /> Delete
+              <TrashIcon /> Delete
             </Button>
           }
         />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
-              <Trash2Icon />
+              <TrashIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>Move {label} to Trash?</AlertDialogTitle>
             <AlertDialogDescription>

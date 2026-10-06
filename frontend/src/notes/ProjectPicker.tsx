@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
-import { FolderIcon, PlusIcon, XIcon } from "lucide-react";
+import { FolderIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useCreateProject } from "./hooks/useCreateProject";
 import { useProjects } from "./hooks/useProjects";

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { CheckIcon, CopyIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, PlusIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ConnectQrCode } from "./ConnectQrCode";
 import { EXPIRY_OPTIONS, SCOPE_OPTIONS, type CreatedApiToken, type TokenScope } from "./types";

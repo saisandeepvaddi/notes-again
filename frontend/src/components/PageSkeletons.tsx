@@ -124,15 +124,11 @@ export function ReviewSkeleton() {
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-1 w-full" />
       </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-1/2" />
-        </CardHeader>
-        <CardContent>
-          <Lines widths={["w-11/12", "w-4/5", "w-full", "w-3/5"]} />
-        </CardContent>
-      </Card>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4 py-2">
+        <Skeleton className="h-7 w-1/2" />
+        <Lines widths={["w-11/12", "w-4/5", "w-full", "w-3/5"]} />
+      </div>
+      <div className="flex flex-col gap-2 border-t pt-4">
         <Skeleton className="h-4 w-56" />
         <div className="grid w-full grid-cols-4 gap-1.5">
           {Array.from({ length: 4 }, (_, i) => (

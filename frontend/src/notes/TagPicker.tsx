@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useCreateTag } from "./hooks/useCreateTag";
 import { useTags } from "./hooks/useTags";
@@ -80,7 +80,11 @@ export function TagPicker({
         <PopoverTrigger
           render={
             compact ? (
-              <Button size="icon-xs" variant="ghost" aria-label={`Add ${triggerLabel.toLowerCase()}`}>
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                aria-label={`Add ${triggerLabel.toLowerCase()}`}
+              >
                 <PlusIcon />
               </Button>
             ) : (

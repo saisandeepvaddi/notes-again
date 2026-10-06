@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { Trash2Icon, UndoIcon } from "lucide-react";
+import { ArrowCounterClockwiseIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { usePermanentDeleteNote } from "../hooks/usePermanentDeleteNote";
 import { useRestoreNote } from "../hooks/useRestoreNote";
@@ -77,7 +77,7 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
             onToggle={select.onToggle}
           />
         )}
-        <h2 className="truncate font-serif font-semibold text-sm">
+        <h2 className="truncate font-heading font-semibold text-sm tracking-tight">
           <NoteTitle title={note.name} />
         </h2>
       </CardHeader>
@@ -89,20 +89,20 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
       </CardContent>
       <CardFooter className="flex gap-2">
         <Button size="sm" variant="outline" onClick={restore} disabled={isRestoring}>
-          <UndoIcon /> Restore
+          <ArrowCounterClockwiseIcon /> Restore
         </Button>
         <AlertDialog open={open}>
           <AlertDialogTrigger
             render={
               <Button size="sm" variant="destructive" onClick={() => setOpen(true)}>
-                <Trash2Icon /> Delete Forever
+                <TrashIcon /> Delete Forever
               </Button>
             }
           />
           <AlertDialogContent size="sm">
             <AlertDialogHeader>
               <AlertDialogMedia>
-                <Trash2Icon />
+                <TrashIcon />
               </AlertDialogMedia>
               <AlertDialogTitle>Delete forever?</AlertDialogTitle>
               <AlertDialogDescription>

@@ -12,15 +12,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { DIFFICULTY_BADGE_CLASSES } from "./difficulty";
+import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "./difficulty";
 import { useTags } from "./hooks/useTags";
-import type { Difficulty } from "./new-note-form/types";
+import type { Difficulty, Tag } from "./new-note-form/types";
 
 interface TagFilterBarProps {
   activeTagId?: number;
 }
 
 const MAX_VISIBLE_TAGS = 8;
+
+const difficultyRank = (tag: Tag) =>
+  DIFFICULTY_OPTIONS.findIndex((option) => option.value === tag.name.toLowerCase());
 
 export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
   const { data: allTags = [] } = useTags();
@@ -31,7 +34,9 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
     return null;
   }
 
-  const difficultyTags = allTags.filter((tag) => tag.is_difficulty);
+  const difficultyTags = allTags
+    .filter((tag) => tag.is_difficulty)
+    .sort((a, b) => difficultyRank(a) - difficultyRank(b));
   const regularTags = [...allTags]
     .filter((tag) => !tag.is_difficulty)
     .sort((a, b) => b.note_count - a.note_count);
@@ -71,6 +76,9 @@ export function TagFilterBar({ activeTagId }: TagFilterBarProps) {
           {tag.name}
         </Badge>
       ))}
+      {difficultyTags.length > 0 && visible.length > 0 && (
+        <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
+      )}
       {visible.map((tag) => (
         <Badge
           key={tag.id}

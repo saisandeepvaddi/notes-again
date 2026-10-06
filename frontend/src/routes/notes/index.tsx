@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { ExportButton } from "@/notes/export/ExportButton";
-import { ImportButton } from "@/notes/ImportButton";
 import { NewNoteButton } from "@/notes/NewNoteButton";
+import { ReviewDueButton } from "@/notes/ReviewDueButton";
 import { NotesListContainer } from "@/notes/notes-list/NotesListContainer";
 import {
   notesSearchSchema,
@@ -30,13 +30,16 @@ function AllNotes() {
   const { tagId, projectId, date, q, status, sort, order, page, pageSize } = Route.useSearch();
   return (
     <div>
-      <PageHeader title="All Notes" actions={
+      <PageHeader
+        title="All Notes"
+        actions={
           <>
-            <ImportButton />
+            <ReviewDueButton />
             <ExportButton projectId={projectId} tagId={tagId} />
             <NewNoteButton />
           </>
-        } />
+        }
+      />
       <NotesListContainer
         tagId={tagId}
         projectId={projectId}

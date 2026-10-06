@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -65,10 +66,14 @@ function NewNoteForm() {
         children={(field) => {
           const error = field.state.meta.isTouched ? field.state.meta.errors[0] : undefined;
           return (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="new-note-name" className="text-xs font-medium">
+                Name
+              </label>
               <Input
+                id="new-note-name"
                 autoComplete="new-password"
-                placeholder="Name"
+                placeholder="What is this note about?"
                 aria-invalid={Boolean(error)}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -79,30 +84,38 @@ function NewNoteForm() {
           );
         }}
       />
-      <NewNoteContent form={form} />
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Difficulty</span>
-        {DIFFICULTY_OPTIONS.map((option) => (
-          <Button
-            key={option.value}
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setDifficulty(option.value)}
-            className={cn(difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value])}
-          >
-            {option.label}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium">Note</span>
+        <NewNoteContent form={form} />
       </div>
-      <ProjectPicker
-        value={project}
-        onChange={(next) => {
-          setProject(next);
-          setStatusChoice(null);
-        }}
-      />
-      <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div role="group" aria-label="Difficulty" className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">Difficulty</span>
+          {DIFFICULTY_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-pressed={difficulty === option.value}
+              onClick={() => setDifficulty(option.value)}
+              className={cn(difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value])}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+        <Separator orientation="vertical" className="h-4" />
+        <ProjectPicker
+          value={project}
+          onChange={(next) => {
+            setProject(next);
+            setStatusChoice(null);
+          }}
+        />
+        <Separator orientation="vertical" className="h-4" />
+        <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
+      </div>
       <div className="flex flex-col gap-1.5">
         <ReviewStatusPicker value={status} onChange={setStatusChoice} />
         <p className="text-xs text-muted-foreground">

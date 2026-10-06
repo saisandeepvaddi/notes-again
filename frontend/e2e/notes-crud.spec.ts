@@ -13,7 +13,7 @@ test.describe("note lifecycle", () => {
     const editedName = `${name} (edited)`;
 
     await page.goto("/notes/new");
-    await page.getByPlaceholder("Name").fill(name);
+    await page.getByLabel("Name", { exact: true }).fill(name);
     await contentEditor(page).click();
     await page.keyboard.type("Original content for the CRUD test.");
     await page.getByRole("button", { name: "Create" }).click();

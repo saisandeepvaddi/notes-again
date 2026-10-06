@@ -27,7 +27,7 @@ test.describe("pausing", () => {
     const noteName = uniqueName("Reference note");
 
     await page.goto("/notes/new");
-    await page.getByPlaceholder("Name").fill(noteName);
+    await page.getByLabel("Name", { exact: true }).fill(noteName);
     const paused = page.getByRole("radio", { name: "Paused" });
     await expect(paused).toHaveAttribute("aria-checked", "false");
 

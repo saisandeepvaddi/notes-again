@@ -1,5 +1,5 @@
 import { getFetcher } from "@/utils/fetchers";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { NotePageSchema } from "../new-note-form/types";
 
 export const DUE_BATCH_SIZE = 25;
@@ -14,4 +14,12 @@ export const fetchDueNotes = () =>
 
 export function useDueNotes() {
   return useSuspenseQuery({ queryKey: ["due-notes"], queryFn: fetchDueNotes });
+}
+
+export function useDueCount() {
+  return useQuery({
+    queryKey: ["due-notes"],
+    queryFn: fetchDueNotes,
+    select: (page) => page.total,
+  });
 }

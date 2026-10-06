@@ -183,15 +183,17 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
       )}
 
       <div className="flex flex-col gap-3">
-        <ReviewStatusPicker value={status} onChange={changeStatus} disabled={isChangingStatus} />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <ReviewStatusPicker value={status} onChange={changeStatus} disabled={isChangingStatus} />
+          {status !== "note-only" && (
+            <NoteReminderList noteId={note.id} reminders={note.reminders} status={status} />
+          )}
+        </div>
         {status !== "active" && (
           <p className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
             <StatusIcon className="size-3.5 shrink-0" />
             {STATUS_NOTICES[status]}
           </p>
-        )}
-        {status !== "note-only" && (
-          <NoteReminderList noteId={note.id} reminders={note.reminders} status={status} />
         )}
 
         <Separator />

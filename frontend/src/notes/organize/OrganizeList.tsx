@@ -94,7 +94,7 @@ function PauseControls({
       {canPause && (
         <Button
           type="button"
-          size="icon-sm"
+          size="sm"
           variant="ghost"
           aria-label={`Pause ${kind} ${name}`}
           title={
@@ -107,6 +107,7 @@ function PauseControls({
           className="shrink-0 text-muted-foreground"
         >
           <PauseIcon />
+          <span className="hidden sm:inline">Pause</span>
         </Button>
       )}
       {canResume && (
@@ -115,13 +116,14 @@ function PauseControls({
             render={
               <Button
                 type="button"
-                size="icon-sm"
+                size="sm"
                 variant="ghost"
                 aria-label={`Resume ${kind} ${name}`}
                 title="Resume: bring its paused notes back into review"
                 className="shrink-0 text-muted-foreground"
               >
                 <PlayIcon />
+                <span className="hidden sm:inline">Resume</span>
               </Button>
             }
           />
@@ -182,13 +184,14 @@ function NoteOnlyControls({
         render={
           <Button
             type="button"
-            size="icon-sm"
+            size="sm"
             variant="ghost"
             aria-label={`Note only options for ${kind} ${name}`}
             title="Note only: take its notes out of review, or add note-only ones back"
             className="shrink-0 text-muted-foreground"
           >
             <FileTextIcon />
+            <span className="hidden sm:inline">Note only</span>
           </Button>
         }
       />

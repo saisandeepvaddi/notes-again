@@ -1,4 +1,10 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { ALGORITHM_OPTIONS, type Algorithm } from "./types";
 import { useSettings } from "./useSettings";
@@ -24,7 +30,10 @@ export function SettingsForm() {
         <div>
           <p className="text-sm font-medium">Default algorithm for new notes</p>
           <p className="text-xs text-muted-foreground">
-            {ALGORITHM_OPTIONS.find((option) => option.value === settings.default_algorithm)?.description}
+            {
+              ALGORITHM_OPTIONS.find((option) => option.value === settings.default_algorithm)
+                ?.description
+            }
           </p>
         </div>
         <Select
@@ -46,7 +55,7 @@ export function SettingsForm() {
         </Select>
       </div>
       <p className="text-xs text-muted-foreground">
-        Existing notes keep using whichever algorithm they were created with — this only affects
+        Existing notes keep using whichever algorithm they were created with. This only affects
         notes created from now on.
       </p>
     </div>

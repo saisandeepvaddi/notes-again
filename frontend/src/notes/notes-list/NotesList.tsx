@@ -250,7 +250,7 @@ function NotesList({
       )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <TagFilterBar activeTagId={tagId} />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -294,7 +294,7 @@ function NotesList({
         <p className="text-muted-foreground">
           {tagId != null || projectId != null || noteDate != null || search || status
             ? "No notes match this filter."
-            : "No notes yet — capture one with New Note above, or from the browser extension."}
+            : "No notes yet. Capture one with New Note above, or from the browser extension."}
         </p>
       ) : (
         <>

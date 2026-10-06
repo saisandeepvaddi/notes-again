@@ -72,7 +72,7 @@ export function RatingButtons({
           )}
         >
           {shortcuts && (
-            <kbd className="absolute top-1 right-1.5 font-sans text-[10px] font-medium tabular-nums opacity-60">
+            <kbd className="absolute top-1 right-1.5 font-sans text-[10px] font-medium tabular-nums opacity-60 [@media(pointer:coarse)]:hidden">
               {index + 1}
             </kbd>
           )}

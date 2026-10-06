@@ -1,4 +1,5 @@
 import { useAuth } from "@/auth/AuthProvider";
+import { useDueCount } from "@/notes/notes-list/useDueNotes";
 import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -19,6 +20,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
@@ -65,9 +67,13 @@ function SignOutButton() {
 
 function AppSidebar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { data: dueCount = 0 } = useDueCount();
   return (
     <Sidebar>
-      <SidebarHeader className="font-semibold px-2">Notes Again</SidebarHeader>
+      <SidebarHeader className="flex-row items-center gap-2 px-2 font-semibold">
+        <img src="/favicon.svg" alt="" className="size-5" />
+        Notes Again
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -80,6 +86,11 @@ function AppSidebar() {
                       <item.icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
+                    {item.to === "/review" && dueCount > 0 && (
+                      <SidebarMenuBadge className="text-primary">
+                        {dueCount.toLocaleString()}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 );
               })}

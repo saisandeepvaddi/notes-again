@@ -119,8 +119,11 @@ export function NoteDetailSkeleton() {
 
 export function ReviewSkeleton() {
   return (
-    <LoadingState label="Loading review" className="flex w-full max-w-2xl flex-col gap-4">
-      <Skeleton className="h-4 w-14" />
+    <LoadingState label="Loading review" className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-1 w-full" />
+      </div>
       <Card>
         <CardHeader>
           <Skeleton className="h-6 w-1/2" />
@@ -128,16 +131,16 @@ export function ReviewSkeleton() {
         <CardContent>
           <Lines widths={["w-11/12", "w-4/5", "w-full", "w-3/5"]} />
         </CardContent>
-        <CardFooter className="flex flex-col items-start gap-2">
-          <Skeleton className="h-4 w-56" />
-          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
-            {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-12" />
-            ))}
-          </div>
-          <Skeleton className="h-3 w-2/3" />
-        </CardFooter>
       </Card>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-56" />
+        <div className="grid w-full grid-cols-4 gap-1.5">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-12" />
+          ))}
+        </div>
+        <Skeleton className="h-3 w-2/3" />
+      </div>
     </LoadingState>
   );
 }

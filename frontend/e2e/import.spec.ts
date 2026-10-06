@@ -31,7 +31,7 @@ test.describe("import", () => {
       .fill(JSON.stringify(payload));
 
     await page.getByRole("button", { name: "Preview" }).click();
-    await expect(page.getByText("Preview — nothing has been imported yet")).toBeVisible();
+    await expect(page.getByText("Preview: nothing has been imported yet")).toBeVisible();
     await expect(page.getByText("notes to import")).toBeVisible();
 
     const importButton = page.getByRole("button", { name: /Import \d+ notes?/ });

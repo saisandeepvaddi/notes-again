@@ -1,9 +1,11 @@
 import type { NoteReminder } from "./new-note-form/types";
 
-import { AlertTriangleIcon, CheckIcon, ClockIcon } from "lucide-react";
+import { CheckIcon, ClockAlertIcon, ClockIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { WARNING_TEXT_CLASSES } from "@/lib/statusColors";
+import { cn } from "@/lib/utils";
 import { differenceInCalendarDays, formatDistanceToNowStrict, isFuture } from "date-fns";
 import { useState } from "react";
 import { RatingButtons } from "./RatingButtons";
@@ -27,13 +29,10 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
         delay={300}
         closeDelay={150}
         render={
-          <Button
-            size="sm"
-            variant={isOverdue ? "destructive" : isUpcoming ? "secondary" : "ghost"}
-          >
+          <Button size="sm" variant={isOverdue || isUpcoming ? "secondary" : "ghost"}>
             {isOverdue ? (
               <>
-                <AlertTriangleIcon />
+                <ClockAlertIcon className={WARNING_TEXT_CLASSES} />
                 {overdueLabel}
               </>
             ) : isUpcoming ? (
@@ -53,7 +52,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
       <PopoverContent align="start" className="w-80 gap-2 p-2">
         <p className="px-0.5 text-muted-foreground">
           {isOverdue ? (
-            <span className="font-medium text-destructive">{overdueLabel}. </span>
+            <span className={cn("font-medium", WARNING_TEXT_CLASSES)}>{overdueLabel}. </span>
           ) : isUpcoming ? (
             <span className="font-medium text-foreground">Not due for {dueIn}. </span>
           ) : null}

@@ -184,7 +184,7 @@ export function ImportForm() {
           <Input type="file" accept=".json,application/json" onChange={onFile} />
           {fileName && (
             <p className="text-xs text-muted-foreground">
-              {fileName} —{" "}
+              {fileName},{" "}
               {(text.length / 1024).toLocaleString(undefined, { maximumFractionDigits: 0 })} KB
               loaded
             </p>
@@ -269,7 +269,7 @@ export function ImportForm() {
 
       {preview && (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
-          <p className="text-sm font-medium">Preview — nothing has been imported yet</p>
+          <p className="text-sm font-medium">Preview: nothing has been imported yet</p>
           <ImportSummary result={preview} />
         </div>
       )}

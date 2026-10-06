@@ -13,7 +13,7 @@ test.describe("projects and tags", () => {
     const tagName = uniqueName("tag");
 
     await page.goto("/notes/new");
-    await page.getByPlaceholder("Name").fill(noteName);
+    await page.getByLabel("Name", { exact: true }).fill(noteName);
     await page.getByRole("textbox", { name: "editable markdown" }).click();
     await page.keyboard.type("Content for the organize test.");
 

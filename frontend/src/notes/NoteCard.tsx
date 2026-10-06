@@ -51,42 +51,41 @@ export function NoteCard({ note, select }: NoteCardProps) {
       data-selecting={select?.selecting ?? false}
       onClickCapture={select && selectionClickCapture(select.selecting, select.onToggle)}
     >
-      <CardHeader className="relative flex shrink-0 items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <CardHeader className="relative flex shrink-0 items-center">
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Link
+                to="/notes/$noteId"
+                params={{ noteId: String(note.id) }}
+                aria-label={titleText}
+                className="peer absolute inset-0"
+              />
+            }
+          />
+          <TooltipContent>{titleText}</TooltipContent>
+        </Tooltip>
+        <h2 className="min-w-0 flex-1 truncate font-serif font-semibold text-sm peer-hover:underline [@media(hover:none)]:pr-12">
+          <NoteTitle title={note.name} />
+        </h2>
+        <div className="absolute inset-y-0 right-(--card-spacing) z-10 flex items-center gap-1 bg-linear-to-l from-card from-75% to-transparent pl-6 opacity-0 transition-opacity group-hover/card:opacity-100 group-data-[selecting=true]/card:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
           {select && (
             <SelectCheckbox
-              revealOnHover
               label={`Select ${titleText}`}
               checked={select.selected}
               onToggle={select.onToggle}
             />
           )}
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link
-                  to="/notes/$noteId"
-                  params={{ noteId: String(note.id) }}
-                  aria-label={titleText}
-                  className="peer absolute inset-0"
-                />
-              }
-            />
-            <TooltipContent>{titleText}</TooltipContent>
-          </Tooltip>
-          <h2 className="min-w-0 truncate font-serif font-semibold text-sm peer-hover:underline">
-            <NoteTitle title={note.name} />
-          </h2>
+          <Button
+            size="icon-xs"
+            onClick={() => deleteNote()}
+            variant="ghost"
+            aria-label="Delete note"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2Icon />
+          </Button>
         </div>
-        <Button
-          size="icon-xs"
-          onClick={() => deleteNote()}
-          variant="ghost"
-          aria-label="Delete note"
-          className="relative z-10 shrink-0 text-muted-foreground hover:text-destructive"
-        >
-          <Trash2Icon />
-        </Button>
       </CardHeader>
       <CardContent className="min-h-0 flex-1">
         <Link

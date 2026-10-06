@@ -11,7 +11,7 @@ test.describe("note only", () => {
     const noteName = uniqueName("Plain note");
 
     await page.goto("/notes/new");
-    await page.getByPlaceholder("Name").fill(noteName);
+    await page.getByLabel("Name", { exact: true }).fill(noteName);
     await page.getByRole("radio", { name: "Note only" }).click();
     await expect(page.getByText("A plain note with no reviews or due dates.")).toBeVisible();
     await page.getByRole("button", { name: "Create" }).click();

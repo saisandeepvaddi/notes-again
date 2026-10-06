@@ -3,7 +3,7 @@ import { uniqueName } from "./support/api";
 
 test.describe("settings", () => {
   test("changing the default algorithm persists across reload", async ({ page }) => {
-    await page.goto("/settings");
+    await page.goto("/settings?section=review");
     const trigger = page.getByRole("combobox");
     const value = trigger.locator('[data-slot="select-value"]');
     const current = (await value.textContent())?.trim();
@@ -20,7 +20,7 @@ test.describe("settings", () => {
   test("creating and revoking an API token", async ({ page }) => {
     const tokenName = uniqueName("E2E token");
 
-    await page.goto("/settings");
+    await page.goto("/settings?section=tokens");
     await page.getByRole("button", { name: "Create token" }).click();
 
     const dialog = page.getByRole("dialog");
@@ -43,7 +43,7 @@ test.describe("settings", () => {
   });
 
   test("creating a full-access token for the mobile app", async ({ page }) => {
-    await page.goto("/settings");
+    await page.goto("/settings?section=tokens");
     await page.getByRole("button", { name: "Create token" }).click();
 
     const dialog = page.getByRole("dialog");
@@ -55,7 +55,9 @@ test.describe("settings", () => {
     await dialog.getByLabel("Name").fill(tokenName);
     await dialog.getByRole("button", { name: "Create token" }).click();
     await expect(dialog.getByLabel("API token")).toHaveValue(/^nal_/);
-    await expect(dialog.getByRole("img", { name: "QR code to connect the mobile app" })).toBeVisible();
+    await expect(
+      dialog.getByRole("img", { name: "QR code to connect the mobile app" }),
+    ).toBeVisible();
     await expect(dialog.getByLabel("Server address the phone uses")).toHaveValue(/^http/);
     await dialog.getByRole("button", { name: "Done" }).click();
 

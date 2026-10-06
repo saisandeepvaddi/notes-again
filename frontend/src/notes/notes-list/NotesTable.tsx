@@ -252,7 +252,7 @@ export function NotesTable({
           />
           <NoteTitle
             title={info.getValue()}
-            className="font-heading font-medium peer-hover:underline"
+            className="font-reading font-medium peer-hover:underline"
           />
         </div>
       ),

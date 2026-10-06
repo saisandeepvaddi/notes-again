@@ -162,7 +162,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
             if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
           }}
           aria-label="Note title"
-          className="h-auto border-input bg-input/20 px-2 py-1 font-heading text-lg font-semibold tracking-tight md:text-lg dark:bg-input/30"
+          className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-lg font-semibold tracking-tight md:text-lg dark:bg-input/30"
         />
       ) : (
         <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
@@ -172,7 +172,7 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
             onClick={() => setEditingTitle(true)}
             className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           />
-          <h1 className="font-heading text-lg leading-7 font-semibold tracking-tight wrap-break-word">
+          <h1 className="font-reading text-lg leading-7 font-semibold tracking-tight wrap-break-word">
             {name.trim() ? (
               <NoteTitle title={name} />
             ) : (

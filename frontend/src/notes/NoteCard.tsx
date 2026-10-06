@@ -65,7 +65,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
           />
           <TooltipContent>{titleText}</TooltipContent>
         </Tooltip>
-        <h2 className="min-w-0 flex-1 truncate font-heading text-sm font-semibold tracking-tight peer-hover:underline [@media(hover:none)]:pr-12">
+        <h2 className="min-w-0 flex-1 truncate font-reading text-sm font-semibold tracking-tight peer-hover:underline [@media(hover:none)]:pr-12">
           <NoteTitle title={note.name} />
         </h2>
         <div className="absolute inset-y-0 right-(--card-spacing) z-10 flex items-center gap-1 bg-linear-to-l from-card from-75% to-transparent pl-6 opacity-0 transition-opacity group-hover/card:opacity-100 group-data-[selecting=true]/card:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">

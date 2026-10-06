@@ -7,6 +7,7 @@ import {
 
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/toast";
+import { READING_FONT_INIT_SCRIPT } from "@/lib/readingFont";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { QueryClient } from "@tanstack/react-query";
 import appCss from "../styles.css?url";
@@ -50,10 +51,11 @@ export const Route = createRootRouteWithContext<{
 
 function RootDocument() {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: READING_FONT_INIT_SCRIPT }} />
       </head>
       <body>
         <Layout />

@@ -1,0 +1,9 @@
+import { z } from "zod";
+
+export const SETTINGS_SECTIONS = ["appearance", "review", "sign-in", "tokens", "system"] as const;
+
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
+export const settingsSearchSchema = z.object({
+  section: z.enum(SETTINGS_SECTIONS).optional().catch(undefined),
+});

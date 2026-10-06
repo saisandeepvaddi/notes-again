@@ -96,7 +96,7 @@ export function ReviewSession() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <SessionProgress reviewed={reviewedCount} remaining={remaining} />
       <article className="flex flex-col gap-4 py-2">
-        <h2 className="font-heading text-xl font-semibold tracking-tight">
+        <h2 className="font-reading text-xl font-semibold tracking-tight">
           <NoteTitle title={current.name} />
         </h2>
         <NoteContent markdown={current.content} />

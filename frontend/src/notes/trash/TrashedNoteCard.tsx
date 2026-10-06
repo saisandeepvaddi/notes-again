@@ -77,7 +77,7 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
             onToggle={select.onToggle}
           />
         )}
-        <h2 className="truncate font-heading font-semibold text-sm tracking-tight">
+        <h2 className="truncate font-reading font-semibold text-sm tracking-tight">
           <NoteTitle title={note.name} />
         </h2>
       </CardHeader>

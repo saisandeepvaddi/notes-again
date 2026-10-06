@@ -33,7 +33,7 @@ import {
   useReactTable,
   type SortingState,
 } from "@tanstack/react-table";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -44,7 +44,7 @@ import {
   FunnelSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS, getDifficulty } from "../difficulty";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useProjects } from "../hooks/useProjects";
@@ -87,6 +87,16 @@ function ProjectCell({ project }: { project: Project | null | undefined }) {
       </button>
     </Badge>
   );
+}
+
+const ROW_CLICK_IGNORE =
+  "a, button, input, label, select, textarea, [role='button'], [role='checkbox'], [role='combobox'], [role='menuitem'], [role='option']";
+
+function isRowClick(event: MouseEvent<HTMLElement>) {
+  const target = event.target as Element;
+  if (!event.currentTarget.contains(target)) return false;
+  if (target.closest(ROW_CLICK_IGNORE)) return false;
+  return !window.getSelection()?.toString();
 }
 
 function DeleteRowButton({ noteId }: { noteId: number }) {
@@ -227,6 +237,7 @@ export function NotesTable({
 }: NotesTableProps) {
   "use no memo";
   const navigate = useNavigate();
+  const router = useRouter();
   const { data: projects = [] } = useProjects();
   const { data: allTags = [] } = useTags();
   const tagOptions = allTags.filter((tag) => !tag.is_difficulty);
@@ -355,6 +366,16 @@ export function NotesTable({
     .filter(([, key]) => key === sort)
     .map(([id]) => ({ id, desc: order === "desc" }));
 
+  const openNote = (event: MouseEvent<HTMLTableRowElement>, noteId: number) => {
+    if (!isRowClick(event)) return;
+    const location = { to: "/notes/$noteId", params: { noteId: String(noteId) } } as const;
+    if (event.button === 1 || event.metaKey || event.ctrlKey) {
+      window.open(router.buildLocation(location).href, "_blank", "noopener");
+      return;
+    }
+    navigate(location);
+  };
+
   const table = useReactTable({
     data: notes,
     columns,
@@ -466,8 +487,12 @@ export function NotesTable({
                 <TableRow
                   key={row.id}
                   data-state={selected ? "selected" : undefined}
-                  className={cn(selection.selectionMode && "cursor-pointer")}
+                  className="cursor-pointer"
                   onClickCapture={selectionClickCapture(selection.selectionMode, toggle)}
+                  onClick={(event) => openNote(event, noteId)}
+                  onAuxClick={(event) => {
+                    if (event.button === 1) openNote(event, noteId);
+                  }}
                 >
                   <TableCell>
                     <SelectCheckbox

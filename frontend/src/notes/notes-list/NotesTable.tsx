@@ -502,7 +502,7 @@ export function NotesTable({
             value={String(pageSize)}
             onValueChange={(value) => value && onPageSizeChange(Number(value))}
           >
-            <SelectTrigger size="sm" className="h-7 w-18">
+            <SelectTrigger size="sm" className="h-7 w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -9,6 +9,7 @@ import { Card } from "@/components/card";
 import { Divider, SettingRow } from "@/components/setting-row";
 import { useTheme } from "@/hooks/use-theme";
 import { space } from "@/theme";
+import { ReadingFontPicker } from "./reading-font-picker";
 
 const METHOD_LABELS = {
   password: "Username and password",
@@ -67,6 +68,15 @@ export function SettingsScreen() {
         >
           Open the web app
         </Button>
+      </Card>
+
+      <Card>
+        <AppText variant="heading">Appearance</AppText>
+        <SettingRow
+          label="Reading font"
+          description="Used for note titles and note text. Saved on this device."
+        />
+        <ReadingFontPicker />
       </Card>
 
       <Card>

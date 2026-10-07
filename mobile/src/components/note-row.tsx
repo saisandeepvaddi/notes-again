@@ -32,7 +32,7 @@ export const NoteRow = memo(function NoteRow({ note }: { note: NoteItem }) {
         gap: 8,
       })}
     >
-      <AppText variant="heading" numberOfLines={2}>
+      <AppText variant="heading" reading numberOfLines={2}>
         {noteTitle(note)}
       </AppText>
       {excerpt ? (

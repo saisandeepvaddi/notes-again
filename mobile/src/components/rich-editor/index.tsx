@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
 import { EditorBridge } from "./bridge";
 import { type LinkDraft, LinkSheet } from "./link-sheet";
@@ -71,6 +72,7 @@ export function RichEditorBody({
   onChange,
 }: RichEditorBodyProps) {
   const { scheme, colors } = useTheme();
+  const { font } = useReadingFont();
   const [height, setHeight] = useState(minHeight);
   const { bridge, onFormat, onFocusChange, onCaret, openLinkEditor } = controller;
   const { attachBody, attachHandle } = bridge;
@@ -81,6 +83,7 @@ export function RichEditorBody({
         markdown={markdown}
         placeholder={placeholder}
         scheme={scheme}
+        font={font}
         palette={{
           foreground: colors.foreground,
           mutedForeground: colors.mutedForeground,

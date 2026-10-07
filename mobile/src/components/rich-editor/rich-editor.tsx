@@ -54,7 +54,13 @@ import {
   UNDO_COMMAND,
 } from "lexical";
 import { type Ref, useEffect, useRef, useState } from "react";
-import { markdownCss, type MarkdownPalette } from "@/components/markdown-css";
+import {
+  MONO_STACK,
+  markdownCss,
+  markdownFontStack,
+  type MarkdownFont,
+  type MarkdownPalette,
+} from "@/components/markdown-css";
 import type { BlockKind, CaretRect, FormatState, ListKind, RichEditorHandle } from "./types";
 
 type Commands = Omit<RichEditorHandle, "focus" | "blur">;
@@ -101,6 +107,7 @@ interface RichEditorProps {
   markdown: string;
   placeholder: string;
   scheme: "light" | "dark";
+  font: MarkdownFont;
   palette: MarkdownPalette & { primaryTint: string; primaryForeground: string };
   onChange: (markdown: string) => Promise<void>;
   onFormat: (state: FormatState) => Promise<void>;
@@ -254,18 +261,18 @@ function Bridge({ hub }: { hub: Hub }) {
   return null;
 }
 
-const interMedium = require("@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf");
+const geistMedium = require("@expo-google-fonts/geist/500Medium/Geist_500Medium.ttf");
 
 const PILL_HEIGHT = 30;
 const PILL_WIDTH = 92;
 
-const editorCss = (palette: RichEditorProps["palette"]) => `
-@font-face { font-family: "Inter"; src: url(${interMedium}); font-weight: 500; font-style: normal; }
+const editorCss = (palette: RichEditorProps["palette"], font: MarkdownFont) => `
+@font-face { font-family: "Geist"; src: url(${geistMedium}); font-weight: 500; font-style: normal; }
 .link-edit-pill {
   position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
   width: ${PILL_WIDTH}px; height: ${PILL_HEIGHT}px; padding: 0; border: 0; border-radius: 999px;
   background: ${palette.primary}; color: ${palette.primaryForeground};
-  font-family: "Inter", system-ui, sans-serif; font-weight: 500; font-size: 13px;
+  font-family: "Geist", system-ui, sans-serif; font-weight: 500; font-size: 13px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14); -webkit-tap-highlight-color: transparent;
   animation: pill-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -277,7 +284,7 @@ html, body { height: 100%; -webkit-user-select: text; user-select: text; }
 .mdxeditor-root-contenteditable, .mdxeditor-root-contenteditable > div { padding: 0 !important; }
 .markdown-content[contenteditable] { outline: none; min-height: 40vh; caret-color: ${palette.primary}; padding: 0 !important; }
 .markdown-content ::selection { background: ${palette.primaryTint}; }
-[class*="_placeholder_"] { padding: 0 !important; right: 0; white-space: normal; color: ${palette.mutedForeground}; font-family: "Literata", Georgia, serif; font-size: 17px; line-height: 1.6; }
+[class*="_placeholder_"] { padding: 0 !important; right: 0; white-space: normal; color: ${palette.mutedForeground}; font-family: ${markdownFontStack(font)}; font-size: 17px; line-height: 1.6; }
 .markdown-content li[role="checkbox"] { list-style: none; position: relative; margin-left: -1.4em; padding-left: 1.6em; }
 .markdown-content li[role="checkbox"]::before { content: ""; position: absolute; left: 0; top: 0.3em; width: 1em; height: 1em; border: 1.5px solid ${palette.mutedForeground}; border-radius: 4px; }
 .markdown-content li[role="checkbox"][aria-checked="true"]::before { background: ${palette.primary}; border-color: ${palette.primary}; }
@@ -285,7 +292,7 @@ html, body { height: 100%; -webkit-user-select: text; user-select: text; }
 .markdown-content li[role="checkbox"]::after { content: none; }
 [class*="_codeMirrorWrapper_"] { margin: 0.75em 0; border-radius: 10px; background: ${palette.secondary}; border: 0; overflow: hidden; }
 [class*="_codeMirrorToolbar_"] { display: none; }
-.cm-editor { background: transparent !important; font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+.cm-editor { background: transparent !important; font-family: ${MONO_STACK}; font-size: 14px; }
 .cm-gutters { display: none !important; }
 .cm-content { padding: 12px 0 !important; caret-color: ${palette.primary}; }
 .cm-line { padding: 0 12px !important; }
@@ -299,6 +306,7 @@ export default function RichEditor({
   markdown,
   placeholder,
   scheme,
+  font,
   palette,
   onChange,
   onFormat,
@@ -456,8 +464,8 @@ export default function RichEditor({
 
   return (
     <>
-      <style>{markdownCss(palette, scheme)}</style>
-      <style>{editorCss(palette)}</style>
+      <style>{markdownCss(palette, scheme, font)}</style>
+      <style>{editorCss(palette, font)}</style>
       <div
         ref={root}
         style={{ width: "100%", position: "relative" }}

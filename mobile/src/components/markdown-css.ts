@@ -1,6 +1,17 @@
 const literata = require("@expo-google-fonts/literata/400Regular/Literata_400Regular.ttf");
 const literataSemibold = require("@expo-google-fonts/literata/600SemiBold/Literata_600SemiBold.ttf");
 const literataItalic = require("@expo-google-fonts/literata/400Regular_Italic/Literata_400Regular_Italic.ttf");
+const geist = require("@expo-google-fonts/geist/400Regular/Geist_400Regular.ttf");
+const geistSemibold = require("@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf");
+const geistItalic = require("@expo-google-fonts/geist/400Regular_Italic/Geist_400Regular_Italic.ttf");
+const geistMono = require("@expo-google-fonts/geist-mono/400Regular/GeistMono_400Regular.ttf");
+
+export type MarkdownFont = "sans" | "serif";
+
+export const markdownFontStack = (font: MarkdownFont) =>
+  font === "serif" ? `"Literata", Georgia, serif` : `"Geist", system-ui, sans-serif`;
+
+export const MONO_STACK = `"Geist Mono", ui-monospace, Menlo, monospace`;
 
 export interface MarkdownPalette {
   foreground: string;
@@ -10,15 +21,19 @@ export interface MarkdownPalette {
   border: string;
 }
 
-export const markdownCss = (p: MarkdownPalette, scheme: "light" | "dark") => `
+export const markdownCss = (p: MarkdownPalette, scheme: "light" | "dark", font: MarkdownFont) => `
 @font-face { font-family: "Literata"; src: url(${literata}); font-weight: 400; font-style: normal; }
 @font-face { font-family: "Literata"; src: url(${literataSemibold}); font-weight: 600; font-style: normal; }
 @font-face { font-family: "Literata"; src: url(${literataItalic}); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Geist"; src: url(${geist}); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Geist"; src: url(${geistSemibold}); font-weight: 600; font-style: normal; }
+@font-face { font-family: "Geist"; src: url(${geistItalic}); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Geist Mono"; src: url(${geistMono}); font-weight: 400; font-style: normal; }
 html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; -webkit-text-size-adjust: 100%; }
 .markdown-content { display: flow-root; width: 100%; min-width: 0; max-width: 100vw; }
 * { box-sizing: border-box; }
 .markdown-content {
-  font-family: "Literata", Georgia, serif; font-size: 17px; line-height: 1.6;
+  font-family: ${markdownFontStack(font)}; font-size: 17px; line-height: 1.6;
   color: ${p.foreground}; overflow-wrap: anywhere; -webkit-tap-highlight-color: transparent;
 }
 .markdown-content > :first-child { margin-top: 0; }
@@ -36,7 +51,7 @@ html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; -
 .markdown-content li > p { margin: 0; }
 .markdown-content blockquote { margin: 0.75em 0; padding-left: 1em; border-left: 4px solid ${p.border}; color: ${p.mutedForeground}; font-style: italic; }
 .markdown-content hr { margin: 1.25em 0; border: 0; border-top: 1px solid ${p.border}; }
-.markdown-content code { font-family: ui-monospace, Menlo, monospace; font-size: 0.82em; background: ${p.secondary}; border-radius: 5px; padding: 0.12em 0.4em; }
+.markdown-content code { font-family: ${MONO_STACK}; font-size: 0.82em; background: ${p.secondary}; border-radius: 5px; padding: 0.12em 0.4em; }
 .markdown-content pre { margin: 0.75em 0; padding: 12px; border-radius: 10px; background: ${p.secondary}; overflow-x: auto; font-size: 14px; line-height: 1.5; -webkit-overflow-scrolling: touch; }
 .markdown-content pre code { background: transparent; padding: 0; font-size: inherit; }
 .markdown-content .shiki { background-color: ${p.secondary} !important; }

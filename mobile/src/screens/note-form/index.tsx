@@ -19,8 +19,9 @@ import { ReviewStatusPicker } from "@/components/review-status-picker";
 import { InlineError } from "@/components/screen-state";
 import { SettingRow } from "@/components/setting-row";
 import { TagPicker } from "@/components/tag-picker";
+import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
-import { fonts, space } from "@/theme";
+import { space } from "@/theme";
 
 const NEW_NOTE_HINTS: Record<ReviewStatus, string> = {
   active: "Due for its first review right away.",
@@ -47,6 +48,7 @@ function useDiscardGuard(dirty: boolean) {
 
 export function NewNoteScreen() {
   const { colors } = useTheme();
+  const { family } = useReadingFont();
   const router = useRouter();
   const createNote = useCreateNote();
   const editor = useRichEditor();
@@ -130,7 +132,7 @@ export function NewNoteScreen() {
               accessibilityLabel="Title"
               style={{
                 color: colors.foreground,
-                fontFamily: fonts.serifSemibold,
+                fontFamily: family.semibold,
                 fontSize: 26,
                 lineHeight: 33,
                 padding: 0,

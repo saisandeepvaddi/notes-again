@@ -9,8 +9,8 @@ export function useStackOptions(): Exclude<StackOptions, (...args: never[]) => u
   const { colors } = useTheme();
   return {
     headerTintColor: colors.primary,
-    headerTitleStyle: { fontFamily: fonts.serifSemibold, color: colors.foreground },
-    headerLargeTitleStyle: { fontFamily: fonts.serifSemibold, color: colors.foreground },
+    headerTitleStyle: { fontFamily: fonts.sansSemibold, color: colors.foreground },
+    headerLargeTitleStyle: { fontFamily: fonts.sansSemibold, color: colors.foreground },
     headerShadowVisible: false,
     headerLargeTitleShadowVisible: false,
     headerBackButtonDisplayMode: "minimal",

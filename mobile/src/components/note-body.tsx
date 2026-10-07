@@ -2,6 +2,7 @@ import * as Linking from "expo-linking";
 import { useState } from "react";
 import * as WebBrowser from "expo-web-browser";
 import NoteMarkdown from "@/components/note-markdown";
+import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
 
 async function openLink(href: string) {
@@ -14,12 +15,14 @@ async function openLink(href: string) {
 
 export function NoteBody({ markdown }: { markdown: string }) {
   const { scheme, colors } = useTheme();
+  const { font } = useReadingFont();
   const [height, setHeight] = useState(1);
   if (!markdown.trim()) return null;
   return (
     <NoteMarkdown
       markdown={markdown}
       scheme={scheme}
+      font={font}
       palette={{
         foreground: colors.foreground,
         mutedForeground: colors.mutedForeground,

@@ -41,8 +41,9 @@ import { Divider, SettingRow } from "@/components/setting-row";
 import { UndoBar } from "@/components/undo-bar";
 import { type SaveStatus, useNoteAutosave } from "@/hooks/use-note-autosave";
 import { useReviewActions } from "@/hooks/use-review-actions";
+import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
-import { fonts, ratingTint, space } from "@/theme";
+import { ratingTint, space } from "@/theme";
 import { dueLabel, noteTitle } from "@/utils/note-format";
 
 const STATUS_HINTS: Record<ReviewStatus, string> = {
@@ -192,6 +193,7 @@ function NoteHeading({ note, children }: { note: NoteItem; children: ReactNode }
 
 function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorController }) {
   const { colors } = useTheme();
+  const { family } = useReadingFont();
   const autosave = useNoteAutosave(note);
   return (
     <>
@@ -217,7 +219,7 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
           accessibilityLabel="Title"
           style={{
             color: colors.foreground,
-            fontFamily: fonts.serifSemibold,
+            fontFamily: family.semibold,
             fontSize: 22,
             lineHeight: 29,
             padding: 0,
@@ -268,7 +270,7 @@ function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
         ) : (
           <>
             <NoteHeading note={note}>
-              <AppText variant="title" selectable>
+              <AppText variant="title" reading selectable>
                 {noteTitle(note)}
               </AppText>
             </NoteHeading>

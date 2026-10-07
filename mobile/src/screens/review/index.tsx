@@ -46,7 +46,7 @@ function ReviewHeader({ left, reviewed }: { left: number | null; reviewed: numbe
           <Icon ios="xmark" android="close" color={colors.foreground} />
         </Pressable>
         <AppText
-          style={{ flex: 1, textAlign: "center", fontFamily: fonts.serifSemibold, fontSize: 17 }}
+          style={{ flex: 1, textAlign: "center", fontFamily: fonts.sansSemibold, fontSize: 17 }}
         >
           Review
         </AppText>
@@ -172,7 +172,7 @@ function Session({ initial, total }: { initial: NoteItem[]; total: number }) {
           style={{ flex: 1 }}
           contentContainerStyle={{ padding: space.gutter, paddingBottom: 24, gap: 14 }}
         >
-          <AppText variant="title" selectable>
+          <AppText variant="title" reading selectable>
             {noteTitle(current)}
           </AppText>
           <NoteMeta note={current} />

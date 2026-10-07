@@ -21,7 +21,7 @@ Don't trust remembered Expo or React Native APIs. Check the `expo` major in `pac
 
 ## Design
 
-Follow [DESIGN.md](../DESIGN.md), sized for touch: 44pt minimum targets, 15–17pt body text, serif (Literata) for note titles, page titles and note bodies, sans (Inter) for chrome, green only for action, selection and focus, flat cards with hairline borders, pill badges for difficulty, rating and tags.
+Follow [DESIGN.md](../DESIGN.md), sized for touch: 44pt minimum targets, 15–17pt body text, Geist for chrome and headings, Geist Mono for code, and the reading font for note titles and note bodies, green only for action, selection and focus, flat cards with hairline borders, pill badges for difficulty, rating and tags. The reading font is a per-device choice in Settings (`useReadingFont`, Geist or Literata): text that shows note content takes `<AppText reading>`, title inputs use `family.semibold`, and the DOM markdown and editor components get it as the `font` prop.
 
 ## Known platform quirks
 

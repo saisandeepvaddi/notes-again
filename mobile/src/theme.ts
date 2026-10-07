@@ -1,10 +1,9 @@
-import { Platform } from "react-native";
 import type { Difficulty, Rating } from "@web/notes/new-note-form/types";
 
 const light = {
   background: "#fbfaf7",
   foreground: "#1d1713",
-  card: "#ffffff",
+  card: "#fefdfc",
   shelf: "#f7f5f1",
   primary: "#227c45",
   primaryForeground: "#fdfcf8",
@@ -90,12 +89,18 @@ export const ratingTint = (rating: Rating, scheme: Scheme): Tint =>
 
 export const fonts = {
   serif: "Literata_400Regular",
-  serifItalic: "Literata_400Regular_Italic",
   serifSemibold: "Literata_600SemiBold",
-  sans: "Inter_400Regular",
-  sansMedium: "Inter_500Medium",
-  sansSemibold: "Inter_600SemiBold",
-  mono: Platform.select({ ios: "Menlo", default: "monospace" }),
+  sans: "Geist_400Regular",
+  sansMedium: "Geist_500Medium",
+  sansSemibold: "Geist_600SemiBold",
+  mono: "GeistMono_400Regular",
+};
+
+export type ReadingFont = "sans" | "serif";
+
+export const readingFonts: Record<ReadingFont, { regular: string; semibold: string }> = {
+  sans: { regular: fonts.sans, semibold: fonts.sansSemibold },
+  serif: { regular: fonts.serif, semibold: fonts.serifSemibold },
 };
 
 export const radius = {

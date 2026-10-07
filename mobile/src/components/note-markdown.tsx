@@ -3,7 +3,7 @@
 import Shiki from "@shikijs/markdown-exit";
 import { createMarkdownExit } from "markdown-exit";
 import { useEffect, useState, type MouseEvent } from "react";
-import { markdownCss, type MarkdownPalette } from "@/components/markdown-css";
+import { markdownCss, type MarkdownFont, type MarkdownPalette } from "@/components/markdown-css";
 
 const md = createMarkdownExit({ linkify: true });
 md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));
@@ -11,6 +11,7 @@ md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));
 interface NoteMarkdownProps {
   markdown: string;
   scheme: "light" | "dark";
+  font: MarkdownFont;
   palette: MarkdownPalette;
   onOpenLink: (href: string) => Promise<void>;
   onHeight: (height: number) => Promise<void>;
@@ -22,6 +23,7 @@ const cache = new Map<string, string>();
 export default function NoteMarkdown({
   markdown,
   scheme,
+  font,
   palette,
   onOpenLink,
   onHeight,
@@ -67,7 +69,7 @@ export default function NoteMarkdown({
 
   return (
     <>
-      <style>{markdownCss(palette, scheme)}</style>
+      <style>{markdownCss(palette, scheme, font)}</style>
       <div
         ref={observe}
         className="markdown-content"

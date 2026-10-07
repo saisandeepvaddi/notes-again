@@ -36,7 +36,7 @@ function DueSummary({ total }: { total: number }) {
       <View style={{ gap: 2 }}>
         <AppText
           style={{
-            fontFamily: fonts.serifSemibold,
+            fontFamily: fonts.sansSemibold,
             fontSize: 48,
             lineHeight: 54,
             fontVariant: ["tabular-nums"],

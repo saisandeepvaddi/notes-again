@@ -1,4 +1,5 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
+import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from "@expo-google-fonts/geist";
+import { GeistMono_400Regular } from "@expo-google-fonts/geist-mono";
 import { Literata_400Regular, Literata_600SemiBold } from "@expo-google-fonts/literata";
 import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
@@ -10,6 +11,7 @@ import { AppState } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ApiError } from "@/api/client";
 import { ConnectionProvider, useConnection } from "@/api/connection";
+import { ReadingFontProvider, useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
 
 void SplashScreen.preventAutoHideAsync();
@@ -29,14 +31,16 @@ function createQueryClient() {
 function RootNavigator() {
   const { ready, connection } = useConnection();
   const { scheme, colors } = useTheme();
+  const readingFont = useReadingFont();
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    GeistMono_400Regular,
     Literata_400Regular,
     Literata_600SemiBold,
   });
-  const loaded = ready && (fontsLoaded || !!fontError);
+  const loaded = ready && readingFont.ready && (fontsLoaded || !!fontError);
 
   useEffect(() => {
     if (loaded) void SplashScreen.hideAsync();
@@ -88,7 +92,9 @@ export default function RootLayout() {
     <KeyboardProvider>
       <QueryClientProvider client={queryClient}>
         <ConnectionProvider>
-          <RootNavigator />
+          <ReadingFontProvider>
+            <RootNavigator />
+          </ReadingFontProvider>
         </ConnectionProvider>
       </QueryClientProvider>
     </KeyboardProvider>

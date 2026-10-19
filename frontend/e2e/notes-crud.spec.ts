@@ -97,6 +97,21 @@ test.describe("note lifecycle", () => {
     await expect(page).toHaveTitle("Page not found · Notes Again");
   });
 
+  test("invalid and missing note IDs show a not-found page", async ({ page }) => {
+    for (const id of ["adsf", "999999999"]) {
+      const noteRequests: string[] = [];
+      const recordRequest = (request: import("@playwright/test").Request) => {
+        if (request.url().includes("/api/notes/")) noteRequests.push(request.url());
+      };
+      page.on("request", recordRequest);
+      await page.goto(`/notes/${id}`);
+      await expect(page.getByRole("heading", { name: "Note not found" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Back to notes" })).toBeVisible();
+      expect(noteRequests.some((url) => url.endsWith("/NaN"))).toBe(false);
+      page.off("request", recordRequest);
+    }
+  });
+
   test("search filters the notes list", async ({ page, request }) => {
     const name = uniqueName("Searchable note");
     await createNote(request, { name, content: "unique searchable body" });

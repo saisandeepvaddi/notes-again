@@ -5,18 +5,19 @@ import { MapTrifoldIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
 interface NotFoundPageProps {
+  title?: string;
   detail?: string;
 }
 
-export function NotFoundPage({ detail }: NotFoundPageProps) {
-  useDocumentTitle("Page not found");
+export function NotFoundPage({ title = "Page not found", detail }: NotFoundPageProps) {
+  useDocumentTitle(title);
   return (
     <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-5 px-6 text-center">
       <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
         <MapTrifoldIcon className="size-6" />
       </div>
       <div className="flex flex-col items-center gap-1.5">
-        <h1 className="font-reading text-xl font-semibold tracking-tight">Page not found</h1>
+        <h1 className="font-reading text-xl font-semibold tracking-tight">{title}</h1>
         <p className="max-w-[46ch] text-sm text-muted-foreground">
           {detail ?? "That page doesn't exist. It may have moved, or the link is out of date."}
         </p>

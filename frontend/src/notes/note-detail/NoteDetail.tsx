@@ -25,7 +25,7 @@ import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
-import { useNote } from "../hooks/useNote";
+import type { NoteItem } from "../new-note-form/types";
 import { useRestoreNote } from "../hooks/useRestoreNote";
 import { useSetNoteStatus } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
@@ -55,11 +55,11 @@ const STATUS_NOTICES: Record<Exclude<ReviewStatus, "active">, string> = {
 };
 
 interface NoteDetailProps {
-  noteId: number;
+  note: NoteItem;
 }
 
-export function NoteDetail({ noteId }: NoteDetailProps) {
-  const { data: note } = useNote(noteId);
+export function NoteDetail({ note }: NoteDetailProps) {
+  const noteId = note.id;
   const navigate = useNavigate();
   const { mutateAsync: updateNote, isPending: isSaving } = useUpdateNote({ noteId });
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId });

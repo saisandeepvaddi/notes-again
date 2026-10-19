@@ -51,6 +51,16 @@ export const getHeaders = async (customHeaders?: Record<string, string>) => {
   return headers;
 };
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 const handleResponse = async (response: Response, url: string) => {
   if (response.status === 401 && typeof window !== "undefined") {
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
@@ -65,7 +75,10 @@ const handleResponse = async (response: Response, url: string) => {
           : null,
       )
       .catch(() => null);
-    throw new Error(detail ?? `Error with ${url} with code: ${response.status}`);
+    throw new ApiError(
+      detail ?? `Error with ${url} with code: ${response.status}`,
+      response.status,
+    );
   }
   if (response.status === 204) {
     return null;

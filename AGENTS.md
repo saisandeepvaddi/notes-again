@@ -19,7 +19,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 - As a user would: `make run` builds the SPA and serves it from the backend via `scripts/serve.sh`, which ignores shell auth/DB/port variables and reads `.env.local` instead (defaults 127.0.0.1:8000, local sign-in; `make run DB=...` for a throwaway database).
 - Backend: `AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 backend/.venv/bin/uvicorn --app-dir backend main:app --reload`. The repo-root `.env` holds container/production values (`DB_PATH=/data/...`, secrets); keep it out of local runs. With `DB_PATH` unset, the DB lives in the OS app-data dir (`~/Library/Application Support/notes-again/` on macOS).
-- Frontend: `pnpm dev` in `frontend/` (port 5273). The API defaults to `localhost:8000`; `VITE_SERVER_IP`/`VITE_SERVER_PORT` in an optional `frontend/.env` override it. The login screen follows whatever auth mode the backend reports at `/api/auth/status`, so `AUTH_DISABLED=1` on the backend means no login in dev.
+- Frontend: `pnpm dev` in `frontend/` (port 5273). The API defaults to the host you opened the app on, port 8000; `VITE_SERVER_IP`/`VITE_SERVER_PORT` in an optional `frontend/.env` override it. A stale `VITE_SERVER_IP` (an old LAN address) is the usual cause of a forever-spinning UI: requests time out after 10s with an error naming the address they tried. The login screen follows whatever auth mode the backend reports at `/api/auth/status`, so `AUTH_DISABLED=1` on the backend means no login in dev.
 
 ## Verifying changes
 

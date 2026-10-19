@@ -10,10 +10,34 @@ export const getURL = () => {
     return "/api";
   }
 
-  const SERVER_IP = import.meta.env.VITE_SERVER_IP || "localhost";
+  const browserHost =
+    typeof window !== "undefined" && window.location.hostname
+      ? window.location.hostname
+      : "localhost";
+  const SERVER_IP = import.meta.env.VITE_SERVER_IP || browserHost;
   const SERVER_PORT = import.meta.env.VITE_SERVER_PORT || "8000";
   return `http://${SERVER_IP}:${SERVER_PORT}/api`;
 };
+
+const REQUEST_TIMEOUT_MS = 10_000;
+
+async function request(url: string, init: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS) {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new Error(
+        `The server at ${getURL()} did not respond within ${Math.round(timeoutMs / 1000)}s. Is the backend running?`,
+      );
+    }
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Could not reach the server at ${getURL()}. Is the backend running on that port?`,
+      );
+    }
+    throw error;
+  }
+}
 
 export const getHeaders = async (customHeaders?: Record<string, string>) => {
   const headers = new Headers({
@@ -53,7 +77,7 @@ interface FetcherOptions {
   headers?: Record<string, string>;
 }
 export const getFetcher = (url: string, options?: FetcherOptions) => async () => {
-  const response = await fetch(`${getURL()}${url}`, {
+  const response = await request(`${getURL()}${url}`, {
     headers: await getHeaders(options?.headers),
     credentials: "include",
   });
@@ -61,7 +85,7 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
 };
 
 export const postFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
-  const response = await fetch(`${getURL()}${url}`, {
+  const response = await request(`${getURL()}${url}`, {
     method: "POST",
     headers: await getHeaders(options?.headers),
     credentials: "include",
@@ -71,7 +95,7 @@ export const postFetcher = (url: string, options?: FetcherOptions) => async (bod
 };
 
 export const patchFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
-  const response = await fetch(`${getURL()}${url}`, {
+  const response = await request(`${getURL()}${url}`, {
     method: "PATCH",
     headers: await getHeaders(options?.headers),
     credentials: "include",
@@ -81,7 +105,7 @@ export const patchFetcher = (url: string, options?: FetcherOptions) => async (bo
 };
 
 export const putFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
-  const response = await fetch(`${getURL()}${url}`, {
+  const response = await request(`${getURL()}${url}`, {
     method: "PUT",
     headers: await getHeaders(options?.headers),
     credentials: "include",
@@ -91,7 +115,7 @@ export const putFetcher = (url: string, options?: FetcherOptions) => async (body
 };
 
 export const deleteFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
-  const response = await fetch(`${getURL()}${url}`, {
+  const response = await request(`${getURL()}${url}`, {
     method: "DELETE",
     headers: await getHeaders(options?.headers),
     credentials: "include",

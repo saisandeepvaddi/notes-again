@@ -14,6 +14,7 @@ from notes.factory import build_note
 from notes.scheduling import (
     Algorithm,
     Rating,
+    preview_note,
     restore_from_snapshot,
     review_note,
     snapshot_for_new_reminder,
@@ -30,7 +31,9 @@ def get_difficulty_tag(session: Session, difficulty: Difficulty) -> Tag:
     name = DIFFICULTY_TAGS[difficulty].name
     tag = session.exec(select(Tag).where(Tag.name == name)).one_or_none()
     if tag is None:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Difficulty tag missing")
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "Difficulty tag missing"
+        )
     return tag
 
 
@@ -43,7 +46,9 @@ def apply_difficulty(session: Session, note: Note, difficulty: Difficulty) -> Ta
 
 def get_project(session: Session, project_id: int) -> Project:
     project = session.exec(
-        select(Project).where(Project.id == project_id, col(Project.deleted_at).is_(None))
+        select(Project).where(
+            Project.id == project_id, col(Project.deleted_at).is_(None)
+        )
     ).one_or_none()
     if project is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
@@ -94,7 +99,9 @@ def _sort_key(sort: NoteSort):
         return (
             select(func.min(rank))
             .join(NoteTag, col(NoteTag.tag_id) == col(Tag.id))
-            .where(col(NoteTag.note_id) == col(Note.id), col(Tag.is_difficulty).is_(True))
+            .where(
+                col(NoteTag.note_id) == col(Note.id), col(Tag.is_difficulty).is_(True)
+            )
             .correlate(Note)
             .scalar_subquery()
         )
@@ -110,7 +117,9 @@ def _notes_page(
     limit: int,
     offset: int,
 ) -> NotePage:
-    total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
+    total = session.exec(
+        select(func.count()).select_from(Note).where(*conditions)
+    ).one()
     key = _sort_key(sort)
     direction = key.asc() if order == "asc" else key.desc()
     statement = (
@@ -152,7 +161,9 @@ def _list_conditions(
 
     if paused is not None:
         conditions.append(
-            col(Note.paused_at).is_not(None) if paused else col(Note.paused_at).is_(None)
+            col(Note.paused_at).is_not(None)
+            if paused
+            else col(Note.paused_at).is_(None)
         )
 
     if search:
@@ -170,11 +181,16 @@ def _list_conditions(
         start_utc = to_utc(start).replace(tzinfo=None)
         end_utc = to_utc(end).replace(tzinfo=None)
 
-        in_range = and_(col(Reminder.remind_at) >= start_utc, col(Reminder.remind_at) < end_utc)
+        in_range = and_(
+            col(Reminder.remind_at) >= start_utc, col(Reminder.remind_at) < end_utc
+        )
         if start_utc <= utcnow().replace(tzinfo=None) < end_utc:
             remind_at_filter = or_(
                 in_range,
-                and_(col(Reminder.remind_at) < start_utc, col(Reminder.reviewed_at).is_(None)),
+                and_(
+                    col(Reminder.remind_at) < start_utc,
+                    col(Reminder.reviewed_at).is_(None),
+                ),
             )
         else:
             remind_at_filter = in_range
@@ -189,7 +205,9 @@ def _list_conditions(
         )
     if tag_id is not None:
         conditions.append(
-            col(Note.id).in_(select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id))
+            col(Note.id).in_(
+                select(NoteTag.note_id).where(col(NoteTag.tag_id) == tag_id)
+            )
         )
     if project_id is not None:
         conditions.append(col(Note.project_id) == project_id)
@@ -222,7 +240,9 @@ def get_notes(
         paused=paused,
         status=status,
     )
-    return _notes_page(session, conditions, sort=sort, order=order, limit=limit, offset=offset)
+    return _notes_page(
+        session, conditions, sort=sort, order=order, limit=limit, offset=offset
+    )
 
 
 class NoteIds(BaseModel):
@@ -254,7 +274,9 @@ def get_note_ids(
         paused=paused,
         status=status,
     )
-    total = session.exec(select(func.count()).select_from(Note).where(*conditions)).one()
+    total = session.exec(
+        select(func.count()).select_from(Note).where(*conditions)
+    ).one()
     key = _sort_key(sort)
     direction = key.asc() if order == "asc" else key.desc()
     ids = session.exec(
@@ -285,7 +307,9 @@ def get_due_notes(
         )
         .exists(),
     ]
-    return _notes_page(session, conditions, sort="due", order="asc", limit=limit, offset=offset)
+    return _notes_page(
+        session, conditions, sort="due", order="asc", limit=limit, offset=offset
+    )
 
 
 @router.get("/{note_id}", response_model=NoteResponse)
@@ -311,11 +335,19 @@ class NewNoteBody(BaseModel):
 def create_note(body: NewNoteBody, session: SessionDep):
     tags: list[Tag] = []
     if body.tag_ids:
-        tags = list(session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all())
+        tags = list(
+            session.exec(select(Tag).where(col(Tag.id).in_(body.tag_ids))).all()
+        )
     tags = [tag for tag in tags if not tag.is_difficulty]
 
-    project = get_project(session, body.project_id) if body.project_id is not None else None
-    paused = body.paused if body.paused is not None else project is not None and project.paused
+    project = (
+        get_project(session, body.project_id) if body.project_id is not None else None
+    )
+    paused = (
+        body.paused
+        if body.paused is not None
+        else project is not None and project.paused
+    )
     note = build_note(
         name=body.name,
         content=body.content,
@@ -417,7 +449,9 @@ def detach_tag(note_id: int, tag_id: int, session: SessionDep):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
     target = next((tag for tag in note.tags if tag.id == tag_id), None)
     if target is not None and target.is_difficulty:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Difficulty tags can't be removed directly")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Difficulty tags can't be removed directly"
+        )
     note.tags = [tag for tag in note.tags if tag.id != tag_id]
     session.add(note)
     session.commit()
@@ -452,14 +486,18 @@ def set_note_project(note_id: int, body: SetProjectBody, session: SessionDep):
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
 
-    note.project = get_project(session, body.project_id) if body.project_id is not None else None
+    note.project = (
+        get_project(session, body.project_id) if body.project_id is not None else None
+    )
     session.add(note)
     session.commit()
     session.refresh(note)
     return note
 
 
-def _set_review_status(session: Session, note_id: int, review_status: ReviewStatus) -> Note:
+def _set_review_status(
+    session: Session, note_id: int, review_status: ReviewStatus
+) -> Note:
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
@@ -499,7 +537,9 @@ class RescheduleReminderBody(BaseModel):
 
 
 @router.patch("/{note_id}/reminders/pending", response_model=NoteResponse)
-def reschedule_pending_reminder(note_id: int, body: RescheduleReminderBody, session: SessionDep):
+def reschedule_pending_reminder(
+    note_id: int, body: RescheduleReminderBody, session: SessionDep
+):
     note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
@@ -526,6 +566,16 @@ class PatchReminderBody(BaseModel):
     rating: Rating | None = None
 
 
+@router.get("/{note_id}/intervals", response_model=dict[Rating, datetime.datetime])
+def get_note_intervals(note_id: int, session: SessionDep):
+    note = session.get(Note, note_id)
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    if not note.in_review or note.paused_at is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Note isn't in review")
+    return preview_note(note)
+
+
 @router.patch("/reminders/{reminder_id}/now", response_model=NoteResponse)
 def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: SessionDep):
     reminder = session.exec(
@@ -542,7 +592,9 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
 
     if body.action == "review":
         if body.rating is None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "rating is required to review")
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "rating is required to review"
+            )
 
         due_at = review_note(note, body.rating)
 

@@ -2,14 +2,15 @@ import datetime
 
 from db.models import Note, Reminder, utcnow
 
-from .fsrs_scheduler import new_card_json, review_fsrs
-from .sm2 import review_sm2
+from .fsrs_scheduler import new_card_json, preview_fsrs, review_fsrs
+from .sm2 import EASE_DELTA, review_sm2
 from .types import Algorithm, Rating
 
 __all__ = [
     "Algorithm",
     "Rating",
     "new_note_scheduling_state",
+    "preview_note",
     "restore_from_snapshot",
     "review_note",
     "snapshot_for_new_reminder",
@@ -51,3 +52,18 @@ def restore_from_snapshot(note: Note, reminder: Reminder) -> None:
         note.ease_factor = reminder.ease_factor
     if reminder.interval_days is not None:
         note.interval_days = reminder.interval_days
+
+
+def preview_note(note: Note) -> dict[Rating, datetime.datetime]:
+    if note.algorithm == "fsrs":
+        if note.fsrs_card is None:
+            raise ValueError(f"FSRS note {note.id} missing fsrs_card")
+        return preview_fsrs(note.fsrs_card)
+
+    previews: dict[Rating, datetime.datetime] = {}
+    for rating in EASE_DELTA:
+        _new_ease, new_interval = review_sm2(
+            note.ease_factor, note.interval_days, rating
+        )
+        previews[rating] = utcnow() + datetime.timedelta(days=new_interval)
+    return previews

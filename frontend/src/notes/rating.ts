@@ -8,6 +8,13 @@ export const RATING_OPTIONS: { value: Rating; label: string; caption: string }[]
   { value: "easy", label: "Easy", caption: "Effortless" },
 ];
 
+export const RATING_DOT_CLASSES: Record<Rating, string> = {
+  again: "bg-red-500",
+  hard: "bg-amber-500",
+  good: "bg-blue-500",
+  easy: "bg-emerald-500",
+};
+
 export const RATING_BADGE_CLASSES: Record<Rating, string> = {
   again: "bg-red-500/15 text-red-700 dark:text-red-400",
   hard: WARNING_TINT_CLASSES,

@@ -15,8 +15,13 @@ test.describe("review session", () => {
     await page.goto("/review");
     await expect(page.getByText(note.name, { exact: true })).toBeVisible();
     await expect(page.getByText("Recall me please.")).toBeVisible();
+    for (const rating of ["Again", "Hard", "Good", "Easy"]) {
+      await expect(
+        page.getByRole("button", { name: new RegExp(`${rating}.*(?:minutes?|hours?|days?)`) }),
+      ).toBeVisible();
+    }
 
-    await page.getByRole("button", { name: "Good" }).click();
+    await page.getByRole("button", { name: /Good/ }).click();
 
     await expect(page.getByText(note.name, { exact: true })).toHaveCount(0);
 

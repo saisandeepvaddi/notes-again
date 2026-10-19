@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNowStrict } from "date-fns";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useRateReminder } from "./hooks/useRateReminder";
 import type { Rating } from "./new-note-form/types";
@@ -7,8 +8,9 @@ import { RATING_BADGE_CLASSES, RATING_OPTIONS } from "./rating";
 
 interface RatingButtonsProps {
   reminderId: number;
-  onRated?: () => void;
-  onUndone?: () => void;
+  intervals?: Partial<Record<Rating, Date>>;
+  onRated?: (rating: Rating) => void;
+  onUndone?: (rating: Rating | undefined) => void;
   shortcuts?: boolean;
   className?: string;
 }
@@ -22,12 +24,20 @@ function isTypingTarget(target: EventTarget | null) {
 
 export function RatingButtons({
   reminderId,
+  intervals,
   onRated,
   onUndone,
   shortcuts = false,
   className,
 }: RatingButtonsProps) {
-  const { rate, isPending } = useRateReminder({ reminderId, onUndone });
+  const lastRated = useRef<Rating | undefined>(undefined);
+  const { rate, isPending } = useRateReminder({
+    reminderId,
+    onUndone: () => {
+      onUndone?.(lastRated.current);
+      lastRated.current = undefined;
+    },
+  });
   const submitting = useRef(false);
 
   const submit = async (rating: Rating) => {
@@ -35,7 +45,8 @@ export function RatingButtons({
     submitting.current = true;
     const rated = await rate(rating);
     if (rated) {
-      onRated?.();
+      lastRated.current = rating;
+      onRated?.(rating);
     } else {
       submitting.current = false;
     }
@@ -77,7 +88,11 @@ export function RatingButtons({
             </kbd>
           )}
           <span className="font-medium">{option.label}</span>
-          <span className="text-[10px] font-normal">{option.caption}</span>
+          <span className="text-[10px] font-normal">
+            {intervals?.[option.value]
+              ? formatDistanceToNowStrict(intervals[option.value] as Date)
+              : option.caption}
+          </span>
         </Button>
       ))}
     </div>

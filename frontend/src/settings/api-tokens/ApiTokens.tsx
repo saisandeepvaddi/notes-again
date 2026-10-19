@@ -86,9 +86,13 @@ export function ApiTokens() {
       </div>
 
       {tokens.length === 0 ? (
-        <p className="rounded-md border border-dashed p-4 text-xs text-muted-foreground">
-          No tokens yet.
-        </p>
+        <div className="flex flex-col items-start gap-2 rounded-md border border-dashed p-4">
+          <p className="text-sm font-medium">No tokens yet</p>
+          <p className="max-w-[60ch] text-xs text-muted-foreground">
+            Create a capture token for the browser extension, or a full-access token for the mobile
+            app. Tokens are shown once, so copy it when it appears.
+          </p>
+        </div>
       ) : (
         <ul className="divide-y rounded-md border">
           {tokens.map((token) => (

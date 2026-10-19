@@ -1,9 +1,22 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, TrashIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +26,7 @@ import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
 import { useNote } from "../hooks/useNote";
+import { useRestoreNote } from "../hooks/useRestoreNote";
 import { useSetNoteStatus } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
@@ -49,12 +63,15 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const navigate = useNavigate();
   const { mutateAsync: updateNote, isPending: isSaving } = useUpdateNote({ noteId });
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId });
+  const { mutateAsync: restoreNote } = useRestoreNote({ noteId });
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
   const { mutateAsync: setStatus, isPending: isChangingStatus } = useSetNoteStatus(noteId);
 
   const [name, setName] = useState(note.name);
+  useDocumentTitle(name.trim() || "Untitled note");
   const [editingTitle, setEditingTitle] = useState(false);
   const [content, setContent] = useState(note.content);
   const [justSaved, setJustSaved] = useState(false);
@@ -122,7 +139,30 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
   const remove = async () => {
     try {
       await deleteNote();
+      setDeleteOpen(false);
       navigate({ to: "/notes", search: lastNotesSearch() });
+      toast.add({
+        type: "success",
+        title: "Note moved to trash",
+        description: "Restore it from Trash anytime.",
+        timeout: 8000,
+        actionProps: {
+          children: "Undo",
+          onClick: async () => {
+            try {
+              await restoreNote();
+              navigate({ to: "/notes/$noteId", params: { noteId: String(noteId) } });
+            } catch (error) {
+              console.error("error:", error);
+              toast.add({
+                type: "error",
+                priority: "high",
+                description: "Couldn't restore the note",
+              });
+            }
+          },
+        },
+      });
     } catch (error) {
       console.error("error:", error);
       toast.add({ type: "error", priority: "high", description: "Failed to delete note" });
@@ -146,9 +186,33 @@ export function NoteDetail({ noteId }: NoteDetailProps) {
           <span className="text-xs text-muted-foreground">
             {isSaving ? "Saving…" : justSaved ? "Saved" : ""}
           </span>
-          <Button size="sm" variant="destructive" onClick={remove}>
-            <TrashIcon /> Delete
-          </Button>
+          <AlertDialog open={deleteOpen}>
+            <AlertDialogTrigger
+              render={
+                <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                  <TrashIcon /> Delete
+                </Button>
+              }
+            />
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogMedia>
+                  <TrashIcon />
+                </AlertDialogMedia>
+                <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  It leaves review and can be restored from Trash later. You can also undo this from
+                  the notification.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={remove}>
+                  Move to trash
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

@@ -438,10 +438,15 @@
 .mdxeditor [class*="_codeMirrorWrapper_"] {
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
   padding: 0.25rem 0.5rem 0.5rem;
   border: 0;
   border-radius: var(--radius-md);
   background-color: var(--muted);
+}
+
+.mdxeditor [class*="_codeMirrorWrapper_"] .cm-content {
+  white-space: pre;
 }
 
 .mdxeditor [class*="_codeMirrorToolbar_"] {

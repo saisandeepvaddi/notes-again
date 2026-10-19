@@ -2,7 +2,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { ReviewContainer } from "@/notes/review/ReviewContainer";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/review")({ component: Review });
+export const Route = createFileRoute("/review")({
+  head: () => ({ meta: [{ title: "Review · Notes Again" }] }),
+  component: Review,
+});
 
 function Review() {
   return (

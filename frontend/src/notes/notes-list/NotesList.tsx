@@ -161,6 +161,23 @@ function EmptyNotes() {
   );
 }
 
+function NoMatchingNotes({ onClear }: { onClear: () => void }) {
+  return (
+    <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed px-6 py-10">
+      <MagnifyingGlassIcon className="size-6 text-muted-foreground" />
+      <div className="flex flex-col gap-1">
+        <h2 className="font-reading text-base font-semibold tracking-tight">No notes match</h2>
+        <p className="max-w-[60ch] text-sm text-muted-foreground">
+          Try a different search, or clear the filters to see everything again.
+        </p>
+      </div>
+      <Button variant="outline" size="sm" onClick={onClear}>
+        Clear filters
+      </Button>
+    </div>
+  );
+}
+
 function NotesList({
   tagId,
   projectId,
@@ -327,7 +344,14 @@ function NotesList({
         <p className="text-destructive">Couldn't load notes.</p>
       ) : notes.length === 0 ? (
         tagId != null || projectId != null || noteDate != null || search || status ? (
-          <p className="text-muted-foreground">No notes match this filter.</p>
+          <NoMatchingNotes
+            onClear={() =>
+              navigate({
+                to: "/notes",
+                search: { sort, order, pageSize },
+              })
+            }
+          />
         ) : (
           <EmptyNotes />
         )

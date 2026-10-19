@@ -1,7 +1,10 @@
 import { NoteDetailContainer } from "@/notes/note-detail/NoteDetailContainer";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/notes/$noteId")({ component: NoteDetailPage });
+export const Route = createFileRoute("/notes/$noteId")({
+  head: () => ({ meta: [{ title: "Note · Notes Again" }] }),
+  component: NoteDetailPage,
+});
 
 function NoteDetailPage() {
   const { noteId } = Route.useParams();

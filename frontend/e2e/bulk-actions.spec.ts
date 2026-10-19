@@ -57,7 +57,7 @@ test.describe("bulk selection actions", () => {
     await expect(dialog.getByText("Move 2 notes to Trash?")).toBeVisible();
     await dialog.getByRole("button", { name: "Move to Trash" }).click();
 
-    await expect(page.getByText("No notes match this filter.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No notes match" })).toBeVisible();
 
     for (const note of [noteA, noteB]) {
       const response = await request.get(`${API_URL}/notes/${note.id}`);

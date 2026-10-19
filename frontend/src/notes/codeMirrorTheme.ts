@@ -2,6 +2,7 @@ import { EditorView } from "@codemirror/view";
 
 export const codeMirrorTheme = EditorView.theme({
   "&": {
+    maxWidth: "100%",
     backgroundColor: "transparent",
     color: "var(--foreground)",
   },

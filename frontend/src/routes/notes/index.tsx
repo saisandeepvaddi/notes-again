@@ -19,6 +19,7 @@ const resetPageOnFilterChange: SearchMiddleware<NotesSearch> = ({ search, next }
 };
 
 export const Route = createFileRoute("/notes/")({
+  head: () => ({ meta: [{ title: "All Notes · Notes Again" }] }),
   validateSearch: notesSearchSchema,
   search: { middlewares: [resetPageOnFilterChange] },
   onEnter: ({ search }) => rememberNotesSearch(search),

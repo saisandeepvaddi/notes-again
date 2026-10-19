@@ -114,7 +114,11 @@ export function TrashedNoteCard({ note, select }: TrashedNoteCardProps) {
               <AlertDialogCancel onClick={() => setOpen(false)} disabled={isDeleting}>
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction onClick={deleteForever} disabled={isDeleting}>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={deleteForever}
+                disabled={isDeleting}
+              >
                 Delete Forever
               </AlertDialogAction>
             </AlertDialogFooter>

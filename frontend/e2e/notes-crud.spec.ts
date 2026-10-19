@@ -38,6 +38,7 @@ test.describe("note lifecycle", () => {
     await expect(page.getByText("Edited content for the CRUD test.")).toBeVisible();
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Move to trash" }).click();
     await expect(page).toHaveURL(/\/notes$/);
     await expect(page.getByRole("link", { name: editedName, exact: true })).toHaveCount(0);
 
@@ -55,6 +56,7 @@ test.describe("note lifecycle", () => {
 
     await page.getByRole("link", { name: editedName, exact: true }).click();
     await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Move to trash" }).click();
     await page.goto("/trash");
     const trashCardAgain = page
       .locator('[data-slot="card"]')
@@ -63,6 +65,36 @@ test.describe("note lifecycle", () => {
     const dialog = page.getByRole("alertdialog");
     await dialog.getByRole("button", { name: "Delete Forever" }).click();
     await expect(page.getByRole("heading", { name: editedName, exact: true })).toHaveCount(0);
+  });
+
+  test("deleting a note can be undone from the notification", async ({ page, request }) => {
+    const name = uniqueName("Undo delete");
+    const note = await createNote(request, {
+      name,
+      content: "This note should return after undo.",
+    });
+
+    await page.goto(`/notes/${note.id}`);
+    await expect(page).toHaveTitle(`${name} · Notes Again`);
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog.getByText("Move this note to trash?")).toBeVisible();
+    await dialog.getByRole("button", { name: "Move to trash" }).click();
+
+    await expect(page).toHaveURL(/\/notes$/);
+    await expect(page.getByText("Note moved to trash", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Undo" }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/notes/${note.id}$`));
+    await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+    await expect(page.getByText("This note should return after undo.")).toBeVisible();
+  });
+
+  test("unknown routes show a useful not-found page", async ({ page }) => {
+    await page.goto("/there-is-no-page-here");
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to notes" })).toBeVisible();
+    await expect(page).toHaveTitle("Page not found · Notes Again");
   });
 
   test("search filters the notes list", async ({ page, request }) => {
@@ -74,6 +106,8 @@ test.describe("note lifecycle", () => {
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
 
     await page.getByLabel("Search notes").fill(uniqueName("no such note"));
-    await expect(page.getByText("No notes match this filter.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No notes match" })).toBeVisible();
+    await page.getByRole("button", { name: "Clear filters" }).click();
+    await expect(page.getByLabel("Search notes")).toHaveValue("");
   });
 });

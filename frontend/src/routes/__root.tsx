@@ -1,11 +1,8 @@
-import {
-  HeadContent,
-  Scripts,
-  createRootRouteWithContext,
-  type NotFoundRouteProps,
-} from "@tanstack/react-router";
+import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
 import Layout from "@/components/layout/Layout";
+import { NotFoundPage } from "@/components/NotFoundPage";
+import { RouteError } from "@/components/RouteError";
 import { Toaster } from "@/components/ui/toast";
 import { READING_FONT_INIT_SCRIPT } from "@/lib/readingFont";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -28,8 +25,12 @@ export const Route = createRootRouteWithContext<{
         title: "Notes Again",
       },
       {
+        name: "description",
+        content: "Spaced repetition for freeform markdown notes.",
+      },
+      {
         name: "theme-color",
-        content: "#7a8a5e",
+        content: "#227c45",
       },
     ],
     links: [
@@ -44,9 +45,8 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   shellComponent: RootDocument,
-  notFoundComponent: (props: NotFoundRouteProps) => {
-    return <>Not Found {props.routeId}</>;
-  },
+  notFoundComponent: () => <NotFoundPage />,
+  errorComponent: ({ error }) => <RouteError error={error} />,
 });
 
 function RootDocument() {

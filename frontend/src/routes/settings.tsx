@@ -4,6 +4,7 @@ import { settingsSearchSchema } from "@/settings/settingsSearch";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
+  head: () => ({ meta: [{ title: "Settings · Notes Again" }] }),
   validateSearch: settingsSearchSchema,
   component: SettingsPage,
 });

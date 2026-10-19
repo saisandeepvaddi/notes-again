@@ -2,7 +2,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { ImportContainer } from "@/imports/ImportContainer";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/import")({ component: ImportPage });
+export const Route = createFileRoute("/import")({
+  head: () => ({ meta: [{ title: "Import · Notes Again" }] }),
+  component: ImportPage,
+});
 
 function ImportPage() {
   return (

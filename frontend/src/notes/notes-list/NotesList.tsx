@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { isNone } from "@/utils/general";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { format, isToday, parseISO } from "date-fns";
 import {
+  CalendarBlankIcon,
   FolderIcon,
+  TagIcon,
   MagnifyingGlassIcon,
   NotebookIcon,
   SquaresFourIcon,
@@ -19,6 +20,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/useProjects";
+import { useTags } from "../hooks/useTags";
 import { NewNoteButton } from "../NewNoteButton";
 import { NoteCard } from "../NoteCard";
 import { REVIEW_STATUS_LABELS } from "../reviewStatus";
@@ -26,8 +28,8 @@ import { fetchNoteIds } from "../selection/fetchNoteIds";
 import { NotesSelectionActions } from "../selection/NotesSelectionActions";
 import { SelectionBar } from "../selection/SelectionBar";
 import { useNoteSelection } from "../selection/useNoteSelection";
-import { TagFilterBar } from "../TagFilterBar";
 import { VirtualNoteGrid } from "../VirtualNoteGrid";
+import { NotesFilters } from "./NotesFilters";
 import { NotesTable } from "./NotesTable";
 import {
   useInfiniteNotes,
@@ -53,52 +55,6 @@ interface NotesListProps {
   order?: NotesSortOrder;
   page?: number;
   pageSize?: number;
-}
-
-const STATUS_OPTIONS: { value: NotesStatus | undefined; label: string; title: string }[] = [
-  { value: undefined, label: "All", title: "All notes" },
-  { value: "active", label: REVIEW_STATUS_LABELS.active, title: "Notes in review" },
-  {
-    value: "paused",
-    label: REVIEW_STATUS_LABELS.paused,
-    title: "Notes kept out of review for now",
-  },
-  {
-    value: "note-only",
-    label: REVIEW_STATUS_LABELS["note-only"],
-    title: "Plain notes that aren't part of review",
-  },
-];
-
-function StatusFilter({
-  status,
-  onChange,
-}: {
-  status: NotesStatus | undefined;
-  onChange: (status: NotesStatus | undefined) => void;
-}) {
-  return (
-    <div
-      className="flex items-center gap-0.5 rounded-md border p-0.5"
-      role="group"
-      aria-label="Review status"
-    >
-      {STATUS_OPTIONS.map((option) => (
-        <Button
-          key={option.label}
-          type="button"
-          size="sm"
-          variant="ghost"
-          title={option.title}
-          aria-pressed={status === option.value}
-          className={cn(status === option.value && "bg-muted text-foreground")}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </Button>
-      ))}
-    </div>
-  );
 }
 
 interface ViewModeToggleProps {
@@ -194,6 +150,7 @@ function NotesList({
   const isMobile = useIsMobile();
   const effectiveMode = isMobile ? "grid" : mode;
   const { data: projects = [] } = useProjects();
+  const { data: tags } = useTags();
   const navigate = useNavigate();
   const setNoteDate = (next: Date | undefined) =>
     navigate({
@@ -283,57 +240,115 @@ function NotesList({
           : { ...prev, sort: undefined, order: undefined };
       },
     });
+  const clearFilters = () =>
+    navigate({ to: "/notes", search: { sort: prevSort, order: prevOrder, pageSize } });
+  const activeTag = tags?.find((tag) => tag.id === tagId);
+  const activeFilterChips = [
+    activeProject && {
+      key: "project",
+      icon: <FolderIcon className="size-3" />,
+      label: activeProject.name,
+      onRemove: () =>
+        navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: undefined }) }),
+    },
+    activeTag && {
+      key: "tag",
+      icon: <TagIcon className="size-3" />,
+      label: activeTag.name,
+      onRemove: () => navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId: undefined }) }),
+    },
+    status && {
+      key: "status",
+      icon: null,
+      label: REVIEW_STATUS_LABELS[status],
+      onRemove: () =>
+        navigate({ to: "/notes", search: (prev) => ({ ...prev, status: undefined }) }),
+    },
+    noteDate && {
+      key: "date",
+      icon: <CalendarBlankIcon className="size-3" />,
+      label: isToday(noteDate) ? "Today" : format(noteDate, "MMM d"),
+      onRemove: () => navigate({ to: "/notes", search: (prev) => ({ ...prev, date: undefined }) }),
+    },
+  ].filter((chip): chip is NonNullable<typeof chip> => Boolean(chip));
+  const prevSort = sort;
+  const prevOrder = order;
+
   return (
     <div className="flex flex-col gap-4">
-      {activeProject && (
-        <Badge variant="secondary" className="w-fit gap-1">
-          <FolderIcon className="size-3" />
-          {activeProject.name}
-          <button
-            type="button"
-            onClick={() =>
-              navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: undefined }) })
-            }
-            className="opacity-60 hover:opacity-100"
-          >
-            <XIcon className="size-2.5" />
-          </button>
-        </Badge>
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <TagFilterBar activeTagId={tagId} />
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => onSearchInput(e.target.value)}
-              placeholder="Search notes..."
-              className="h-8 w-40 pl-7 sm:w-56"
-              aria-label="Search notes"
-            />
-          </div>
-          {isNone(noteDate) ? (
-            <Button size="sm" variant="outline" onClick={() => setNoteDate(new Date())}>
-              Show only today
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" onClick={() => setNoteDate(undefined)}>
-              Show All (currently: {isToday(noteDate) ? "today" : format(noteDate, "MMM d")})
-            </Button>
-          )}
-          <StatusFilter
-            status={status}
-            onChange={(next) =>
-              navigate({
-                to: "/notes",
-                search: (prev) => ({ ...prev, status: next }),
-              })
-            }
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1 sm:flex-none">
+          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(e) => onSearchInput(e.target.value)}
+            placeholder="Search notes..."
+            className="h-8 w-full pr-7 pl-7 sm:w-64"
+            aria-label="Search notes"
           />
-          {!isMobile && <ViewModeToggle mode={mode} onChange={setMode} />}
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => onSearchInput("")}
+              aria-label="Clear search"
+              className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+            >
+              <XIcon className="size-3.5" />
+            </button>
+          )}
         </div>
+        <NotesFilters
+          status={status}
+          tagId={tagId}
+          onStatusChange={(next) =>
+            navigate({ to: "/notes", search: (prev) => ({ ...prev, status: next }) })
+          }
+          onTagChange={(next) =>
+            navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId: next }) })
+          }
+          onClear={() =>
+            navigate({
+              to: "/notes",
+              search: { sort: prevSort, order: prevOrder, pageSize },
+            })
+          }
+        />
+        <Button
+          size="sm"
+          variant={noteDate ? "secondary" : "outline"}
+          onClick={() => setNoteDate(noteDate ? undefined : new Date())}
+        >
+          <CalendarBlankIcon />
+          {noteDate ? (isToday(noteDate) ? "Today" : format(noteDate, "MMM d")) : "Today only"}
+        </Button>
+        {!isMobile && <ViewModeToggle mode={mode} onChange={setMode} />}
       </div>
+      {activeFilterChips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {activeFilterChips.map((chip) => (
+            <Badge key={chip.key} variant="secondary" className="gap-1">
+              {chip.icon}
+              {chip.label}
+              <button
+                type="button"
+                onClick={chip.onRemove}
+                aria-label={`Remove ${chip.label} filter`}
+                className="opacity-60 hover:opacity-100"
+              >
+                <XIcon className="size-2.5" />
+              </button>
+            </Badge>
+          ))}
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-muted-foreground"
+            onClick={clearFilters}
+          >
+            Clear all
+          </Button>
+        </div>
+      )}
       {isPending ? (
         effectiveMode === "table" ? (
           <NoteTableSkeleton />
@@ -348,7 +363,7 @@ function NotesList({
             onClear={() =>
               navigate({
                 to: "/notes",
-                search: { sort, order, pageSize },
+                search: { sort: prevSort, order: prevOrder, pageSize },
               })
             }
           />

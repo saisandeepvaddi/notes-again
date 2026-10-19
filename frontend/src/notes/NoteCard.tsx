@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FolderIcon, TrashIcon } from "@phosphor-icons/react";
-import { DIFFICULTY_BADGE_CLASSES, getDifficulty } from "./difficulty";
+
 import { useDeleteNote } from "./hooks/useDeleteNote";
 import type { NoteItem, Project, Tag } from "./new-note-form/types";
 import { NoteContent } from "./NoteContent";
@@ -35,7 +35,6 @@ export function NoteCard({ note, select }: NoteCardProps) {
   const visibleTags = regularTags.slice(0, MAX_VISIBLE_TAGS);
   const hiddenTags = regularTags.slice(MAX_VISIBLE_TAGS);
   const project = note.project ?? null;
-  const difficulty = getDifficulty(note.tags);
   const goToTag = (tag: Tag) =>
     navigate({ to: "/notes", search: (prev) => ({ ...prev, tagId: tag.id }) });
   const goToProject = (proj: Project) =>
@@ -93,7 +92,10 @@ export function NoteCard({ note, select }: NoteCardProps) {
           params={{ noteId: String(note.id) }}
           className="relative block h-full overflow-hidden"
         >
-          <NoteContent markdown={note.content} className="text-xs" />
+          <NoteContent
+            markdown={note.content}
+            className="text-xs [&_pre]:overflow-x-hidden [&_pre]:whitespace-pre-wrap [&_pre]:break-words"
+          />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card to-transparent" />
         </Link>
       </CardContent>
@@ -105,12 +107,6 @@ export function NoteCard({ note, select }: NoteCardProps) {
           compact
         />
         <div className="flex w-full flex-nowrap items-center gap-1.5 overflow-hidden">
-          <Badge
-            variant="outline"
-            className={cn("shrink-0 capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}
-          >
-            {difficulty}
-          </Badge>
           {project && (
             <Tooltip>
               <TooltipTrigger
@@ -137,7 +133,7 @@ export function NoteCard({ note, select }: NoteCardProps) {
                     className="min-w-0 shrink cursor-pointer"
                     onClick={() => goToTag(tag)}
                   >
-                    <span className="min-w-0 max-w-20 truncate">{tag.name}</span>
+                    <span className="min-w-0 max-w-28 truncate">{tag.name}</span>
                   </Badge>
                 }
               />

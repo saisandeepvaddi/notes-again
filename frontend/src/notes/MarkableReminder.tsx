@@ -19,7 +19,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
   const daysOverdue = Math.max(0, differenceInCalendarDays(new Date(), reminder.remind_at));
   const isOverdue = daysOverdue > 0;
   const isUpcoming = !isOverdue && isFuture(reminder.remind_at);
-  const overdueLabel = `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`;
+  const overdueLabel = `Due ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} ago`;
   const dueIn = formatDistanceToNowStrict(reminder.remind_at);
 
   return (
@@ -38,7 +38,7 @@ export function MarkableReminder({ reminder }: MarkableReminderProps) {
             ) : isUpcoming ? (
               <>
                 <ClockIcon />
-                Next review in {dueIn}
+                Next in {dueIn}
               </>
             ) : (
               <>

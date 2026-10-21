@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { cn } from "@/lib/utils";
 import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
@@ -41,13 +42,15 @@ import { MarkdownEditor } from "../MarkdownEditor";
 import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteReminderList } from "../NoteReminderList";
 import { NoteTitle } from "../NoteTitle";
-import { NoteMetadata } from "./NoteMetadata";
+import { NoteDetailsSheet } from "./NoteDetailsSheet";
 import { ProjectPicker } from "../ProjectPicker";
 import { REVIEW_STATUS_ICONS, ReviewStatusPicker } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 
 const AUTOSAVE_DELAY_MS = 800;
+
+type SaveState = "saved" | "unsaved" | "saving" | "error";
 
 const STATUS_TOASTS: Record<ReviewStatus, string> = {
   active: "In review: it comes up on its schedule",
@@ -82,7 +85,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
   useDocumentTitle(name.trim() || "Untitled note");
   const [editingTitle, setEditingTitle] = useState(false);
   const [content, setContent] = useState(note.content);
-  const [saveState, setSaveState] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
+  const [saveState, setSaveState] = useState<SaveState>("saved");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInFlight = useRef<Promise<unknown> | null>(null);
   const isFirstRender = useRef(true);
@@ -225,115 +228,114 @@ export function NoteDetail({ note }: NoteDetailProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="hidden md:inline-flex" />
-          <Link
-            to="/notes"
-            search={lastNotesSearch()}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
-          >
-            <ArrowLeftIcon className="size-3.5" /> All Notes
-          </Link>
-        </div>
-        <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
-          <PopoverTrigger
-            render={
-              <Button size="sm" variant="ghost" aria-label="More note actions">
-                <DotsThreeIcon /> More
-              </Button>
-            }
-          />
-          <PopoverContent align="end" className="w-40 p-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive"
-              onClick={() => {
-                setActionsOpen(false);
-                setDeleteOpen(true);
-              }}
-            >
-              <TrashIcon /> Move to trash
-            </Button>
-          </PopoverContent>
-        </Popover>
-        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <AlertDialogContent size="sm">
-            <AlertDialogHeader>
-              <AlertDialogMedia>
-                <TrashIcon />
-              </AlertDialogMedia>
-              <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
-              <AlertDialogDescription>
-                It leaves review and can be restored from Trash later. You can also undo this from
-                the notification.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={remove}>
-                Move to trash
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+    <div className="flex h-full max-w-4xl flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="hidden md:inline-flex" />
+        <Link
+          to="/notes"
+          search={lastNotesSearch()}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+        >
+          <ArrowLeftIcon className="size-3.5" /> All Notes
+        </Link>
       </div>
 
-      <div className="flex flex-col gap-1">
-        {editingTitle ? (
-          <Input
-            autoFocus
-            value={name}
-            onChange={(e) => changeName(e.target.value)}
-            onBlur={() => setEditingTitle(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
-            }}
-            aria-label="Note title"
-            className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-xl font-semibold tracking-tight md:text-2xl dark:bg-input/30"
-          />
-        ) : (
-          <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
-            <button
-              type="button"
-              aria-label="Edit title"
-              onClick={() => setEditingTitle(true)}
-              className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          {editingTitle ? (
+            <Input
+              autoFocus
+              value={name}
+              onChange={(e) => changeName(e.target.value)}
+              onBlur={() => setEditingTitle(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+              }}
+              aria-label="Note title"
+              className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-xl leading-tight font-semibold tracking-tight md:text-2xl dark:bg-input/30"
             />
-            <h1 className="font-reading text-xl leading-tight font-semibold tracking-tight wrap-break-word md:text-2xl">
-              {name.trim() ? (
-                <NoteTitle title={name} />
-              ) : (
-                <span className="text-muted-foreground">Untitled</span>
-              )}
-            </h1>
-          </div>
-        )}
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground"
-        >
-          {saveState === "saving" ? (
-            <SpinnerGapIcon className="size-3.5 animate-spin" />
-          ) : saveState === "error" ? (
-            <WarningCircleIcon className="size-3.5 text-destructive" />
-          ) : saveState === "unsaved" ? (
-            <ClockIcon className="size-3.5" />
           ) : (
-            <CheckCircleIcon className="size-3.5" />
+            <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
+              <button
+                type="button"
+                aria-label="Edit title"
+                onClick={() => setEditingTitle(true)}
+                className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              />
+              <h1 className="font-reading text-xl leading-tight font-semibold tracking-tight wrap-break-word md:text-2xl">
+                {name.trim() ? (
+                  <NoteTitle title={name} />
+                ) : (
+                  <span className="text-muted-foreground">Untitled</span>
+                )}
+              </h1>
+            </div>
           )}
-          {saveState === "saving"
-            ? "Saving…"
-            : saveState === "error"
-              ? "Couldn't save. Your changes are still here."
-              : saveState === "unsaved"
-                ? "Unsaved changes"
-                : "Saved"}
+        </div>
+        <div className="mt-1 flex shrink-0 items-center gap-1 md:mt-1.5">
+          <span
+            role="status"
+            aria-live="polite"
+            title={SAVE_STATE_LABELS[saveState]}
+            className={cn(
+              "flex items-center gap-1 px-1 text-xs text-muted-foreground",
+              saveState === "error" && "text-destructive",
+            )}
+          >
+            <SaveStateIcon state={saveState} />
+            <span className="sr-only sm:not-sr-only">{SAVE_STATE_LABELS[saveState]}</span>
+          </span>
+          <NoteDetailsSheet note={note} />
+          <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="More note actions"
+                  title="More note actions"
+                >
+                  <DotsThreeIcon />
+                </Button>
+              }
+            />
+            <PopoverContent align="end" className="w-40 p-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full justify-start text-destructive hover:text-destructive"
+                onClick={() => {
+                  setActionsOpen(false);
+                  setDeleteOpen(true);
+                }}
+              >
+                <TrashIcon /> Move to trash
+              </Button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <TrashIcon />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It leaves review and can be restored from Trash later. You can also undo this from the
+              notification.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={remove}>
+              Move to trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -372,14 +374,25 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_14rem]">
-        <MarkdownEditor
-          markdown={content}
-          onChange={changeContent}
-          className="min-h-64 min-w-0 bg-card px-3 py-2 dark:bg-card md:min-h-80"
-        />
-        <NoteMetadata note={note} />
-      </div>
+      <MarkdownEditor
+        markdown={content}
+        onChange={changeContent}
+        className="min-h-64 flex-1 bg-card px-3 py-2 dark:bg-card"
+      />
     </div>
   );
+}
+
+const SAVE_STATE_LABELS: Record<SaveState, string> = {
+  saved: "Saved",
+  unsaved: "Unsaved changes",
+  saving: "Saving…",
+  error: "Couldn't save. Your changes are still here.",
+};
+
+function SaveStateIcon({ state }: { state: SaveState }) {
+  if (state === "saving") return <SpinnerGapIcon className="size-3.5 animate-spin" />;
+  if (state === "error") return <WarningCircleIcon className="size-3.5" />;
+  if (state === "unsaved") return <ClockIcon className="size-3.5" />;
+  return <CheckCircleIcon className="size-3.5" />;
 }

@@ -39,8 +39,8 @@ test.describe("review session", () => {
     expect(new Date(pending[0].remind_at).getTime()).toBeGreaterThan(Date.now());
 
     await page.goto(`/notes/${note.id}`);
-    const details = page.getByRole("complementary", { name: "Note details" });
-    await expect(details.getByText("Algorithm")).toBeVisible();
+    await page.getByRole("button", { name: "Note details" }).click();
+    const details = page.getByRole("dialog", { name: "Note details" });
     await expect(details.getByRole("heading", { name: "Review history" })).toBeVisible();
     await expect(details.getByText("Good", { exact: true })).toBeVisible();
   });

@@ -144,7 +144,7 @@ Two families with separate jobs: warm paper neutrals (~60–85°, very low chrom
 - **Note title** (`font-reading`, semibold, `text-sm` on cards and table rows up to `text-2xl` on the detail page): a note's own name wherever it appears.
 - **Note body** (`font-reading`, `text-sm`/relaxed via `.markdown-content`): rendered and edited markdown, with its own heading/list/code/table rules layered on the same tokens.
 - **Page title** (`font-heading` → Geist, semibold, `text-lg`, tight tracking): `PageHeader`, 404 and route-error titles.
-- **Section and chrome heading** (`font-heading`, medium–semibold, `text-sm`–`text-base`): dialog/sheet/alert/Card titles, sidebar sections such as the note page's Details panel, empty-state headings.
+- **Section and chrome heading** (`font-heading`, medium–semibold, `text-sm`–`text-base`): dialog/sheet/alert/Card titles, section headings such as the note details sheet's Review history, empty-state headings.
 - **Body** (Geist, `text-xs/relaxed` ≈ 12px/1.625): the default UI text size across nearly all controls and labels.
 - **Label** (Geist, `text-[0.625rem]`, medium): badges and the `xs` button size — the smallest text in the system.
 - **Mono** (Geist Mono, `text-xs`): code blocks, inline code, API token display, CodeMirror content, JSON import preview.

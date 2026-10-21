@@ -102,7 +102,7 @@
       },
       "heading": {
         "displayName": "Interface Heading",
-        "purpose": "Geist via font-heading. Page titles, dialog/sheet/card titles, section headings such as the note page's Details panel, empty-state headings."
+        "purpose": "Geist via font-heading. Page titles, dialog/sheet/card titles, section headings such as the note details sheet's Review history, empty-state headings."
       },
       "reading": {
         "displayName": "Reading Font",

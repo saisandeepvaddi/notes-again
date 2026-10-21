@@ -64,10 +64,12 @@ export function NoteReminderList({
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {canUndoLastReview && <UndoMarkableReminder reminder={lastReview} />}
-      {pendingBadge}
-      {pending && !paused && (
-        <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />
-      )}
+      <div className="flex items-center gap-1.5">
+        {pendingBadge}
+        {pending && !paused && (
+          <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />
+        )}
+      </div>
       {showHistory && reviewed.length > 0 && (
         <Popover>
           <PopoverTrigger

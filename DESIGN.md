@@ -4,9 +4,9 @@ description: A personal, self-hosted spaced-repetition tool for retaining techni
 colors:
   background: "oklch(0.985 0.004 85)"
   foreground: "oklch(0.21 0.012 60)"
-  card: "oklch(1 0 0)"
+  card: "oklch(0.995 0.002 85)"
   card-foreground: "oklch(0.21 0.012 60)"
-  popover: "oklch(1 0 0)"
+  popover: "oklch(0.995 0.002 85)"
   popover-foreground: "oklch(0.21 0.012 60)"
   primary: "oklch(0.52 0.12 152)"
   primary-foreground: "oklch(0.99 0.005 85)"
@@ -31,18 +31,28 @@ colors:
   chart-4: "oklch(0.48 0.1 152)"
   chart-5: "oklch(0.36 0.07 152)"
 typography:
+  sans:
+    fontFamily: "Geist Variable, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 500
+    lineHeight: 1.625
+  heading:
+    fontFamily: "Geist Variable, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 600
+    letterSpacing: "-0.025em"
+  reading:
+    fontFamily: "Geist Variable, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.625
   serif:
     fontFamily: "Literata Variable, serif"
     fontSize: "0.875rem"
     fontWeight: 400
-    lineHeight: 1.5
-  sans:
-    fontFamily: "Inter Variable, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 500
     lineHeight: 1.625
   mono:
-    fontFamily: "ui-monospace, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, monospace"
     fontSize: "0.75rem"
     fontWeight: 400
 rounded:
@@ -86,14 +96,14 @@ components:
 
 Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).
 
-Density is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually *reads as content* (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.
+Density is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. Type is one family, Geist, for the whole interface, with a single role split: the user's own notes (a note's title wherever it appears, and its body) render in the *reading font*, a per-device setting that is Geist by default or Literata serif for a more book-like page. Everything else — page titles, section headings, buttons, badges, dialogs, empty states — is interface and stays in Geist regardless of that setting.
 
 This was extracted from the shipped implementation (shadcn "base-mira" style, "olive" base color, Tailwind v4 + OKLCH tokens), not designed as a seed. No visual rejections have been confirmed by the user beyond what the implementation already embodies.
 
 **Key Characteristics:**
 - One accent hue (~152°, green ink) carries primary, ring, active nav, links, and selection; neutrals are warm paper (~85°), never tinted with the accent.
 - Flat-by-default: hairline ring (`ring-1 ring-foreground/10`) defines containers; shadow is reserved for floating overlays.
-- Serif (Literata) for anything read as content; sans (Inter) for interactive chrome — never mixed within the same role.
+- Geist for the interface; the reading font (Geist or Literata, chosen per device in Settings → Appearance) only for note titles and note bodies.
 - Dense, compact control sizing (28px controls, 12px base text) suited to a power-user tool used many times a day.
 - Pill-shaped badges carry all semantic status color (difficulty, recall rating, tags, project) rather than color on text or backgrounds elsewhere.
 
@@ -106,7 +116,7 @@ Two families with separate jobs: warm paper neutrals (~60–85°, very low chrom
 
 ### Neutral
 - **Warm Paper** (`oklch(0.985 0.004 85)`, background; dark mode warm charcoal `oklch(0.17 0.006 70)`): the page canvas.
-- **Sheet** (`oklch(1 0 0)`, card/popover; dark mode `oklch(0.205 0.007 70)` card, `0.225` popover): content surfaces sit one step lighter than the canvas, so cards lift off the page with no shadow.
+- **Sheet** (`oklch(0.995 0.002 85)`, card/popover, tinted just off pure white; dark mode `oklch(0.205 0.007 70)` card, `0.225` popover): content surfaces sit one step lighter than the canvas, so cards lift off the page with no shadow.
 - **Shelf** (`oklch(0.97 0.006 85)`, sidebar; dark mode `oklch(0.19 0.006 70)`): one step deeper than the canvas, so navigation recedes behind content.
 - **Ink** (`oklch(0.21 0.012 60)`, foreground; dark mode `oklch(0.95 0.006 85)`): primary text. Muted text is `oklch(0.52 0.012 70)` / dark `oklch(0.68 0.01 75)`.
 - **Quiet Fill** (`oklch(0.955 0.006 85)`, secondary/muted; dark mode `oklch(0.25 0.007 70)`): secondary buttons, code chips and blocks, table headers. Hover (`accent`) is a separate, slightly deeper step (`0.945 0.008 85`).
@@ -124,22 +134,23 @@ Two families with separate jobs: warm paper neutrals (~60–85°, very low chrom
 
 ## Typography
 
-**Serif Font:** Literata Variable (with `serif` fallback)
-**Sans Font:** Inter Variable (with `sans-serif` fallback)
-**Mono Font:** system monospace stack (no custom webfont)
+**Sans Font:** Geist Variable (`@fontsource-variable/geist`, with `sans-serif` fallback)
+**Reading Font:** `--reading-font`, Geist Variable by default, Literata Variable when the device picks "serif" (`data-reading-font="serif"` on `<html>`, stored in localStorage by `frontend/src/lib/readingFont.ts`)
+**Mono Font:** Geist Mono Variable (with `ui-monospace` fallback)
 
-**Character:** A working notebook, not a marketing page — Inter runs the interface itself (dense, neutral, functional), while Literata is reserved for anything the user is actually reading, giving note content a calmer, more book-like texture than the chrome around it.
+**Character:** A working notebook, not a marketing page. Geist runs the interface: dense, neutral, functional. The reading font is the user's own choice for their own writing, so note content can read either as clean sans or as a calmer serif page without the chrome around it changing.
 
 ### Hierarchy
-- **Content title** (Literata, semibold, `text-lg`/`text-sm` depending on context): page titles (`PageHeader`), a note's own name wherever it appears (card title, detail page, table row) — always serif, never the sans "heading" token.
-- **Chrome heading** (Inter via `font-heading` → `font-sans`, medium, `text-sm`): generic dialog/sheet/alert-dialog/Card titles — component chrome that isn't itself "content."
-- **Body** (Inter, `text-xs/relaxed` ≈ 12px/1.625): the default UI text size across nearly all controls and labels — deliberately small and dense.
-- **Note body** (Literata, `text-sm`/1.5 via `.markdown-content`): rendered markdown note content, with its own heading/list/code/table rules layered on the same tokens.
-- **Label** (Inter, `text-[0.625rem]`, medium): badges and the `xs` button size — the smallest text in the system.
-- **Mono** (system mono, `text-xs`): code blocks, inline code, API token display, CodeMirror editor content, JSON import preview.
+- **Note title** (`font-reading`, semibold, `text-sm` on cards and table rows up to `text-2xl` on the detail page): a note's own name wherever it appears.
+- **Note body** (`font-reading`, `text-sm`/relaxed via `.markdown-content`): rendered and edited markdown, with its own heading/list/code/table rules layered on the same tokens.
+- **Page title** (`font-heading` → Geist, semibold, `text-lg`, tight tracking): `PageHeader`, 404 and route-error titles.
+- **Section and chrome heading** (`font-heading`, medium–semibold, `text-sm`–`text-base`): dialog/sheet/alert/Card titles, sidebar sections such as the note page's Details panel, empty-state headings.
+- **Body** (Geist, `text-xs/relaxed` ≈ 12px/1.625): the default UI text size across nearly all controls and labels.
+- **Label** (Geist, `text-[0.625rem]`, medium): badges and the `xs` button size — the smallest text in the system.
+- **Mono** (Geist Mono, `text-xs`): code blocks, inline code, API token display, CodeMirror content, JSON import preview.
 
 ### Named Rules
-**The Reading Serif Rule.** Anything the user reads as content — a note's title wherever it appears, a page title, a section heading inside a content list — renders in Literata. Anything that is interface chrome around that content — dialogs, sheets, alerts, generic Card titles, buttons, badges — stays in Inter. Never mix the two within the same role.
+**The Reading Font Rule.** Only the user's notes take `font-reading`: a note's title and its body, wherever they appear (card, table row, detail page, review session, trash). Everything else is interface and takes Geist (`font-sans` / `font-heading`), so switching the reading font changes the notes and nothing around them. Never hard-code Literata (`font-serif`) on content; it exists for the Appearance setting's preview.
 
 ## Layout
 
@@ -186,16 +197,19 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 - **Focus:** border shifts to `ring` color plus a soft 2px ring at 30% opacity — never a glow or shadow-based focus treatment.
 - **Error:** border and ring shift to the destructive token at reduced opacity, mirroring the destructive button treatment.
 
+### Icons
+- **Phosphor** (`@phosphor-icons/react`, regular weight; shadcn `iconLibrary: "phosphor"`): one family across the app, sized by the parent control (`size-3.5` inline with `text-xs`, `size-2.5` inside badges, `size-6` for empty-state marks). No emoji or unicode glyphs as icons.
+
 ### Navigation
 - **Sidebar:** icon+label items, active state takes a `primary/10` green tint with `primary` text and `font-medium` (hover stays on the neutral `sidebar-accent`, so only the current location is green); collapses to icon-only with a smooth width/padding transition rather than disappearing. Nav is a flat list, not nested — this is a shallow, task-oriented app (Home, All Notes, Review, Import, Organize, Trash, Settings), not a deep IA.
 
 ### Markdown / Reading Surface
-- **`.markdown-content`:** the shared rendering rules for both the editor's content area and read-only note display — serif body text, a compact heading scale (h1–h6 all `mt`/`mb` in the 1–4 spacing range), muted-background code chips, and dual-theme syntax highlighting (Shiki) that only needs a dark-mode override since the light theme's inline colors already match.
+- **`.markdown-content`:** the shared rendering rules for both the editor's content area and read-only note display — reading-font body text, a compact heading scale (h1–h6 all `mt`/`mb` in the 1–4 spacing range), muted-background code chips, and dual-theme syntax highlighting (Shiki) that only needs a dark-mode override since the light theme's inline colors already match.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep every note-facing title (card, detail page, table row, page header) in Literata serif; keep every piece of surrounding interface chrome in Inter sans — see **The Reading Serif Rule**.
+- **Do** put note titles and note bodies in `font-reading` and everything else, page titles included, in Geist — see **The Reading Font Rule**.
 - **Do** define container depth with a hairline ring (`ring-1 ring-foreground/10`) at rest; add `shadow-md` only when a surface floats above unrelated page content (popover, select, combobox) — see **The Flat-By-Default Rule**.
 - **Do** carry semantic status (difficulty, recall rating, tags) as badge fills, not colored text or full-color solid backgrounds elsewhere.
 - **Do** keep surfaces and neutrals on warm paper and spend green only on action, selection, and focus — see **The Paper and Ink Rule**.
@@ -204,5 +218,5 @@ A single radius scale derived from one `--radius: 0.75rem` base (`sm` = ×0.6, `
 ### Don't:
 - **Don't** add a second UI accent hue; route new emphasis through green ink at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.
 - **Don't** put shadows on resting cards, dialogs, or the docked sidebar — that breaks the flat-by-default elevation model this system is built on.
-- **Don't** render note titles or page titles in the sans/heading font, or generic dialog/component chrome in serif — the two faces are role-locked, not a stylistic mix-and-match.
+- **Don't** hard-code a face on note content (`font-serif`, `font-sans`) or apply `font-reading` to interface chrome — the reading font is the user's setting for their notes only.
 - **Don't** treat this as a marketing/persuade surface (no hero imagery, no decorative illustration, no gradient-heavy visual language) — it's a personal utility tool and its restraint is intentional, not a placeholder waiting for "real" design.

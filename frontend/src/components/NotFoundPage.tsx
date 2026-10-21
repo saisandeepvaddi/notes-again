@@ -17,7 +17,7 @@ export function NotFoundPage({ title = "Page not found", detail }: NotFoundPageP
         <MapTrifoldIcon className="size-6" />
       </div>
       <div className="flex flex-col items-center gap-1.5">
-        <h1 className="font-reading text-xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="font-heading text-xl font-semibold tracking-tight">{title}</h1>
         <p className="max-w-[46ch] text-sm text-muted-foreground">
           {detail ?? "That page doesn't exist. It may have moved, or the link is out of date."}
         </p>

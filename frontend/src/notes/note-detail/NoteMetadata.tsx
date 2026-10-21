@@ -24,7 +24,7 @@ export function NoteMetadata({ note }: { note: NoteItem }) {
       aria-label="Note details"
     >
       <section className="flex flex-col gap-3">
-        <h2 className="font-reading text-sm font-semibold">Details</h2>
+        <h2 className="font-heading text-sm font-semibold">Details</h2>
         <dl className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2">
           <dt className="text-muted-foreground">Algorithm</dt>
           <dd className="text-right font-medium uppercase" title="Scheduling algorithm">
@@ -43,7 +43,7 @@ export function NoteMetadata({ note }: { note: NoteItem }) {
       <Separator />
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-reading text-sm font-semibold">Review history</h2>
+          <h2 className="font-heading text-sm font-semibold">Review history</h2>
           {reviews.length > 0 && (
             <span className="text-muted-foreground tabular-nums">{reviews.length}</span>
           )}

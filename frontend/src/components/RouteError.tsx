@@ -19,7 +19,7 @@ export function RouteError({ error }: RouteErrorProps) {
         <WarningOctagonIcon className="size-6" />
       </div>
       <div className="flex flex-col items-center gap-1.5">
-        <h1 className="font-reading text-xl font-semibold tracking-tight">This page broke</h1>
+        <h1 className="font-heading text-xl font-semibold tracking-tight">This page broke</h1>
         <p className="max-w-[52ch] text-sm text-muted-foreground">
           The note data could not be loaded. Try again, and if it keeps failing the backend may be
           down or the database may need a look.

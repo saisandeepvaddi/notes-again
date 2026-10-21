@@ -55,7 +55,7 @@ export function TrashList() {
       <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed px-6 py-10">
         <TrashIcon className="size-6 text-muted-foreground" />
         <div className="flex flex-col gap-1">
-          <h2 className="font-reading text-base font-semibold tracking-tight">Trash is empty</h2>
+          <h2 className="font-heading text-base font-semibold tracking-tight">Trash is empty</h2>
           <p className="max-w-[60ch] text-sm text-muted-foreground">
             Notes you delete land here first, so nothing is lost by accident.
           </p>

@@ -122,7 +122,7 @@ function NoMatchingNotes({ onClear }: { onClear: () => void }) {
     <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed px-6 py-10">
       <MagnifyingGlassIcon className="size-6 text-muted-foreground" />
       <div className="flex flex-col gap-1">
-        <h2 className="font-reading text-base font-semibold tracking-tight">No notes match</h2>
+        <h2 className="font-heading text-base font-semibold tracking-tight">No notes match</h2>
         <p className="max-w-[60ch] text-sm text-muted-foreground">
           Try a different search, or clear the filters to see everything again.
         </p>

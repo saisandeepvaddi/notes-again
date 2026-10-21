@@ -1,82 +1,82 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-22T06:42:40Z",
+  "generatedAt": "2026-10-21T19:20:08Z",
   "title": "Design System: Notes Again",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
-        "displayName": "Moss Green",
-        "canonical": "oklch(0.5 0.1 150)",
+        "displayName": "Green Ink",
+        "canonical": "oklch(0.52 0.12 152)",
         "tonalRamp": [
-          "oklch(0.20 0.06 150)",
-          "oklch(0.30 0.08 150)",
-          "oklch(0.40 0.09 150)",
-          "oklch(0.50 0.10 150)",
-          "oklch(0.60 0.10 150)",
-          "oklch(0.70 0.09 150)",
-          "oklch(0.85 0.06 150)",
-          "oklch(0.95 0.02 150)"
+          "oklch(0.20 0.07 152)",
+          "oklch(0.30 0.085 152)",
+          "oklch(0.40 0.099 152)",
+          "oklch(0.50 0.113 152)",
+          "oklch(0.60 0.113 152)",
+          "oklch(0.70 0.099 152)",
+          "oklch(0.85 0.077 152)",
+          "oklch(0.95 0.063 152)"
         ]
       },
       "background": {
         "role": "neutral",
         "displayName": "Warm Paper",
-        "canonical": "oklch(0.99 0.006 145)",
+        "canonical": "oklch(0.985 0.004 85)",
         "tonalRamp": [
-          "oklch(0.16 0.018 150)",
-          "oklch(0.26 0.02 148)",
-          "oklch(0.40 0.018 148)",
-          "oklch(0.55 0.015 146)",
-          "oklch(0.70 0.012 146)",
-          "oklch(0.85 0.008 145)",
-          "oklch(0.93 0.006 145)",
-          "oklch(0.99 0.006 145)"
+          "oklch(0.20 0.005 85)",
+          "oklch(0.30 0.006 85)",
+          "oklch(0.40 0.007 85)",
+          "oklch(0.50 0.008 85)",
+          "oklch(0.60 0.008 85)",
+          "oklch(0.70 0.007 85)",
+          "oklch(0.85 0.005 85)",
+          "oklch(0.95 0.004 85)"
         ]
       },
       "foreground": {
         "role": "neutral",
-        "displayName": "Near-Black Moss",
-        "canonical": "oklch(0.22 0.02 150)",
+        "displayName": "Ink",
+        "canonical": "oklch(0.21 0.012 60)",
         "tonalRamp": [
-          "oklch(0.22 0.02 150)",
-          "oklch(0.32 0.025 150)",
-          "oklch(0.42 0.028 150)",
-          "oklch(0.53 0.03 150)",
-          "oklch(0.66 0.025 150)",
-          "oklch(0.79 0.02 145)",
-          "oklch(0.90 0.015 140)",
-          "oklch(0.96 0.015 140)"
+          "oklch(0.20 0.007 60)",
+          "oklch(0.30 0.008 60)",
+          "oklch(0.40 0.01 60)",
+          "oklch(0.50 0.011 60)",
+          "oklch(0.60 0.011 60)",
+          "oklch(0.70 0.01 60)",
+          "oklch(0.85 0.008 60)",
+          "oklch(0.95 0.006 60)"
         ]
       },
       "secondary": {
         "role": "neutral",
-        "displayName": "Pale Sage",
-        "canonical": "oklch(0.96 0.015 140)",
+        "displayName": "Quiet Fill",
+        "canonical": "oklch(0.955 0.006 85)",
         "tonalRamp": [
-          "oklch(0.26 0.02 148)",
-          "oklch(0.36 0.02 145)",
-          "oklch(0.48 0.02 142)",
-          "oklch(0.6 0.018 140)",
-          "oklch(0.73 0.017 140)",
-          "oklch(0.85 0.016 140)",
-          "oklch(0.91 0.015 140)",
-          "oklch(0.96 0.015 140)"
+          "oklch(0.20 0.005 85)",
+          "oklch(0.30 0.006 85)",
+          "oklch(0.40 0.007 85)",
+          "oklch(0.50 0.008 85)",
+          "oklch(0.60 0.008 85)",
+          "oklch(0.70 0.007 85)",
+          "oklch(0.85 0.005 85)",
+          "oklch(0.95 0.004 85)"
         ]
       },
       "border": {
         "role": "neutral",
-        "displayName": "Soft Sage Line",
-        "canonical": "oklch(0.89 0.02 140)",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.905 0.007 85)",
         "tonalRamp": [
-          "oklch(1 0 0 / 12%)",
-          "oklch(0.4 0.02 140)",
-          "oklch(0.55 0.02 140)",
-          "oklch(0.7 0.02 140)",
-          "oklch(0.8 0.02 140)",
-          "oklch(0.85 0.02 140)",
-          "oklch(0.89 0.02 140)",
-          "oklch(0.94 0.015 140)"
+          "oklch(0.20 0.005 85)",
+          "oklch(0.30 0.006 85)",
+          "oklch(0.40 0.007 85)",
+          "oklch(0.50 0.008 85)",
+          "oklch(0.60 0.008 85)",
+          "oklch(0.70 0.007 85)",
+          "oklch(0.85 0.005 85)",
+          "oklch(0.95 0.004 85)"
         ]
       },
       "destructive": {
@@ -96,17 +96,25 @@
       }
     },
     "typographyMeta": {
-      "serif": {
-        "displayName": "Content Serif",
-        "purpose": "Anything the user reads as content: note titles wherever they appear, page titles, section headings, and the rendered/edited note body itself. Never used for interface chrome."
-      },
       "sans": {
         "displayName": "Interface Sans",
-        "purpose": "All interactive chrome: buttons, badges, form controls, nav, generic dialog/sheet/card titles. The default UI voice."
+        "purpose": "Geist. All interface chrome: buttons, badges, form controls, nav, labels. The default UI voice."
+      },
+      "heading": {
+        "displayName": "Interface Heading",
+        "purpose": "Geist via font-heading. Page titles, dialog/sheet/card titles, section headings such as the note page's Details panel, empty-state headings."
+      },
+      "reading": {
+        "displayName": "Reading Font",
+        "purpose": "var(--reading-font): Geist by default, Literata when the device picks serif in Settings → Appearance. Only note titles and note bodies."
+      },
+      "serif": {
+        "displayName": "Literata",
+        "purpose": "The serif option behind the reading font, plus the Appearance setting's preview. Never hard-coded on content."
       },
       "mono": {
         "displayName": "Code Mono",
-        "purpose": "Code blocks, inline code, CodeMirror editor content, API token display, JSON import preview. System monospace stack, no custom webfont."
+        "purpose": "Geist Mono. Code blocks, inline code, CodeMirror content, API token display, JSON import preview."
       }
     },
     "shadows": [
@@ -122,7 +130,10 @@
       }
     ],
     "breakpoints": [
-      { "name": "md", "value": "768px" }
+      {
+        "name": "md",
+        "value": "768px"
+      }
     ]
   },
   "components": [
@@ -130,17 +141,17 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Default button variant — moss-green fill, used for the main affirmative action on a page or dialog.",
+      "description": "Default button variant — green-ink fill, used for the main affirmative action on a page or dialog.",
       "html": "<button class=\"ds-btn ds-btn-primary\">Save note</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn-primary { background: var(--primary, oklch(0.5 0.1 150)); color: var(--primary-foreground, oklch(0.99 0.01 140)); } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, oklch(0.5 0.1 150)) 80%, transparent); } .ds-btn-primary:focus-visible { border-color: var(--ring, oklch(0.62 0.09 150)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.09 150)) 30%, transparent); outline: none; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn-primary { background: var(--primary, oklch(0.52 0.12 152)); color: var(--primary-foreground, oklch(0.99 0.005 85)); } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 80%, transparent); } .ds-btn-primary:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Pale-sage fill for secondary actions alongside a primary button.",
+      "description": "Quiet-fill button for secondary actions alongside a primary button.",
       "html": "<button class=\"ds-btn ds-btn-secondary\">Cancel</button>",
-      "css": ".ds-btn-secondary { background: var(--secondary, oklch(0.96 0.015 140)); color: var(--secondary-foreground, oklch(0.32 0.03 150)); } .ds-btn-secondary:hover { background: color-mix(in oklch, var(--secondary, oklch(0.96 0.015 140)), var(--foreground, oklch(0.22 0.02 150)) 5%); }"
+      "css": ".ds-btn-secondary { background: var(--secondary, oklch(0.955 0.006 85)); color: var(--secondary-foreground, oklch(0.52 0.12 152)); } .ds-btn-secondary:hover { background: color-mix(in oklch, var(--secondary, oklch(0.955 0.006 85)), var(--foreground, oklch(0.21 0.012 60)) 5%); }"
     },
     {
       "name": "Outline Button",
@@ -148,7 +159,7 @@
       "refersTo": "button-outline",
       "description": "Transparent at rest, filled with a muted tint on hover — the low-emphasis action button.",
       "html": "<button class=\"ds-btn ds-btn-outline\">Discard</button>",
-      "css": ".ds-btn-outline { background: transparent; color: var(--foreground, oklch(0.22 0.02 150)); border-color: var(--border, oklch(0.89 0.02 140)); } .ds-btn-outline:hover { background: color-mix(in oklch, var(--input, oklch(0.89 0.02 140)), transparent 50%); }"
+      "css": ".ds-btn-outline { background: transparent; color: var(--foreground, oklch(0.21 0.012 60)); border-color: var(--border, oklch(0.905 0.007 85)); } .ds-btn-outline:hover { background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 50%); }"
     },
     {
       "name": "Destructive Button",
@@ -172,7 +183,7 @@
       "refersTo": "badge-outline",
       "description": "Interactive tag/project chip — outline variant, clickable, filters the note list on click.",
       "html": "<span class=\"ds-badge ds-badge-outline\">dsa</span>",
-      "css": ".ds-badge-outline { background: color-mix(in oklch, var(--input, oklch(0.89 0.02 140)), transparent 80%); color: var(--foreground, oklch(0.22 0.02 150)); border: 1px solid var(--border, oklch(0.89 0.02 140)); cursor: pointer; } .ds-badge-outline:hover { background: var(--muted, oklch(0.96 0.015 140)); }"
+      "css": ".ds-badge-outline { background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 80%); color: var(--foreground, oklch(0.21 0.012 60)); border: 1px solid var(--border, oklch(0.905 0.007 85)); cursor: pointer; } .ds-badge-outline:hover { background: var(--muted, oklch(0.955 0.006 85)); }"
     },
     {
       "name": "Note Card",
@@ -180,7 +191,7 @@
       "refersTo": "card",
       "description": "Signature component: fixed-height card so grid rows stay aligned regardless of content length, with a stretched-link title and a bottom gradient fade signaling clipped overflow.",
       "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h2 class=\"ds-card-title\">Segment tree</h2></div><div class=\"ds-card-content\"><p>Range queries in O(log n)...</p><div class=\"ds-card-fade\"></div></div><div class=\"ds-card-footer\"><span class=\"ds-badge ds-badge-hard\">Hard</span></div></div>",
-      "css": ".ds-card { display: flex; flex-direction: column; height: 18rem; overflow: hidden; border-radius: 0.75rem; background: var(--card, oklch(0.99 0.006 145)); box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground, oklch(0.22 0.02 150)), transparent 90%); font-size: 0.75rem; line-height: 1.625; } .ds-card-header { padding: 1rem 1rem 0; } .ds-card-title { font-family: 'Literata Variable', serif; font-weight: 600; font-size: 0.875rem; color: var(--foreground, oklch(0.22 0.02 150)); } .ds-card-content { position: relative; flex: 1; min-height: 0; padding: 0.5rem 1rem; overflow: hidden; font-family: 'Literata Variable', serif; } .ds-card-fade { position: absolute; inset-inline: 0; bottom: 0; height: 2rem; background: linear-gradient(to top, var(--card, oklch(0.99 0.006 145)), transparent); pointer-events: none; } .ds-card-footer { padding: 0 1rem 1rem; display: flex; gap: 0.375rem; }"
+      "css": ".ds-card { display: flex; flex-direction: column; height: 18rem; overflow: hidden; border-radius: 0.75rem; background: var(--card, oklch(0.995 0.002 85)); box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground, oklch(0.21 0.012 60)), transparent 90%); font-size: 0.75rem; line-height: 1.625; } .ds-card-header { padding: 1rem 1rem 0; } .ds-card-title { font-family: var(--reading-font, 'Geist Variable', sans-serif); font-weight: 600; font-size: 0.875rem; color: var(--foreground, oklch(0.21 0.012 60)); } .ds-card-content { position: relative; flex: 1; min-height: 0; padding: 0.5rem 1rem; overflow: hidden; font-family: var(--reading-font, 'Geist Variable', sans-serif); } .ds-card-fade { position: absolute; inset-inline: 0; bottom: 0; height: 2rem; background: linear-gradient(to top, var(--card, oklch(0.995 0.002 85)), transparent); pointer-events: none; } .ds-card-footer { padding: 0 1rem 1rem; display: flex; gap: 0.375rem; }"
     },
     {
       "name": "Text Input",
@@ -188,43 +199,55 @@
       "refersTo": "input",
       "description": "Compact translucent-fill input, the default form control across the app.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search notes…\" />",
-      "css": ".ds-input { height: 1.75rem; width: 100%; padding: 0.125rem 0.5rem; border-radius: 0.6rem; border: 1px solid var(--input, oklch(0.89 0.02 140)); background: color-mix(in oklch, var(--input, oklch(0.89 0.02 140)), transparent 80%); font-size: 0.875rem; color: var(--foreground, oklch(0.22 0.02 150)); outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.53 0.03 150)); } .ds-input:focus-visible { border-color: var(--ring, oklch(0.62 0.09 150)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.09 150)) 30%, transparent); }"
+      "css": ".ds-input { height: 1.75rem; width: 100%; padding: 0.125rem 0.5rem; border-radius: 0.6rem; border: 1px solid var(--input, oklch(0.905 0.007 85)); background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 80%); font-size: 0.875rem; color: var(--foreground, oklch(0.21 0.012 60)); outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.52 0.012 70)); } .ds-input:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); }"
     },
     {
       "name": "Sidebar Nav Item",
       "kind": "nav",
       "refersTo": "sidebar-menu-button",
-      "description": "Flat icon+label nav item; active state fills with the sage sidebar-accent token and adds medium weight.",
+      "description": "Flat icon+label nav item; hover uses the neutral sidebar-accent, the active item takes a primary/10 green tint with primary text and medium weight.",
       "html": "<a class=\"ds-nav-item ds-nav-item-active\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/><polyline points=\"9 22 9 12 15 12 15 22\"/></svg><span>Home</span></a>",
-      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; color: var(--sidebar-foreground, oklch(0.22 0.02 150)); text-decoration: none; } .ds-nav-item:hover { background: var(--sidebar-accent, oklch(0.96 0.015 140)); } .ds-nav-item-active { background: var(--sidebar-accent, oklch(0.96 0.015 140)); font-weight: 500; color: var(--sidebar-accent-foreground, oklch(0.32 0.03 150)); }"
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; color: var(--sidebar-foreground, oklch(0.21 0.012 60)); text-decoration: none; } .ds-nav-item:hover { background: var(--sidebar-accent, oklch(0.955 0.006 85)); } .ds-nav-item-active { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 10%, transparent); font-weight: 500; color: var(--primary, oklch(0.52 0.12 152)); }"
     }
   ],
   "narrative": {
     "northStar": "The Field Notebook",
-    "overview": "Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact, olive-and-paper working notebook rather than a SaaS dashboard. The neutral scale is never true gray — background, borders, and text all carry a faint moss tint from the same ~150° hue family that the primary accent lives in, so the whole interface feels like it was cut from one material instead of a gray shell with a brand color dropped on top. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).\n\nDensity is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. The one real extravagance is typographic: everything the user actually reads as content (a note's title, a page's title, a section heading, the note body itself) switches to a serif face, while every piece of interactive chrome (buttons, badges, dialogs, generic component titles) stays in the sans UI face. That split is the system's signature — it's what makes scanning a grid of technical notes feel like reading a notebook page instead of scrolling a form.",
+    "overview": "Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).\n\nDensity is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. Type is one family, Geist, for the whole interface, with a single role split: the user's own notes (a note's title wherever it appears, and its body) render in the *reading font*, a per-device setting that is Geist by default or Literata serif for a more book-like page. Everything else — page titles, section headings, buttons, badges, dialogs, empty states — is interface and stays in Geist regardless of that setting.",
     "keyCharacteristics": [
-      "One accent hue (~150°, moss/olive) carries primary, ring, and sidebar-primary; neutrals share its tint rather than being true gray.",
-      "Flat-by-default: hairline ring (ring-1 ring-foreground/10) defines containers; shadow is reserved for floating overlays.",
-      "Serif (Literata) for anything read as content; sans (Inter) for interactive chrome — never mixed within the same role.",
+      "One accent hue (~152°, green ink) carries primary, ring, active nav, links, and selection; neutrals are warm paper (~85°), never tinted with the accent.",
+      "Flat-by-default: hairline ring (`ring-1 ring-foreground/10`) defines containers; shadow is reserved for floating overlays.",
+      "Geist for the interface; the reading font (Geist or Literata, chosen per device in Settings → Appearance) only for note titles and note bodies.",
       "Dense, compact control sizing (28px controls, 12px base text) suited to a power-user tool used many times a day.",
       "Pill-shaped badges carry all semantic status color (difficulty, recall rating, tags, project) rather than color on text or backgrounds elsewhere."
     ],
     "rules": [
-      { "name": "The One Hue Rule", "body": "Every neutral and the primary accent share one hue family (~140–150°). A new UI color that isn't a deliberate semantic break (destructive red, difficulty/rating chips) should be a lightness/chroma step within that family, not a new hue.", "section": "colors" },
-      { "name": "The Reading Serif Rule", "body": "Anything the user reads as content — a note's title wherever it appears, a page title, a section heading inside a content list — renders in Literata. Anything that is interface chrome around that content — dialogs, sheets, alerts, generic Card titles, buttons, badges — stays in Inter. Never mix the two within the same role.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "A surface docked in the normal document flow (card, dialog, sidebar) gets a ring, never a shadow. Shadow is earned only by floating above unrelated content.", "section": "elevation" }
+      {
+        "name": "The Paper and Ink Rule",
+        "body": "Surfaces, lines, and text are warm paper neutrals; green is ink and appears only where it means action, selection, or focus. Never tint a surface or neutral with the accent hue, and never spend green on decoration. A new color that isn't a deliberate semantic break (destructive red, difficulty/rating chips) is either a paper step or a green step.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reading Font Rule",
+        "body": "Only the user's notes take `font-reading`: a note's title and its body, wherever they appear (card, table row, detail page, review session, trash). Everything else is interface and takes Geist (`font-sans` / `font-heading`), so switching the reading font changes the notes and nothing around them. Never hard-code Literata (`font-serif`) on content; it exists for the Appearance setting's preview.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "A surface docked in the normal document flow (card, dialog, sidebar) gets a ring, never a shadow. Shadow is earned only by floating above unrelated content.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do keep every note-facing title (card, detail page, table row, page header) in Literata serif; keep every piece of surrounding interface chrome in Inter sans.",
-      "Do define container depth with a hairline ring (ring-1 ring-foreground/10) at rest; add shadow-md only when a surface floats above unrelated page content (popover, select, combobox).",
+      "Do put note titles and note bodies in `font-reading` and everything else, page titles included, in Geist — see The Reading Font Rule.",
+      "Do define container depth with a hairline ring (`ring-1 ring-foreground/10`) at rest; add `shadow-md` only when a surface floats above unrelated page content (popover, select, combobox) — see The Flat-By-Default Rule.",
       "Do carry semantic status (difficulty, recall rating, tags) as badge fills, not colored text or full-color solid backgrounds elsewhere.",
-      "Do keep new UI colors within the existing ~140–150° hue family unless the need is a genuine semantic break like destructive red.",
-      "Do compensate for the deliberately compact (20–32px) control sizing with the (pointer: coarse) media query rather than growing controls for every user."
+      "Do keep surfaces and neutrals on warm paper and spend green only on action, selection, and focus — see The Paper and Ink Rule.",
+      "Do compensate for the deliberately compact (20–32px) control sizing with the `(pointer: coarse)` media query rather than growing controls for every user."
     ],
     "donts": [
-      "Don't add a second UI accent hue; route new emphasis through moss-green at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.",
+      "Don't add a second UI accent hue; route new emphasis through green ink at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.",
       "Don't put shadows on resting cards, dialogs, or the docked sidebar — that breaks the flat-by-default elevation model this system is built on.",
-      "Don't render note titles or page titles in the sans/heading font, or generic dialog/component chrome in serif — the two faces are role-locked, not a stylistic mix-and-match.",
+      "Don't hard-code a face on note content (`font-serif`, `font-sans`) or apply `font-reading` to interface chrome — the reading font is the user's setting for their notes only.",
       "Don't treat this as a marketing/persuade surface (no hero imagery, no decorative illustration, no gradient-heavy visual language) — it's a personal utility tool and its restraint is intentional, not a placeholder waiting for \"real\" design."
     ]
   }

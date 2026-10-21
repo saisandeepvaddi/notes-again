@@ -7,6 +7,12 @@ const contentEditor = (page: import("@playwright/test").Page) =>
 const noteDetailNameInput = (page: import("@playwright/test").Page) =>
   page.getByLabel("Note title");
 
+async function moveNoteToTrash(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "More note actions" }).click();
+  await page.getByRole("button", { name: "Move to trash", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Move to trash" }).click();
+}
+
 test.describe("note lifecycle", () => {
   test("create, edit, delete, restore, and permanently delete a note", async ({ page }) => {
     const name = uniqueName("CRUD note");
@@ -23,11 +29,12 @@ test.describe("note lifecycle", () => {
 
     await page.getByRole("link", { name, exact: true }).click();
     await expect(page).toHaveURL(/\/notes\/\d+$/);
-    await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "More note actions" })).toBeVisible();
     await expect(page.getByText("Original content for the CRUD test.")).toBeVisible();
 
     await page.getByRole("button", { name: "Edit title" }).click();
     await noteDetailNameInput(page).fill(editedName);
+    await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
     await contentEditor(page).click();
     await page.keyboard.press("Control+A");
     await page.keyboard.type("Edited content for the CRUD test.");
@@ -37,8 +44,7 @@ test.describe("note lifecycle", () => {
     await expect(page.getByRole("heading", { level: 1, name: editedName })).toBeVisible();
     await expect(page.getByText("Edited content for the CRUD test.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Move to trash" }).click();
+    await moveNoteToTrash(page);
     await expect(page).toHaveURL(/\/notes$/);
     await expect(page.getByRole("link", { name: editedName, exact: true })).toHaveCount(0);
 
@@ -55,8 +61,7 @@ test.describe("note lifecycle", () => {
     await expect(page.getByRole("link", { name: editedName, exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: editedName, exact: true }).click();
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Move to trash" }).click();
+    await moveNoteToTrash(page);
     await page.goto("/trash");
     const trashCardAgain = page
       .locator('[data-slot="card"]')
@@ -65,6 +70,24 @@ test.describe("note lifecycle", () => {
     const dialog = page.getByRole("alertdialog");
     await dialog.getByRole("button", { name: "Delete Forever" }).click();
     await expect(page.getByRole("heading", { name: editedName, exact: true })).toHaveCount(0);
+  });
+
+  test("leaving immediately after editing saves the note before navigating", async ({
+    page,
+    request,
+  }) => {
+    const name = uniqueName("Quick edit");
+    const note = await createNote(request, { name });
+    const editedName = `${name} updated`;
+
+    await page.goto(`/notes/${note.id}`);
+    await page.getByRole("button", { name: "Edit title" }).click();
+    await noteDetailNameInput(page).fill(editedName);
+    await page.locator("main").getByRole("link", { name: "All Notes" }).click();
+
+    await expect(page).toHaveURL(/\/notes$/);
+    const response = await request.get(`http://127.0.0.1:8210/api/notes/${note.id}`);
+    expect((await response.json()).name).toBe(editedName);
   });
 
   test("deleting a note can be undone from the notification", async ({ page, request }) => {
@@ -76,7 +99,8 @@ test.describe("note lifecycle", () => {
 
     await page.goto(`/notes/${note.id}`);
     await expect(page).toHaveTitle(`${name} · Notes Again`);
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await page.getByRole("button", { name: "More note actions" }).click();
+    await page.getByRole("button", { name: "Move to trash", exact: true }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog.getByText("Move this note to trash?")).toBeVisible();
     await dialog.getByRole("button", { name: "Move to trash" }).click();

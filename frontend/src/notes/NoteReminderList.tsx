@@ -15,6 +15,7 @@ interface NoteReminderListProps {
   reminders: NoteReminderType[];
   compact?: boolean;
   status?: ReviewStatus;
+  showHistory?: boolean;
 }
 
 export function NoteReminderList({
@@ -22,6 +23,7 @@ export function NoteReminderList({
   reminders,
   compact = false,
   status = "active",
+  showHistory = true,
 }: NoteReminderListProps) {
   if (status === "note-only") {
     return (
@@ -66,7 +68,7 @@ export function NoteReminderList({
       {pending && !paused && (
         <ReschedulePopover noteId={noteId} currentRemindAt={pending.remind_at} />
       )}
-      {reviewed.length > 0 && (
+      {showHistory && reviewed.length > 0 && (
         <Popover>
           <PopoverTrigger
             render={

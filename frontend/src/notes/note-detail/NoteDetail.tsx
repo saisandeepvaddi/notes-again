@@ -8,33 +8,40 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, TrashIcon } from "@phosphor-icons/react";
+import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowLeftIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  DotsThreeIcon,
+  SpinnerGapIcon,
+  TrashIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
 import { useDeleteNote } from "../hooks/useDeleteNote";
 import { useDetachTag } from "../hooks/useDetachTag";
-import type { NoteItem } from "../new-note-form/types";
+import type { NoteItem, Tag } from "../new-note-form/types";
 import { useRestoreNote } from "../hooks/useRestoreNote";
 import { useSetNoteStatus } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
-import type { Tag } from "../new-note-form/types";
 import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteReminderList } from "../NoteReminderList";
 import { NoteTitle } from "../NoteTitle";
+import { NoteMetadata } from "./NoteMetadata";
 import { ProjectPicker } from "../ProjectPicker";
 import { REVIEW_STATUS_ICONS, ReviewStatusPicker } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
@@ -61,10 +68,11 @@ interface NoteDetailProps {
 export function NoteDetail({ note }: NoteDetailProps) {
   const noteId = note.id;
   const navigate = useNavigate();
-  const { mutateAsync: updateNote, isPending: isSaving } = useUpdateNote({ noteId });
+  const { mutateAsync: updateNote } = useUpdateNote({ noteId });
   const { mutateAsync: deleteNote } = useDeleteNote({ noteId });
   const { mutateAsync: restoreNote } = useRestoreNote({ noteId });
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
@@ -74,9 +82,23 @@ export function NoteDetail({ note }: NoteDetailProps) {
   useDocumentTitle(name.trim() || "Untitled note");
   const [editingTitle, setEditingTitle] = useState(false);
   const [content, setContent] = useState(note.content);
-  const [justSaved, setJustSaved] = useState(false);
+  const [saveState, setSaveState] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlight = useRef<Promise<unknown> | null>(null);
   const isFirstRender = useRef(true);
+  const editVersion = useRef(0);
+  const leaveAfterDelete = useRef(false);
+
+  const changeName = (value: string) => {
+    editVersion.current += 1;
+    setSaveState("unsaved");
+    setName(value);
+  };
+  const changeContent = (value: string) => {
+    editVersion.current += 1;
+    setSaveState("unsaved");
+    setContent(value);
+  };
 
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const project = note.project ?? null;
@@ -86,35 +108,63 @@ export function NoteDetail({ note }: NoteDetailProps) {
     setName(note.name);
     setEditingTitle(false);
     setContent(note.content);
+    setSaveState("saved");
+    editVersion.current = 0;
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteId]);
+
+  const persist = async (version: number, draft: { name: string; content: string }) => {
+    try {
+      await saveInFlight.current?.catch(() => undefined);
+      if (version !== editVersion.current) return;
+      setSaveState("saving");
+      const request = updateNote(draft);
+      saveInFlight.current = request;
+      try {
+        await request;
+      } finally {
+        if (saveInFlight.current === request) saveInFlight.current = null;
+      }
+      if (version === editVersion.current) setSaveState("saved");
+    } catch (error) {
+      if (version === editVersion.current) setSaveState("error");
+      console.error("error:", error);
+      toast.add({ type: "error", priority: "high", description: "Failed to save note" });
+      throw error;
+    }
+  };
 
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-    }
-    saveTimer.current = setTimeout(async () => {
-      try {
-        await updateNote({ name, content });
-        setJustSaved(true);
-        setTimeout(() => setJustSaved(false), 1500);
-      } catch (error) {
-        console.error("error:", error);
-        toast.add({ type: "error", priority: "high", description: "Failed to save note" });
-      }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const version = editVersion.current;
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      void persist(version, { name, content }).catch(() => undefined);
     }, AUTOSAVE_DELAY_MS);
     return () => {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-      }
+      if (saveTimer.current) clearTimeout(saveTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, content]);
+
+  useBlocker({
+    shouldBlockFn: async () => {
+      if (leaveAfterDelete.current || saveState === "saved") return false;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      try {
+        await persist(editVersion.current, { name, content });
+        return false;
+      } catch {
+        return true;
+      }
+    },
+    enableBeforeUnload: saveState !== "saved",
+  });
 
   const toggleTag = (tag: Tag) => {
     if (note.tags.some((attached) => attached.id === tag.id)) {
@@ -138,7 +188,12 @@ export function NoteDetail({ note }: NoteDetailProps) {
 
   const remove = async () => {
     try {
+      if (saveState !== "saved") {
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        await persist(editVersion.current, { name, content });
+      }
       await deleteNote();
+      leaveAfterDelete.current = true;
       setDeleteOpen(false);
       navigate({ to: "/notes", search: lastNotesSearch() });
       toast.add({
@@ -170,8 +225,8 @@ export function NoteDetail({ note }: NoteDetailProps) {
   };
 
   return (
-    <div className="flex h-full max-w-4xl flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="hidden md:inline-flex" />
           <Link
@@ -182,75 +237,114 @@ export function NoteDetail({ note }: NoteDetailProps) {
             <ArrowLeftIcon className="size-3.5" /> All Notes
           </Link>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {isSaving ? "Saving…" : justSaved ? "Saved" : ""}
-          </span>
-          <AlertDialog open={deleteOpen}>
-            <AlertDialogTrigger
-              render={
-                <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
-                  <TrashIcon /> Delete
-                </Button>
-              }
-            />
-            <AlertDialogContent size="sm">
-              <AlertDialogHeader>
-                <AlertDialogMedia>
-                  <TrashIcon />
-                </AlertDialogMedia>
-                <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  It leaves review and can be restored from Trash later. You can also undo this from
-                  the notification.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={remove}>
-                  Move to trash
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+          <PopoverTrigger
+            render={
+              <Button size="sm" variant="ghost" aria-label="More note actions">
+                <DotsThreeIcon /> More
+              </Button>
+            }
+          />
+          <PopoverContent align="end" className="w-40 p-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full justify-start text-destructive hover:text-destructive"
+              onClick={() => {
+                setActionsOpen(false);
+                setDeleteOpen(true);
+              }}
+            >
+              <TrashIcon /> Move to trash
+            </Button>
+          </PopoverContent>
+        </Popover>
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <TrashIcon />
+              </AlertDialogMedia>
+              <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                It leaves review and can be restored from Trash later. You can also undo this from
+                the notification.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={remove}>
+                Move to trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
-      {editingTitle ? (
-        <Input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => setEditingTitle(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
-          }}
-          aria-label="Note title"
-          className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-lg font-semibold tracking-tight md:text-lg dark:bg-input/30"
-        />
-      ) : (
-        <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
-          <button
-            type="button"
-            aria-label="Edit title"
-            onClick={() => setEditingTitle(true)}
-            className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      <div className="flex flex-col gap-1">
+        {editingTitle ? (
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => changeName(e.target.value)}
+            onBlur={() => setEditingTitle(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+            }}
+            aria-label="Note title"
+            className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-xl font-semibold tracking-tight md:text-2xl dark:bg-input/30"
           />
-          <h1 className="font-reading text-lg leading-7 font-semibold tracking-tight wrap-break-word">
-            {name.trim() ? (
-              <NoteTitle title={name} />
-            ) : (
-              <span className="text-muted-foreground">Untitled</span>
-            )}
-          </h1>
+        ) : (
+          <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
+            <button
+              type="button"
+              aria-label="Edit title"
+              onClick={() => setEditingTitle(true)}
+              className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+            />
+            <h1 className="font-reading text-xl leading-tight font-semibold tracking-tight wrap-break-word md:text-2xl">
+              {name.trim() ? (
+                <NoteTitle title={name} />
+              ) : (
+                <span className="text-muted-foreground">Untitled</span>
+              )}
+            </h1>
+          </div>
+        )}
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground"
+        >
+          {saveState === "saving" ? (
+            <SpinnerGapIcon className="size-3.5 animate-spin" />
+          ) : saveState === "error" ? (
+            <WarningCircleIcon className="size-3.5 text-destructive" />
+          ) : saveState === "unsaved" ? (
+            <ClockIcon className="size-3.5" />
+          ) : (
+            <CheckCircleIcon className="size-3.5" />
+          )}
+          {saveState === "saving"
+            ? "Saving…"
+            : saveState === "error"
+              ? "Couldn't save. Your changes are still here."
+              : saveState === "unsaved"
+                ? "Unsaved changes"
+                : "Saved"}
         </div>
-      )}
+      </div>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <ReviewStatusPicker value={status} onChange={changeStatus} disabled={isChangingStatus} />
           {status !== "note-only" && (
-            <NoteReminderList noteId={note.id} reminders={note.reminders} status={status} />
+            <NoteReminderList
+              noteId={note.id}
+              reminders={note.reminders}
+              status={status}
+              showHistory={false}
+            />
           )}
         </div>
         {status !== "active" && (
@@ -275,17 +369,17 @@ export function NoteDetail({ note }: NoteDetailProps) {
           />
           <Separator orientation="vertical" className="h-4" />
           <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
-          <Separator orientation="vertical" className="h-4" />
-          <Badge
-            variant="outline"
-            className="text-[10px] tracking-wide text-muted-foreground uppercase"
-          >
-            {note.algorithm}
-          </Badge>
         </div>
       </div>
 
-      <MarkdownEditor markdown={content} onChange={setContent} className="flex-1 min-h-0" />
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_14rem]">
+        <MarkdownEditor
+          markdown={content}
+          onChange={changeContent}
+          className="min-h-64 min-w-0 bg-card px-3 py-2 dark:bg-card md:min-h-80"
+        />
+        <NoteMetadata note={note} />
+      </div>
     </div>
   );
 }

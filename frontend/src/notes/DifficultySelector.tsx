@@ -32,8 +32,13 @@ export function DifficultySelector({ noteId, difficulty }: DifficultySelectorPro
       <PopoverTrigger
         render={
           <Badge
+            render={<button type="button" />}
             variant="outline"
-            className={cn("cursor-pointer capitalize", DIFFICULTY_BADGE_CLASSES[difficulty])}
+            title="Change difficulty"
+            className={cn(
+              "cursor-pointer capitalize outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+              DIFFICULTY_BADGE_CLASSES[difficulty],
+            )}
           >
             {difficulty}
           </Badge>

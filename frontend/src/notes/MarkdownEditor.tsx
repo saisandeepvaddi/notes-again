@@ -68,7 +68,9 @@ export function MarkdownEditor({
           markdownShortcutPlugin(),
         ]}
         placeholder={placeholder}
-        onChange={onChange}
+        onChange={(value, initialMarkdownNormalize) => {
+          if (!initialMarkdownNormalize) onChange(value);
+        }}
       />
     </div>
   );

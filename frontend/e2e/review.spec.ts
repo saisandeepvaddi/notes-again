@@ -37,6 +37,12 @@ test.describe("review session", () => {
     expect(reviewed[0].rating).toBe("good");
     expect(pending).toHaveLength(1);
     expect(new Date(pending[0].remind_at).getTime()).toBeGreaterThan(Date.now());
+
+    await page.goto(`/notes/${note.id}`);
+    const details = page.getByRole("complementary", { name: "Note details" });
+    await expect(details.getByText("Algorithm")).toBeVisible();
+    await expect(details.getByRole("heading", { name: "Review history" })).toBeVisible();
+    await expect(details.getByText("Good", { exact: true })).toBeVisible();
   });
 
   test("a note not yet due does not appear in the review queue", async ({ page, request }) => {

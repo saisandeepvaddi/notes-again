@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-21T19:20:08Z",
+  "generatedAt": "2026-10-26T17:36:33Z",
   "title": "Design System: Notes Again",
   "extensions": {
     "colorMeta": {
@@ -9,14 +9,29 @@
         "displayName": "Green Ink",
         "canonical": "oklch(0.52 0.12 152)",
         "tonalRamp": [
-          "oklch(0.20 0.07 152)",
-          "oklch(0.30 0.085 152)",
-          "oklch(0.40 0.099 152)",
-          "oklch(0.50 0.113 152)",
-          "oklch(0.60 0.113 152)",
-          "oklch(0.70 0.099 152)",
-          "oklch(0.85 0.077 152)",
-          "oklch(0.95 0.063 152)"
+          "oklch(0.15 0.04 152)",
+          "oklch(0.25 0.06 152)",
+          "oklch(0.35 0.08 152)",
+          "oklch(0.45 0.1 152)",
+          "oklch(0.55 0.12 152)",
+          "oklch(0.70 0.09 152)",
+          "oklch(0.85 0.06 152)",
+          "oklch(0.95 0.04 152)"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Focus Ring",
+        "canonical": "oklch(0.62 0.11 152)",
+        "tonalRamp": [
+          "oklch(0.15 0.037 152)",
+          "oklch(0.25 0.055 152)",
+          "oklch(0.35 0.073 152)",
+          "oklch(0.45 0.092 152)",
+          "oklch(0.55 0.11 152)",
+          "oklch(0.70 0.083 152)",
+          "oklch(0.85 0.055 152)",
+          "oklch(0.95 0.037 152)"
         ]
       },
       "background": {
@@ -24,14 +39,44 @@
         "displayName": "Warm Paper",
         "canonical": "oklch(0.985 0.004 85)",
         "tonalRamp": [
-          "oklch(0.20 0.005 85)",
-          "oklch(0.30 0.006 85)",
-          "oklch(0.40 0.007 85)",
-          "oklch(0.50 0.008 85)",
-          "oklch(0.60 0.008 85)",
-          "oklch(0.70 0.007 85)",
-          "oklch(0.85 0.005 85)",
-          "oklch(0.95 0.004 85)"
+          "oklch(0.15 0.002 85)",
+          "oklch(0.25 0.003 85)",
+          "oklch(0.35 0.004 85)",
+          "oklch(0.45 0.005 85)",
+          "oklch(0.55 0.006 85)",
+          "oklch(0.70 0.005 85)",
+          "oklch(0.85 0.003 85)",
+          "oklch(0.95 0.002 85)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "oklch(0.995 0.002 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 85)",
+          "oklch(0.25 0.003 85)",
+          "oklch(0.35 0.004 85)",
+          "oklch(0.45 0.005 85)",
+          "oklch(0.55 0.006 85)",
+          "oklch(0.70 0.005 85)",
+          "oklch(0.85 0.003 85)",
+          "oklch(0.95 0.002 85)"
+        ]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Shelf",
+        "canonical": "oklch(0.97 0.006 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 85)",
+          "oklch(0.25 0.003 85)",
+          "oklch(0.35 0.004 85)",
+          "oklch(0.45 0.005 85)",
+          "oklch(0.55 0.006 85)",
+          "oklch(0.70 0.005 85)",
+          "oklch(0.85 0.003 85)",
+          "oklch(0.95 0.002 85)"
         ]
       },
       "foreground": {
@@ -39,14 +84,29 @@
         "displayName": "Ink",
         "canonical": "oklch(0.21 0.012 60)",
         "tonalRamp": [
-          "oklch(0.20 0.007 60)",
-          "oklch(0.30 0.008 60)",
-          "oklch(0.40 0.01 60)",
-          "oklch(0.50 0.011 60)",
-          "oklch(0.60 0.011 60)",
-          "oklch(0.70 0.01 60)",
-          "oklch(0.85 0.008 60)",
-          "oklch(0.95 0.006 60)"
+          "oklch(0.15 0.004 60)",
+          "oklch(0.25 0.006 60)",
+          "oklch(0.35 0.008 60)",
+          "oklch(0.45 0.01 60)",
+          "oklch(0.55 0.012 60)",
+          "oklch(0.70 0.009 60)",
+          "oklch(0.85 0.006 60)",
+          "oklch(0.95 0.004 60)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "oklch(0.52 0.012 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 70)",
+          "oklch(0.25 0.006 70)",
+          "oklch(0.35 0.008 70)",
+          "oklch(0.45 0.01 70)",
+          "oklch(0.55 0.012 70)",
+          "oklch(0.70 0.009 70)",
+          "oklch(0.85 0.006 70)",
+          "oklch(0.95 0.004 70)"
         ]
       },
       "secondary": {
@@ -54,14 +114,29 @@
         "displayName": "Quiet Fill",
         "canonical": "oklch(0.955 0.006 85)",
         "tonalRamp": [
-          "oklch(0.20 0.005 85)",
-          "oklch(0.30 0.006 85)",
-          "oklch(0.40 0.007 85)",
-          "oklch(0.50 0.008 85)",
-          "oklch(0.60 0.008 85)",
-          "oklch(0.70 0.007 85)",
-          "oklch(0.85 0.005 85)",
-          "oklch(0.95 0.004 85)"
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.004 85)",
+          "oklch(0.35 0.005 85)",
+          "oklch(0.45 0.007 85)",
+          "oklch(0.55 0.008 85)",
+          "oklch(0.70 0.006 85)",
+          "oklch(0.85 0.004 85)",
+          "oklch(0.95 0.003 85)"
+        ]
+      },
+      "accent": {
+        "role": "neutral",
+        "displayName": "Hover Step",
+        "canonical": "oklch(0.945 0.008 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.004 85)",
+          "oklch(0.35 0.005 85)",
+          "oklch(0.45 0.007 85)",
+          "oklch(0.55 0.008 85)",
+          "oklch(0.70 0.006 85)",
+          "oklch(0.85 0.004 85)",
+          "oklch(0.95 0.003 85)"
         ]
       },
       "border": {
@@ -69,14 +144,14 @@
         "displayName": "Hairline",
         "canonical": "oklch(0.905 0.007 85)",
         "tonalRamp": [
-          "oklch(0.20 0.005 85)",
-          "oklch(0.30 0.006 85)",
-          "oklch(0.40 0.007 85)",
-          "oklch(0.50 0.008 85)",
-          "oklch(0.60 0.008 85)",
-          "oklch(0.70 0.007 85)",
-          "oklch(0.85 0.005 85)",
-          "oklch(0.95 0.004 85)"
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.004 85)",
+          "oklch(0.35 0.005 85)",
+          "oklch(0.45 0.007 85)",
+          "oklch(0.55 0.008 85)",
+          "oklch(0.70 0.006 85)",
+          "oklch(0.85 0.004 85)",
+          "oklch(0.95 0.003 85)"
         ]
       },
       "destructive": {
@@ -84,55 +159,205 @@
         "displayName": "Clay Red",
         "canonical": "oklch(0.577 0.245 27.325)",
         "tonalRamp": [
-          "oklch(0.25 0.15 27)",
-          "oklch(0.35 0.18 27)",
-          "oklch(0.45 0.21 27)",
-          "oklch(0.577 0.245 27.325)",
-          "oklch(0.65 0.22 24)",
-          "oklch(0.704 0.191 22.216)",
-          "oklch(0.8 0.14 22)",
-          "oklch(0.9 0.06 22)"
+          "oklch(0.15 0.067 27.325)",
+          "oklch(0.25 0.1 27.325)",
+          "oklch(0.35 0.133 27.325)",
+          "oklch(0.45 0.167 27.325)",
+          "oklch(0.55 0.2 27.325)",
+          "oklch(0.70 0.15 27.325)",
+          "oklch(0.85 0.1 27.325)",
+          "oklch(0.95 0.067 27.325)"
+        ]
+      },
+      "status-teal": {
+        "role": "semantic",
+        "displayName": "Easy Teal",
+        "canonical": "oklch(0.704 0.14 182.503)",
+        "tonalRamp": [
+          "oklch(0.15 0.047 182.503)",
+          "oklch(0.25 0.07 182.503)",
+          "oklch(0.35 0.093 182.503)",
+          "oklch(0.45 0.117 182.503)",
+          "oklch(0.55 0.14 182.503)",
+          "oklch(0.70 0.105 182.503)",
+          "oklch(0.85 0.07 182.503)",
+          "oklch(0.95 0.047 182.503)"
+        ]
+      },
+      "status-amber": {
+        "role": "semantic",
+        "displayName": "Medium/Hard Amber",
+        "canonical": "oklch(0.769 0.188 70.08)",
+        "tonalRamp": [
+          "oklch(0.15 0.063 70.08)",
+          "oklch(0.25 0.094 70.08)",
+          "oklch(0.35 0.125 70.08)",
+          "oklch(0.45 0.157 70.08)",
+          "oklch(0.55 0.188 70.08)",
+          "oklch(0.70 0.141 70.08)",
+          "oklch(0.85 0.094 70.08)",
+          "oklch(0.95 0.063 70.08)"
+        ]
+      },
+      "status-red": {
+        "role": "semantic",
+        "displayName": "Hard/Again Red",
+        "canonical": "oklch(0.637 0.237 25.331)",
+        "tonalRamp": [
+          "oklch(0.15 0.079 25.331)",
+          "oklch(0.25 0.118 25.331)",
+          "oklch(0.35 0.158 25.331)",
+          "oklch(0.45 0.197 25.331)",
+          "oklch(0.55 0.237 25.331)",
+          "oklch(0.70 0.178 25.331)",
+          "oklch(0.85 0.119 25.331)",
+          "oklch(0.95 0.079 25.331)"
+        ]
+      },
+      "status-blue": {
+        "role": "semantic",
+        "displayName": "Good Blue",
+        "canonical": "oklch(0.623 0.214 259.815)",
+        "tonalRamp": [
+          "oklch(0.15 0.071 259.815)",
+          "oklch(0.25 0.107 259.815)",
+          "oklch(0.35 0.143 259.815)",
+          "oklch(0.45 0.178 259.815)",
+          "oklch(0.55 0.214 259.815)",
+          "oklch(0.70 0.161 259.815)",
+          "oklch(0.85 0.107 259.815)",
+          "oklch(0.95 0.071 259.815)"
+        ]
+      },
+      "status-emerald": {
+        "role": "semantic",
+        "displayName": "Easy/Success Emerald",
+        "canonical": "oklch(0.696 0.17 162.48)",
+        "tonalRamp": [
+          "oklch(0.15 0.057 162.48)",
+          "oklch(0.25 0.085 162.48)",
+          "oklch(0.35 0.113 162.48)",
+          "oklch(0.45 0.142 162.48)",
+          "oklch(0.55 0.17 162.48)",
+          "oklch(0.70 0.128 162.48)",
+          "oklch(0.85 0.085 162.48)",
+          "oklch(0.95 0.057 162.48)"
         ]
       }
     },
     "typographyMeta": {
-      "sans": {
-        "displayName": "Interface Sans",
-        "purpose": "Geist. All interface chrome: buttons, badges, form controls, nav, labels. The default UI voice."
+      "body": {
+        "displayName": "Interface Body",
+        "purpose": "Geist 0.75rem/1.625. Default size for controls, labels, menus and descriptions."
       },
-      "heading": {
-        "displayName": "Interface Heading",
-        "purpose": "Geist via font-heading. Page titles, dialog/sheet/card titles, section headings such as the note details sheet's Review history, empty-state headings."
+      "control": {
+        "displayName": "Control",
+        "purpose": "Geist 0.75rem medium. Button and tab labels."
       },
-      "reading": {
-        "displayName": "Reading Font",
-        "purpose": "var(--reading-font): Geist by default, Literata when the device picks serif in Settings → Appearance. Only note titles and note bodies."
+      "label": {
+        "displayName": "Label",
+        "purpose": "Geist 0.625rem medium. Badges, xs buttons, rating captions, keyboard hints."
       },
-      "serif": {
+      "page-title": {
+        "displayName": "Page Title",
+        "purpose": "Geist 1.125rem semibold, tight tracking. PageHeader; 1.25rem on 404 and route-error screens."
+      },
+      "chrome-title": {
+        "displayName": "Chrome Title",
+        "purpose": "Geist via font-heading, 0.875rem medium. Dialog, sheet and Card titles, section headings; empty-state headings at 1rem semibold."
+      },
+      "note-title": {
+        "displayName": "Note Title",
+        "purpose": "Reading font, semibold, tight tracking. 1.5rem on the detail page from md (1.25rem on phones and the review card), 0.875rem on cards."
+      },
+      "note-body": {
+        "displayName": "Note Body",
+        "purpose": "Reading font 0.875rem/1.625 via .markdown-content, with h1 1.5rem down to h4-h6 1rem."
+      },
+      "reading-serif": {
         "displayName": "Literata",
-        "purpose": "The serif option behind the reading font, plus the Appearance setting's preview. Never hard-coded on content."
+        "purpose": "The serif option behind --reading-font when a device picks serif; never hard-coded on content."
       },
       "mono": {
         "displayName": "Code Mono",
-        "purpose": "Geist Mono. Code blocks, inline code, CodeMirror content, API token display, JSON import preview."
+        "purpose": "Geist Mono 0.75rem. Code blocks, inline code (0.85em), CodeMirror, API tokens, JSON import preview."
       }
     },
     "shadows": [
       {
         "name": "floating-overlay",
         "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        "purpose": "Popover, select dropdown, and combobox dropdown — always paired with ring-1 ring-foreground/10. Never used on docked/inline surfaces like cards or dialogs."
+        "purpose": "shadow-md with the hairline ring: popovers, select and combobox dropdowns, the editor's code-language menu."
       },
       {
-        "name": "ambient-sidebar",
+        "name": "edge-overlay",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "shadow-lg: side sheets and toasts sliding in from an edge."
+      },
+      {
+        "name": "ambient",
         "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-        "purpose": "The sidebar's rare floating variant and the inset main-content area — a softer touch than the overlay shadow."
+        "purpose": "shadow-sm: the sidebar's floating and inset variants only."
+      },
+      {
+        "name": "hairline-ring",
+        "value": "0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)",
+        "purpose": "ring-1 ring-foreground/10: the edge of every docked surface (cards, dialogs, review card) in place of a shadow."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent)",
+        "purpose": "Focus on buttons, inputs, selects, checkboxes and switches, paired with a ring-colored border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "overlay-in",
+        "value": "100ms fade + zoom from 95%, 8px slide from the anchor side",
+        "purpose": "Popovers, selects, dialogs, tooltips opening and closing."
+      },
+      {
+        "name": "sheet-slide",
+        "value": "200ms ease-in-out, 2.5rem translate + fade",
+        "purpose": "Side sheets entering and leaving."
+      },
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "loading-reveal: skeletons fade in over 240ms after a 300ms delay so fast loads never flash."
+      },
+      {
+        "name": "progress",
+        "value": "300ms transform",
+        "purpose": "Review progress bar fill."
+      },
+      {
+        "name": "press",
+        "value": "translate-y 1px on :active",
+        "purpose": "Button press feedback (not on menu triggers)."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms durations under prefers-reduced-motion",
+        "purpose": "Everything except spinners and skeleton pulses."
       }
     ],
     "breakpoints": [
       {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
         "name": "md",
         "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "coarse-pointer",
+        "value": "@media (pointer: coarse) → 44px targets"
       }
     ]
   },
@@ -141,89 +366,102 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Default button variant — green-ink fill, used for the main affirmative action on a page or dialog.",
-      "html": "<button class=\"ds-btn ds-btn-primary\">Save note</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn-primary { background: var(--primary, oklch(0.52 0.12 152)); color: var(--primary-foreground, oklch(0.99 0.005 85)); } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 80%, transparent); } .ds-btn-primary:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; }"
+      "description": "Green-ink fill for the one affirmative action on a page or dialog (New Note, Save). Hover drops to 80% opacity.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z\"/></svg> New Note</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-btn svg { width: 0.875rem; height: 0.875rem; } .ds-btn-primary { background: var(--primary, oklch(0.52 0.12 152)); color: var(--primary-foreground, oklch(0.99 0.005 85)); } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 80%, transparent); }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Quiet-fill button for secondary actions alongside a primary button.",
-      "html": "<button class=\"ds-btn ds-btn-secondary\">Cancel</button>",
-      "css": ".ds-btn-secondary { background: var(--secondary, oklch(0.955 0.006 85)); color: var(--secondary-foreground, oklch(0.52 0.12 152)); } .ds-btn-secondary:hover { background: color-mix(in oklch, var(--secondary, oklch(0.955 0.006 85)), var(--foreground, oklch(0.21 0.012 60)) 5%); }"
-    },
-    {
-      "name": "Outline Button",
-      "kind": "button",
-      "refersTo": "button-outline",
-      "description": "Transparent at rest, filled with a muted tint on hover — the low-emphasis action button.",
-      "html": "<button class=\"ds-btn ds-btn-outline\">Discard</button>",
-      "css": ".ds-btn-outline { background: transparent; color: var(--foreground, oklch(0.21 0.012 60)); border-color: var(--border, oklch(0.905 0.007 85)); } .ds-btn-outline:hover { background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 50%); }"
+      "description": "Quiet-fill button for secondary actions and stateful toolbar controls such as the next-reminder chip. Hover mixes 5% ink into the fill.",
+      "html": "<button class=\"ds-btn ds-btn-secondary\">Export</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-btn svg { width: 0.875rem; height: 0.875rem; } .ds-btn-secondary { background: var(--secondary, oklch(0.955 0.006 85)); color: var(--secondary-foreground, oklch(0.3 0.012 60)); } .ds-btn-secondary:hover { background: color-mix(in oklch, var(--secondary, oklch(0.955 0.006 85)), var(--foreground, oklch(0.21 0.012 60)) 5%); }"
     },
     {
       "name": "Destructive Button",
       "kind": "button",
       "refersTo": "button-destructive",
-      "description": "Low-opacity red fill rather than a solid red button — restrained semantic color, matching the badge system's treatment.",
-      "html": "<button class=\"ds-btn ds-btn-destructive\">Delete note</button>",
-      "css": ".ds-btn-destructive { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)), transparent 90%); color: var(--destructive, oklch(0.577 0.245 27.325)); } .ds-btn-destructive:hover { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)), transparent 80%); }"
+      "description": "A 10% red tint with red text, never a solid red fill; 20% on hover. Used for Move to trash and permanent deletes.",
+      "html": "<button class=\"ds-btn ds-btn-destructive\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M216 48h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM96 40a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm96 168H64V64h128Z\"/></svg> Move to trash</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-btn svg { width: 0.875rem; height: 0.875rem; } .ds-btn-destructive { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 10%, transparent); color: var(--destructive, oklch(0.577 0.245 27.325)); } .ds-btn-destructive:hover { background: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); } .ds-btn-destructive:focus-visible { border-color: color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 40%, transparent); box-shadow: 0 0 0 2px color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); }"
     },
     {
-      "name": "Difficulty Badge",
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "button-ghost",
+      "description": "Hairline-framed group of ghost buttons with the selected segment in quiet fill. Review status (In review / Paused / Note only) and the grid/table view switch.",
+      "html": "<div class=\"ds-seg\" role=\"group\"><button class=\"ds-btn ds-seg-item ds-seg-on\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M24 128A72.08 72.08 0 0 1 96 56h96V40a8 8 0 0 1 13.66-5.66l24 24a8 8 0 0 1 0 11.32l-24 24A8 8 0 0 1 192 88V72H96a56.06 56.06 0 0 0-56 56 8 8 0 0 1-16 0Zm200-8a8 8 0 0 0-8 8 56.06 56.06 0 0 1-56 56H64v-16a8 8 0 0 0-13.66-5.66l-24 24a8 8 0 0 0 0 11.32l24 24A8 8 0 0 0 64 216v-16h96a72.08 72.08 0 0 0 72-72 8 8 0 0 0-8-8Z\"/></svg> In review</button><button class=\"ds-btn ds-seg-item\">Paused</button><button class=\"ds-btn ds-seg-item\">Note only</button></div>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.5rem; border-radius: 0.6rem; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.15s; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-btn svg { width: 0.875rem; height: 0.875rem; } .ds-seg { display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem; border: 1px solid var(--border, oklch(0.905 0.007 85)); border-radius: 0.6rem; } .ds-seg-item { height: 1.5rem; background: transparent; color: var(--foreground, oklch(0.21 0.012 60)); } .ds-seg-item:hover { background: var(--muted, oklch(0.955 0.006 85)); } .ds-seg-on { background: var(--muted, oklch(0.955 0.006 85)); }"
+    },
+    {
+      "name": "Status Badges",
       "kind": "chip",
-      "refersTo": "badge-primary",
-      "description": "Pill-shaped status chip — the system's primary carrier of semantic color. This instance shows the 'hard' difficulty variant; easy/medium/good/again follow the same shape with emerald/amber/blue/red tints respectively.",
-      "html": "<span class=\"ds-badge ds-badge-hard\">Hard</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; height: 1.25rem; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 500; white-space: nowrap; } .ds-badge-hard { background: color-mix(in oklch, oklch(0.63 0.2 25), transparent 85%); color: oklch(0.5 0.2 25); }"
+      "refersTo": "badge-secondary",
+      "description": "Pill chips carrying difficulty (teal/amber/red) and recall rating (red/amber/blue/emerald) as 15% tints with deep same-hue text — the Fifteen Percent Rule.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-badge ds-easy\">Easy</span><span class=\"ds-badge ds-medium\">Medium</span><span class=\"ds-badge ds-hard\">Hard</span><span class=\"ds-badge ds-good\">Good</span><span class=\"ds-badge ds-again\">Again</span></div>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.25rem; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.625rem; font-weight: 500; white-space: nowrap; } .ds-badge svg { width: 0.625rem; height: 0.625rem; } .ds-row { display: flex; gap: 0.375rem; flex-wrap: wrap; } .ds-easy { background: color-mix(in oklch, oklch(0.704 0.14 182.503) 15%, transparent); color: oklch(0.437 0.078 188.216); } .ds-medium { background: color-mix(in oklch, oklch(0.769 0.188 70.08) 15%, transparent); color: oklch(0.473 0.137 46.201); } .ds-hard { background: color-mix(in oklch, oklch(0.637 0.237 25.331) 15%, transparent); color: oklch(0.444 0.177 26.899); } .ds-good { background: color-mix(in oklch, oklch(0.623 0.214 259.815) 15%, transparent); color: oklch(0.488 0.243 264.376); } .ds-again { background: color-mix(in oklch, oklch(0.637 0.237 25.331) 15%, transparent); color: oklch(0.505 0.213 27.518); }"
     },
     {
-      "name": "Outline Badge (tag chip)",
+      "name": "Project and Tag Chips",
       "kind": "chip",
       "refersTo": "badge-outline",
-      "description": "Interactive tag/project chip — outline variant, clickable, filters the note list on click.",
-      "html": "<span class=\"ds-badge ds-badge-outline\">dsa</span>",
-      "css": ".ds-badge-outline { background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 80%); color: var(--foreground, oklch(0.21 0.012 60)); border: 1px solid var(--border, oklch(0.905 0.007 85)); cursor: pointer; } .ds-badge-outline:hover { background: var(--muted, oklch(0.955 0.006 85)); }"
+      "description": "Project as a quiet-fill badge with a folder icon, tags as outline badges; both truncate, filter the list on click and show the full name in a tooltip.",
+      "html": "<div class=\"ds-row\"><a class=\"ds-badge ds-chip-project\" href=\"#\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M216 72h-84.69L104 44.69A15.86 15.86 0 0 0 92.69 40H40a16 16 0 0 0-16 16v144.62A15.4 15.4 0 0 0 39.38 216h177.51A15.13 15.13 0 0 0 232 200.89V88a16 16 0 0 0-16-16ZM40 56h52.69l16 16H40Zm176 144H40V88h176Z\"/></svg><span class=\"ds-trunc\">Algorithms</span></a><a class=\"ds-badge ds-chip-tag\" href=\"#\"><span class=\"ds-trunc\">graphs</span></a><a class=\"ds-badge ds-chip-tag\" href=\"#\"><span class=\"ds-trunc\">shortest-path</span></a></div>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.25rem; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.625rem; font-weight: 500; white-space: nowrap; } .ds-badge svg { width: 0.625rem; height: 0.625rem; } .ds-row { display: flex; gap: 0.375rem; } .ds-chip-project { background: var(--secondary, oklch(0.955 0.006 85)); color: var(--secondary-foreground, oklch(0.3 0.012 60)); text-decoration: none; cursor: pointer; } .ds-chip-project:hover { background: color-mix(in oklch, var(--secondary, oklch(0.955 0.006 85)) 80%, transparent); } .ds-chip-tag { background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)) 20%, transparent); border-color: var(--border, oklch(0.905 0.007 85)); color: var(--foreground, oklch(0.21 0.012 60)); text-decoration: none; cursor: pointer; } .ds-chip-tag:hover { background: var(--muted, oklch(0.955 0.006 85)); color: var(--muted-foreground, oklch(0.52 0.012 70)); } .ds-trunc { max-width: 7rem; overflow: hidden; text-overflow: ellipsis; } .ds-badge:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 50%, transparent); outline: none; }"
     },
     {
       "name": "Note Card",
       "kind": "card",
-      "refersTo": "card",
-      "description": "Signature component: fixed-height card so grid rows stay aligned regardless of content length, with a stretched-link title and a bottom gradient fade signaling clipped overflow.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h2 class=\"ds-card-title\">Segment tree</h2></div><div class=\"ds-card-content\"><p>Range queries in O(log n)...</p><div class=\"ds-card-fade\"></div></div><div class=\"ds-card-footer\"><span class=\"ds-badge ds-badge-hard\">Hard</span></div></div>",
-      "css": ".ds-card { display: flex; flex-direction: column; height: 18rem; overflow: hidden; border-radius: 0.75rem; background: var(--card, oklch(0.995 0.002 85)); box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground, oklch(0.21 0.012 60)), transparent 90%); font-size: 0.75rem; line-height: 1.625; } .ds-card-header { padding: 1rem 1rem 0; } .ds-card-title { font-family: var(--reading-font, 'Geist Variable', sans-serif); font-weight: 600; font-size: 0.875rem; color: var(--foreground, oklch(0.21 0.012 60)); } .ds-card-content { position: relative; flex: 1; min-height: 0; padding: 0.5rem 1rem; overflow: hidden; font-family: var(--reading-font, 'Geist Variable', sans-serif); } .ds-card-fade { position: absolute; inset-inline: 0; bottom: 0; height: 2rem; background: linear-gradient(to top, var(--card, oklch(0.995 0.002 85)), transparent); pointer-events: none; } .ds-card-footer { padding: 0 1rem 1rem; display: flex; gap: 0.375rem; }"
+      "refersTo": "note-card",
+      "description": "Signature component: fixed 288px height, 260-320px wide, hairline ring instead of shadow, reading-font title and excerpt clipped under a fade to the card color, reminder control and chips in the footer.",
+      "html": "<article class=\"ds-card\"><header class=\"ds-card-header\"><h2 class=\"ds-card-title\">Dijkstra's shortest path</h2></header><div class=\"ds-card-content\"><p>Dijkstra finds shortest paths from a single source in a graph with <strong>non-negative</strong> edge weights.</p><p>Keep a min-heap of <code>(distance, node)</code>. Pop the closest unsettled node, then relax each outgoing edge.</p><div class=\"ds-card-fade\"></div></div><footer class=\"ds-card-footer\"><span class=\"ds-card-next\">Next in 2 days</span><span class=\"ds-badge ds-chip-project\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M216 72h-84.69L104 44.69A15.86 15.86 0 0 0 92.69 40H40a16 16 0 0 0-16 16v144.62A15.4 15.4 0 0 0 39.38 216h177.51A15.13 15.13 0 0 0 232 200.89V88a16 16 0 0 0-16-16ZM40 56h52.69l16 16H40Zm176 144H40V88h176Z\"/></svg>Algorithms</span></footer></article>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.25rem; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid transparent; font-family: 'Geist Variable', sans-serif; font-size: 0.625rem; font-weight: 500; white-space: nowrap; } .ds-badge svg { width: 0.625rem; height: 0.625rem; } .ds-card { display: flex; flex-direction: column; gap: 1rem; width: 17.5rem; height: 18rem; padding: 1rem 0; overflow: hidden; border-radius: 0.75rem; background: var(--card, oklch(0.995 0.002 85)); color: var(--foreground, oklch(0.21 0.012 60)); box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground, oklch(0.21 0.012 60)) 10%, transparent); font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; } .ds-card-header { padding: 0 1rem; } .ds-card-title { margin: 0; font-family: var(--reading-font, 'Geist Variable', sans-serif); font-size: 0.875rem; font-weight: 600; letter-spacing: -0.025em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-card:hover .ds-card-title { text-decoration: underline; } .ds-card-content { position: relative; flex: 1; min-height: 0; padding: 0 1rem; overflow: hidden; font-family: var(--reading-font, 'Geist Variable', sans-serif); } .ds-card-content p { margin: 0 0 0.5rem; } .ds-card-content code { padding: 0.125rem 0.375rem; border-radius: 4px; background: var(--muted, oklch(0.955 0.006 85)); font-family: 'Geist Mono Variable', ui-monospace, monospace; font-size: 0.85em; } .ds-card-fade { position: absolute; inset-inline: 0; bottom: 0; height: 2rem; background: linear-gradient(to top, var(--card, oklch(0.995 0.002 85)), transparent); pointer-events: none; } .ds-card-footer { display: flex; flex-direction: column; align-items: flex-start; gap: 0.375rem; padding: 0 1rem; } .ds-card-next { display: inline-flex; align-items: center; height: 1.5rem; padding: 0 0.5rem; border-radius: 0.6rem; background: var(--secondary, oklch(0.955 0.006 85)); font-weight: 500; } .ds-chip-project { background: var(--secondary, oklch(0.955 0.006 85)); color: var(--secondary-foreground, oklch(0.3 0.012 60)); }"
     },
     {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "Compact translucent-fill input, the default form control across the app.",
-      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search notes…\" />",
-      "css": ".ds-input { height: 1.75rem; width: 100%; padding: 0.125rem 0.5rem; border-radius: 0.6rem; border: 1px solid var(--input, oklch(0.905 0.007 85)); background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)), transparent 80%); font-size: 0.875rem; color: var(--foreground, oklch(0.21 0.012 60)); outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.52 0.012 70)); } .ds-input:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); }"
+      "description": "28px compact field with a translucent input fill and hairline border; focus shifts the border to the ring color with a 2px halo, invalid uses the destructive tint.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search notes…\" aria-label=\"Search notes\" />",
+      "css": ".ds-input { height: 1.75rem; width: 16rem; padding: 0.125rem 0.5rem; border-radius: 0.6rem; border: 1px solid var(--input, oklch(0.905 0.007 85)); background: color-mix(in oklch, var(--input, oklch(0.905 0.007 85)) 20%, transparent); color: var(--foreground, oklch(0.21 0.012 60)); font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; line-height: 1.625; caret-color: var(--primary, oklch(0.52 0.12 152)); outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.52 0.012 70)); } .ds-input:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-input[aria-invalid=true] { border-color: var(--destructive, oklch(0.577 0.245 27.325)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--destructive, oklch(0.577 0.245 27.325)) 20%, transparent); }"
     },
     {
       "name": "Sidebar Nav Item",
       "kind": "nav",
-      "refersTo": "sidebar-menu-button",
-      "description": "Flat icon+label nav item; hover uses the neutral sidebar-accent, the active item takes a primary/10 green tint with primary text and medium weight.",
-      "html": "<a class=\"ds-nav-item ds-nav-item-active\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/><polyline points=\"9 22 9 12 15 12 15 22\"/></svg><span>Home</span></a>",
-      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; color: var(--sidebar-foreground, oklch(0.21 0.012 60)); text-decoration: none; } .ds-nav-item:hover { background: var(--sidebar-accent, oklch(0.955 0.006 85)); } .ds-nav-item-active { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 10%, transparent); font-weight: 500; color: var(--primary, oklch(0.52 0.12 152)); }"
+      "refersTo": "sidebar-item-active",
+      "description": "Icon and label on the shelf color; hover is the neutral sidebar-accent, and only the current route turns green (primary/10 tint, primary text, medium weight). Due counts sit at the right in green.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M184 112a8 8 0 0 1-8 8h-64a8 8 0 0 1 0-16h64a8 8 0 0 1 8 8Zm-8 24h-64a8 8 0 0 0 0 16h64a8 8 0 0 0 0-16Zm48-88v160a16 16 0 0 1-16 16H48a16 16 0 0 1-16-16V48a16 16 0 0 1 16-16h160a16 16 0 0 1 16 16ZM48 208h24V48H48Zm160 0V48H88v160Z\"/></svg><span>All Notes</span></a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M24 128A72.08 72.08 0 0 1 96 56h96V40a8 8 0 0 1 13.66-5.66l24 24a8 8 0 0 1 0 11.32l-24 24A8 8 0 0 1 192 88V72H96a56.06 56.06 0 0 0-56 56 8 8 0 0 1-16 0Zm200-8a8 8 0 0 0-8 8 56.06 56.06 0 0 1-56 56H64v-16a8 8 0 0 0-13.66-5.66l-24 24a8 8 0 0 0 0 11.32l24 24A8 8 0 0 0 64 216v-16h96a72.08 72.08 0 0 0 72-72 8 8 0 0 0-8-8Z\"/></svg><span>Review</span><span class=\"ds-nav-count\">4</span></a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M216 48h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM96 40a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm96 168H64V64h128Z\"/></svg><span>Trash</span></a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 0.25rem; width: 15rem; padding: 0.5rem; background: var(--sidebar, oklch(0.97 0.006 85)); } .ds-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: calc(0.45rem + 2px); color: var(--sidebar-foreground, oklch(0.21 0.012 60)); font-family: 'Geist Variable', sans-serif; font-size: 0.75rem; text-decoration: none; outline: none; } .ds-nav-item svg { width: 1.125rem; height: 1.125rem; flex-shrink: 0; } .ds-nav-item:hover { background: var(--sidebar-accent, oklch(0.935 0.008 85)); } .ds-nav-item:focus-visible { box-shadow: 0 0 0 2px var(--ring, oklch(0.62 0.11 152)); } .ds-nav-active { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 10%, transparent); color: var(--primary, oklch(0.52 0.12 152)); font-weight: 500; } .ds-nav-active:hover { background: color-mix(in oklch, var(--primary, oklch(0.52 0.12 152)) 15%, transparent); } .ds-nav-count { margin-left: auto; color: var(--primary, oklch(0.52 0.12 152)); font-weight: 500; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Rating Buttons",
+      "kind": "custom",
+      "refersTo": "button-outline",
+      "description": "Signature review control: four outline buttons tinted with their rating's 15% colors, each showing the label, the interval it would schedule, and a 1-4 shortcut hint.",
+      "html": "<div class=\"ds-rate\"><button class=\"ds-rate-btn ds-again\"><kbd>1</kbd><span>Again</span><small>10 minutes</small></button><button class=\"ds-rate-btn ds-hardr\"><kbd>2</kbd><span>Hard</span><small>1 day</small></button><button class=\"ds-rate-btn ds-good\"><kbd>3</kbd><span>Good</span><small>3 days</small></button><button class=\"ds-rate-btn ds-easyr\"><kbd>4</kbd><span>Easy</span><small>8 days</small></button></div>",
+      "css": ".ds-rate { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.375rem; width: 26rem; font-family: 'Geist Variable', sans-serif; } .ds-rate-btn { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0.5rem 0.25rem; border: 1px solid var(--border, oklch(0.905 0.007 85)); border-radius: 0.6rem; font-size: 0.75rem; line-height: 1.625; cursor: pointer; transition: all 0.15s; } .ds-rate-btn span { font-weight: 500; } .ds-rate-btn small { font-size: 0.625rem; } .ds-rate-btn kbd { position: absolute; top: 0.25rem; right: 0.375rem; font: 500 0.625rem 'Geist Variable', sans-serif; opacity: 0.6; font-variant-numeric: tabular-nums; } .ds-rate-btn:active { transform: translateY(1px); } .ds-rate-btn:focus-visible { border-color: var(--ring, oklch(0.62 0.11 152)); box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring, oklch(0.62 0.11 152)) 30%, transparent); outline: none; } .ds-again { background: color-mix(in oklch, oklch(0.637 0.237 25.331) 15%, transparent); color: oklch(0.505 0.213 27.518); } .ds-hardr { background: color-mix(in oklch, oklch(0.769 0.188 70.08) 15%, transparent); color: oklch(0.473 0.137 46.201); } .ds-good { background: color-mix(in oklch, oklch(0.623 0.214 259.815) 15%, transparent); color: oklch(0.488 0.243 264.376); } .ds-easyr { background: color-mix(in oklch, oklch(0.696 0.17 162.48) 15%, transparent); color: oklch(0.432 0.095 166.913); } .ds-rate-btn:hover { filter: brightness(0.97); }"
     }
   ],
   "narrative": {
     "northStar": "The Field Notebook",
-    "overview": "Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray — background, borders, and text all carry a faint warm paper tint (~60–85° hue, chroma ≤ 0.012), and the green (~152°) is reserved for ink: the primary action, the active nav item, focus, links, selection. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page (popovers, selects, comboboxes).\n\nDensity is deliberately tight — 28px controls, 12px base UI text, compact spacing — because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. Type is one family, Geist, for the whole interface, with a single role split: the user's own notes (a note's title wherever it appears, and its body) render in the *reading font*, a per-device setting that is Geist by default or Literata serif for a more book-like page. Everything else — page titles, section headings, buttons, badges, dialogs, empty states — is interface and stays in Geist regardless of that setting.",
+    "overview": "Notes Again is a single-user tool, not a marketing surface, and its design reads that way on purpose: a compact working notebook of warm paper and green ink rather than a SaaS dashboard. The neutral scale is never cold gray. Background, borders and text all carry a faint warm paper tint (hue 60–85°, chroma ≤ 0.012), and the green (hue 152°) is reserved for ink: the primary action, the active nav item, focus, links, selection, the caret. Keeping green off the surfaces is what lets it read as meaning; an earlier version tinted every neutral with the accent hue and the whole app felt damp and gray-green. Surfaces sit flat against that paper-toned background, separated by hairline rings rather than shadows; shadow is reserved for the handful of things that genuinely float above the page.\n\nDensity is deliberately tight (28px controls, 12px base UI text, 6–8px gaps) because this is a tool its one user operates dozens of times a day, not a surface meant to feel spacious for a first-time visitor. Type is one family, Geist, for the whole interface, with a single role split: the user's own notes (a note's title wherever it appears, and its body) render in the *reading font*, a per-device setting that is Geist by default or Literata serif for a more book-like page. Everything else, from page titles to badges, is interface and stays in Geist whatever that setting says.\n\nThis was extracted from the shipped implementation (shadcn `base-mira` style on Base UI, `olive` base color, Tailwind v4, OKLCH custom properties in `frontend/src/styles.css`, Phosphor icons). The mobile app (`mobile/`) follows the same system sized for touch; see `mobile/AGENTS.md`. No visual rejections have been confirmed by the user beyond what the implementation already embodies.",
     "keyCharacteristics": [
-      "One accent hue (~152°, green ink) carries primary, ring, active nav, links, and selection; neutrals are warm paper (~85°), never tinted with the accent.",
-      "Flat-by-default: hairline ring (`ring-1 ring-foreground/10`) defines containers; shadow is reserved for floating overlays.",
+      "One accent hue (152°, green ink) carries primary, ring, active nav, links, selection and the caret; neutrals are warm paper (60–85°), never tinted with the accent.",
+      "Flat by default: a hairline ring (`ring-1 ring-foreground/10`) defines docked containers; shadow appears only on content that floats.",
       "Geist for the interface; the reading font (Geist or Literata, chosen per device in Settings → Appearance) only for note titles and note bodies.",
-      "Dense, compact control sizing (28px controls, 12px base text) suited to a power-user tool used many times a day.",
-      "Pill-shaped badges carry all semantic status color (difficulty, recall rating, tags, project) rather than color on text or backgrounds elsewhere."
+      "Dense, compact control sizing (20–32px controls, 12px base text) for a keyboard-and-mouse power user, compensated to 44px only on coarse pointers.",
+      "Pill-shaped badges and tinted chips carry all semantic status color (difficulty, recall rating, review state); text and surfaces stay paper and ink."
     ],
     "rules": [
       {
         "name": "The Paper and Ink Rule",
-        "body": "Surfaces, lines, and text are warm paper neutrals; green is ink and appears only where it means action, selection, or focus. Never tint a surface or neutral with the accent hue, and never spend green on decoration. A new color that isn't a deliberate semantic break (destructive red, difficulty/rating chips) is either a paper step or a green step.",
+        "body": "Surfaces, lines and text are warm paper neutrals; green is ink and appears only where it means action, selection or focus. Never tint a surface or neutral with the accent hue, and never spend green on decoration. A new color that isn't a deliberate semantic break (destructive red, the status palette) is either a paper step or a green step.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fifteen Percent Rule",
+        "body": "Status color is a 15% tint of the hue with a deep (`-700`/`-800`) text of the same hue in light mode and a `-400` text in dark mode. Never a solid saturated fill, never colored text on a plain surface.",
         "section": "colors"
       },
       {
@@ -238,17 +476,22 @@
       }
     ],
     "dos": [
-      "Do put note titles and note bodies in `font-reading` and everything else, page titles included, in Geist — see The Reading Font Rule.",
-      "Do define container depth with a hairline ring (`ring-1 ring-foreground/10`) at rest; add `shadow-md` only when a surface floats above unrelated page content (popover, select, combobox) — see The Flat-By-Default Rule.",
-      "Do carry semantic status (difficulty, recall rating, tags) as badge fills, not colored text or full-color solid backgrounds elsewhere.",
-      "Do keep surfaces and neutrals on warm paper and spend green only on action, selection, and focus — see The Paper and Ink Rule.",
-      "Do compensate for the deliberately compact (20–32px) control sizing with the `(pointer: coarse)` media query rather than growing controls for every user."
+      "**Do** keep surfaces and neutrals on warm paper and spend green only on action, selection and focus — see **The Paper and Ink Rule**.",
+      "**Do** put note titles and note bodies in `font-reading` and everything else, page titles included, in Geist — see **The Reading Font Rule**.",
+      "**Do** define docked container depth with the hairline ring (`ring-1 ring-foreground/10`) and add `shadow-md` or `shadow-lg` only to surfaces that float — see **The Flat-By-Default Rule**.",
+      "**Do** carry status as 15% tints with same-hue deep text (difficulty, rating, warning, success) — see **The Fifteen Percent Rule**.",
+      "**Do** build from the existing scale: 28px controls, 0.75rem text, `md` radius for controls and `lg` for containers, 6–8px gaps inside groups and 16px between them.",
+      "**Do** compensate for the compact 20–32px controls with the `(pointer: coarse)` 44px minimum rather than growing controls for every user.",
+      "**Do** use `tabular-nums` for counts, dates and intervals, and theme the browser surfaces from tokens (selection, caret, focus ring) rather than leaving defaults.",
+      "**Do** give every async surface a delayed skeleton, an empty state with a next step, and an error that names what failed."
     ],
     "donts": [
-      "Don't add a second UI accent hue; route new emphasis through green ink at a different lightness/chroma, or through the established destructive/difficulty/rating palettes.",
-      "Don't put shadows on resting cards, dialogs, or the docked sidebar — that breaks the flat-by-default elevation model this system is built on.",
-      "Don't hard-code a face on note content (`font-serif`, `font-sans`) or apply `font-reading` to interface chrome — the reading font is the user's setting for their notes only.",
-      "Don't treat this as a marketing/persuade surface (no hero imagery, no decorative illustration, no gradient-heavy visual language) — it's a personal utility tool and its restraint is intentional, not a placeholder waiting for \"real\" design."
+      "**Don't** add a second UI accent hue; route new emphasis through green ink at a different lightness or chroma, or through the established destructive and status palettes.",
+      "**Don't** use emerald where green ink is meant, or green ink to say \"done\"; emerald is the success status, green ink is the call to act.",
+      "**Don't** put shadows on resting cards, dialogs or the docked sidebar; that breaks the flat-by-default model.",
+      "**Don't** hard-code a face on note content (`font-serif`, `font-sans`) or apply `font-reading` to interface chrome; the reading font is the user's setting for their notes only.",
+      "**Don't** use solid saturated fills for status or destructive actions; tints only.",
+      "**Don't** treat this as a marketing or persuade surface (no hero imagery, decorative illustration or gradient-heavy visual language); its restraint is intentional, not a placeholder waiting for \"real\" design. Gradients appear only as functional fades to the card color."
     ]
   }
 }

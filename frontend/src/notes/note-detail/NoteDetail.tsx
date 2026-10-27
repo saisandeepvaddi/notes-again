@@ -367,7 +367,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </div>
 
-      <header className="px-4 pt-6 md:px-8 md:pt-12">
+      <header className="px-4 pt-3 md:px-8 md:pt-5">
         <div className="note-column flex flex-col gap-3">
           <div ref={titleRef} className="-mx-2 min-w-0">
             {editingTitle ? (

@@ -93,7 +93,7 @@ export function NoteDetailSkeleton() {
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-5 w-16" />
       </div>
-      <div className="px-4 pt-6 md:px-8 md:pt-12">
+      <div className="px-4 pt-3 md:px-8 md:pt-5">
         <div className="note-column flex flex-col gap-4">
           <Skeleton className="h-9 w-2/3" />
           <div className="flex flex-wrap items-center gap-2">

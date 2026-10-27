@@ -40,11 +40,10 @@ import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { lastNotesSearch } from "../notes-list/notesSearch";
-import { NoteReminderList } from "../NoteReminderList";
-import { NoteTitle } from "../NoteTitle";
-import { NoteDetailsSheet } from "./NoteDetailsSheet";
+import { NoteTitle, noteTitleText } from "../NoteTitle";
+import { NoteFooter } from "./NoteFooter";
 import { ProjectPicker } from "../ProjectPicker";
-import { REVIEW_STATUS_ICONS, ReviewStatusPicker } from "../ReviewStatusPicker";
+import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 
@@ -177,6 +176,34 @@ export function NoteDetail({ note }: NoteDetailProps) {
     }
   };
 
+  const titleRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [condensed, setCondensed] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const title = titleRef.current;
+      const bar = barRef.current;
+      if (!title || !bar) return;
+      setCondensed(title.getBoundingClientRect().bottom <= bar.getBoundingClientRect().bottom);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, []);
+
+  const trimmedContent = content.trim();
+  const wordCount = trimmedContent ? trimmedContent.split(/\s+/).length : 0;
+
   const status = reviewStatusOf(note);
   const StatusIcon = REVIEW_STATUS_ICONS[status];
   const changeStatus = async (next: ReviewStatus) => {
@@ -228,51 +255,41 @@ export function NoteDetail({ note }: NoteDetailProps) {
   };
 
   return (
-    <div className="flex h-full max-w-4xl flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="hidden md:inline-flex" />
-        <Link
-          to="/notes"
-          search={lastNotesSearch()}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          <ArrowLeftIcon className="size-3.5" /> All Notes
-        </Link>
-      </div>
-
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          {editingTitle ? (
-            <Input
-              autoFocus
-              value={name}
-              onChange={(e) => changeName(e.target.value)}
-              onBlur={() => setEditingTitle(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
-              }}
-              aria-label="Note title"
-              className="h-auto border-input bg-input/20 px-2 py-1 font-reading text-xl leading-tight font-semibold tracking-tight md:text-2xl dark:bg-input/30"
-            />
-          ) : (
-            <div className="relative rounded-md border border-transparent px-2 py-1 transition-colors has-[button:hover]:border-input has-[button:hover]:bg-input/20 dark:has-[button:hover]:bg-input/30">
-              <button
-                type="button"
-                aria-label="Edit title"
-                onClick={() => setEditingTitle(true)}
-                className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-              />
-              <h1 className="font-reading text-xl leading-tight font-semibold tracking-tight wrap-break-word md:text-2xl">
-                {name.trim() ? (
-                  <NoteTitle title={name} />
-                ) : (
-                  <span className="text-muted-foreground">Untitled</span>
-                )}
-              </h1>
-            </div>
-          )}
+    <div className="-m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh">
+      <div
+        ref={barRef}
+        data-condensed={condensed}
+        className="group/bar sticky top-12 z-20 grid h-11 grid-cols-[1fr_minmax(0,44rem)_1fr] items-center gap-3 border-b border-transparent bg-background px-4 transition-colors duration-300 data-[condensed=true]:border-border md:top-0 md:px-8"
+      >
+        <div className="flex items-center gap-1">
+          <SidebarTrigger className="-ml-1 hidden md:inline-flex" />
+          <Link
+            to="/notes"
+            search={lastNotesSearch()}
+            className="flex shrink-0 items-center gap-1 rounded-sm text-xs text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <ArrowLeftIcon className="size-3.5" />
+            <span className="hidden lg:inline">All Notes</span>
+          </Link>
         </div>
-        <div className="mt-1 flex shrink-0 items-center gap-1 md:mt-1.5">
+        <button
+          type="button"
+          aria-hidden={!condensed}
+          tabIndex={condensed ? 0 : -1}
+          title="Back to top"
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "auto"
+                : "smooth",
+            })
+          }
+          className="min-w-0 translate-y-1.5 truncate rounded-sm text-left font-reading text-sm font-semibold tracking-tight opacity-0 transition-[opacity,translate] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring group-data-[condensed=true]/bar:translate-y-0 group-data-[condensed=true]/bar:opacity-100"
+        >
+          {noteTitleText(name).trim() || "Untitled"}
+        </button>
+        <div className="flex items-center justify-end gap-1">
           <span
             role="status"
             aria-live="polite"
@@ -285,7 +302,6 @@ export function NoteDetail({ note }: NoteDetailProps) {
             <SaveStateIcon state={saveState} />
             <span className="sr-only sm:not-sr-only">{SAVE_STATE_LABELS[saveState]}</span>
           </span>
-          <NoteDetailsSheet note={note} />
           <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
             <PopoverTrigger
               render={
@@ -316,6 +332,64 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </div>
 
+      <header className="px-4 pt-6 md:px-8 md:pt-12">
+        <div className="mx-auto flex max-w-[44rem] flex-col gap-3">
+          <div ref={titleRef} className="-mx-2 min-w-0">
+            {editingTitle ? (
+              <Input
+                autoFocus
+                value={name}
+                onChange={(e) => changeName(e.target.value)}
+                onBlur={() => setEditingTitle(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+                }}
+                aria-label="Note title"
+                className="h-auto rounded-md border-0 bg-transparent px-2 py-0.5 font-reading text-[1.75rem] leading-tight font-semibold tracking-tight shadow-none focus-visible:bg-muted/40 focus-visible:ring-0 md:text-[2.125rem] dark:bg-transparent"
+              />
+            ) : (
+              <div className="relative rounded-md px-2 py-0.5 transition-colors has-[button:hover]:bg-muted/40">
+                <button
+                  type="button"
+                  aria-label="Edit title"
+                  onClick={() => setEditingTitle(true)}
+                  className="absolute inset-0 cursor-text rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                />
+                <h1 className="font-reading text-[1.75rem] leading-tight font-semibold tracking-tight text-balance wrap-break-word md:text-[2.125rem]">
+                  {name.trim() ? (
+                    <NoteTitle title={name} />
+                  ) : (
+                    <span className="text-muted-foreground">Untitled</span>
+                  )}
+                </h1>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <DifficultySelector noteId={note.id} difficulty={difficulty} />
+            <Separator orientation="vertical" className="mx-0.5 h-3.5 data-vertical:self-center" />
+            <ProjectPicker
+              value={project}
+              onChange={(next) => setProject(next?.id ?? null)}
+              onProjectClick={(proj) =>
+                navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: proj.id }) })
+              }
+              compact
+            />
+            <Separator orientation="vertical" className="mx-0.5 h-3.5 data-vertical:self-center" />
+            <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
+          </div>
+
+          {status !== "active" && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <StatusIcon className="size-3.5 shrink-0" />
+              {STATUS_NOTICES[status]}
+            </p>
+          )}
+        </div>
+      </header>
+
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
@@ -337,47 +411,23 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <ReviewStatusPicker value={status} onChange={changeStatus} disabled={isChangingStatus} />
-          {status !== "note-only" && (
-            <NoteReminderList
-              noteId={note.id}
-              reminders={note.reminders}
-              status={status}
-              showHistory={false}
-            />
-          )}
-        </div>
-        {status !== "active" && (
-          <p className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-            <StatusIcon className="size-3.5 shrink-0" />
-            {STATUS_NOTICES[status]}
-          </p>
-        )}
-
-        <Separator />
-
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <DifficultySelector noteId={note.id} difficulty={difficulty} />
-          <Separator orientation="vertical" className="h-4" />
-          <ProjectPicker
-            value={project}
-            onChange={(next) => setProject(next?.id ?? null)}
-            onProjectClick={(proj) =>
-              navigate({ to: "/notes", search: (prev) => ({ ...prev, projectId: proj.id }) })
-            }
-            compact
+      <div className="flex-1 px-4 pt-6 pb-20 md:px-8">
+        <div className="mx-auto max-w-[44rem]">
+          <MarkdownEditor
+            markdown={content}
+            onChange={changeContent}
+            className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"
+            contentClassName="markdown-paper"
           />
-          <Separator orientation="vertical" className="h-4" />
-          <TagPicker selectedTags={regularTags} onToggle={toggleTag} compact />
         </div>
       </div>
 
-      <MarkdownEditor
-        markdown={content}
-        onChange={changeContent}
-        className="min-h-64 flex-1 bg-card px-3 py-2 dark:bg-card"
+      <NoteFooter
+        note={note}
+        status={status}
+        onStatusChange={changeStatus}
+        statusDisabled={isChangingStatus}
+        wordCount={wordCount}
       />
     </div>
   );

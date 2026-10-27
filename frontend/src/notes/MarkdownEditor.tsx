@@ -24,6 +24,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  contentClassName?: string;
 }
 
 export function MarkdownEditor({
@@ -31,6 +32,7 @@ export function MarkdownEditor({
   onChange,
   placeholder = "Notes here",
   className,
+  contentClassName,
 }: MarkdownEditorProps) {
   return (
     <div
@@ -40,7 +42,7 @@ export function MarkdownEditor({
       )}
     >
       <MDXEditor
-        contentEditableClassName="prose markdown-content max-w-full"
+        contentEditableClassName={cn("prose markdown-content max-w-full", contentClassName)}
         className="h-full overflow-y-auto"
         markdown={markdown}
         plugins={[

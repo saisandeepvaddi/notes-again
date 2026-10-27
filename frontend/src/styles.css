@@ -293,6 +293,79 @@
   }
 }
 
+.markdown-content.markdown-paper {
+  font-size: 1rem;
+  line-height: 1.7;
+
+  & h1 {
+    @apply mt-9 mb-3 text-[1.75rem] leading-tight;
+  }
+
+  & h2 {
+    @apply mt-8 mb-2.5 text-[1.375rem] leading-snug;
+  }
+
+  & h3 {
+    @apply mt-7 mb-2 text-lg leading-snug;
+  }
+
+  & h4,
+  & h5,
+  & h6 {
+    @apply mt-6 mb-1.5 text-base;
+  }
+
+  & h1,
+  & h2,
+  & h3 {
+    text-wrap: balance;
+  }
+
+  & p {
+    margin-bottom: 0.85em;
+  }
+
+  & ul,
+  & ol {
+    margin-bottom: 0.85em;
+    padding-left: 1.5em;
+  }
+
+  & li {
+    margin-block: 0.2em;
+  }
+
+  & li > ul,
+  & li > ol {
+    margin-bottom: 0;
+  }
+
+  & blockquote {
+    @apply my-4 border-l-2 pl-4;
+  }
+
+  & pre {
+    @apply my-4 p-4 text-[0.8125rem] leading-relaxed;
+  }
+
+  & hr {
+    @apply my-8;
+  }
+
+  & table {
+    @apply my-4;
+  }
+
+  & img {
+    @apply my-4;
+  }
+}
+
+.mdxeditor-contenteditable-wrapper .markdown-paper {
+  padding: 0;
+  min-height: 50dvh;
+}
+
 .dark .markdown-content .shiki,
 .dark .markdown-content .shiki span {
   color: var(--shiki-dark) !important;

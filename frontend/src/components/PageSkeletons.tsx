@@ -1,5 +1,4 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { LoadingState } from "./LoadingState";
@@ -86,32 +85,34 @@ export function NoteTableSkeleton() {
 
 export function NoteDetailSkeleton() {
   return (
-    <LoadingState label="Loading note" className="flex h-full max-w-4xl flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
+    <LoadingState
+      label="Loading note"
+      className="-m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh"
+    >
+      <div className="flex h-11 items-center justify-between gap-2 px-4 md:px-8">
         <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-6 w-16" />
+        <Skeleton className="h-5 w-16" />
       </div>
-      <div className="px-2 py-1.5">
-        <Skeleton className="h-6 w-1/2" />
-      </div>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-28" />
-          <Skeleton className="size-7" />
+      <div className="px-4 pt-6 md:px-8 md:pt-12">
+        <div className="mx-auto flex max-w-[44rem] flex-col gap-4">
+          <Skeleton className="h-9 w-2/3" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill className="w-16" />
+            <Pill className="w-28" />
+            <Pill className="w-24" />
+            <Pill className="w-20" />
+          </div>
+          <Lines
+            widths={["w-1/4", "w-11/12", "w-4/5", "w-full", "w-2/3", "w-3/5"]}
+            className="mt-6 gap-4"
+          />
         </div>
-        <Separator />
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <Pill className="w-16" />
+      </div>
+      <div className="mt-auto flex h-10 items-center gap-2 border-t px-4 md:px-8">
+        <div className="mx-auto flex w-full max-w-[44rem] items-center gap-2">
+          <Skeleton className="h-7 w-56" />
           <Pill className="w-28" />
-          <Pill className="w-24" />
-          <Pill className="w-20" />
         </div>
-      </div>
-      <div className="min-h-64 flex-1 rounded-md border border-input px-5 py-4">
-        <Lines
-          widths={["w-1/4", "w-11/12", "w-4/5", "w-full", "w-2/3", "w-3/5"]}
-          className="gap-3"
-        />
       </div>
     </LoadingState>
   );

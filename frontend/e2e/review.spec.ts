@@ -40,7 +40,7 @@ test.describe("review session", () => {
 
     await page.goto(`/notes/${note.id}`);
     await page.getByRole("button", { name: "Note details" }).click();
-    const details = page.getByRole("dialog", { name: "Note details" });
+    const details = page.getByRole("region", { name: "Note details" });
     await expect(details.getByRole("heading", { name: "Review history" })).toBeVisible();
     await expect(details.getByText("Good", { exact: true })).toBeVisible();
   });

@@ -4,6 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { RouteError } from "@/components/RouteError";
 import { Toaster } from "@/components/ui/toast";
+import { NOTE_LAYOUT_INIT_SCRIPT } from "@/lib/noteLayout";
 import { READING_FONT_INIT_SCRIPT } from "@/lib/readingFont";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { QueryClient } from "@tanstack/react-query";
@@ -56,6 +57,7 @@ function RootDocument() {
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: READING_FONT_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: NOTE_LAYOUT_INIT_SCRIPT }} />
       </head>
       <body>
         <Layout />

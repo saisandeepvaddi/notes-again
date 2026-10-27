@@ -87,14 +87,14 @@ export function NoteDetailSkeleton() {
   return (
     <LoadingState
       label="Loading note"
-      className="-m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh"
+      className="note-page -m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh"
     >
       <div className="flex h-11 items-center justify-between gap-2 px-4 md:px-8">
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-5 w-16" />
       </div>
       <div className="px-4 pt-6 md:px-8 md:pt-12">
-        <div className="mx-auto flex max-w-[44rem] flex-col gap-4">
+        <div className="note-column flex flex-col gap-4">
           <Skeleton className="h-9 w-2/3" />
           <div className="flex flex-wrap items-center gap-2">
             <Pill className="w-16" />
@@ -109,7 +109,7 @@ export function NoteDetailSkeleton() {
         </div>
       </div>
       <div className="mt-auto flex h-10 items-center gap-2 border-t px-4 md:px-8">
-        <div className="mx-auto flex w-full max-w-[44rem] items-center gap-2">
+        <div className="note-column flex items-center gap-2">
           <Skeleton className="h-7 w-56" />
           <Pill className="w-28" />
         </div>

@@ -51,7 +51,7 @@ export function NoteFooter({
           inert={!open}
           className="min-h-0 overflow-hidden"
         >
-          <div className="mx-auto grid max-w-[44rem] gap-x-10 gap-y-4 pt-4 pb-3 text-xs sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+          <div className="note-column grid gap-x-10 gap-y-4 pt-4 pb-3 text-xs sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
             <div className="sm:hidden">
               <ReviewStatusPicker
                 value={status}
@@ -81,7 +81,11 @@ export function NoteFooter({
                 )}
               </h3>
               {reviews.length > 0 ? (
-                <ol className="flex max-h-32 flex-col gap-1.5 overflow-y-auto">
+                <ol
+                  tabIndex={0}
+                  aria-label="Review history"
+                  className="flex max-h-32 flex-col gap-1.5 overflow-y-auto rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                >
                   {reviews.map((reminder) => {
                     const option = ratingOption(reminder.rating);
                     return (

@@ -1,6 +1,15 @@
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import type { NoteAlign } from "@/lib/noteLayout";
 import type { ReadingFont } from "@/lib/readingFont";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/theme/ThemeToggle";
+import {
+  ArrowsOutLineHorizontalIcon,
+  TextAlignCenterIcon,
+  TextAlignLeftIcon,
+} from "@phosphor-icons/react";
+import { useNoteLayout } from "./useNoteLayout";
 import { useReadingFont } from "./useReadingFont";
 
 const READING_FONT_OPTIONS: {
@@ -23,10 +32,17 @@ const READING_FONT_OPTIONS: {
   },
 ];
 
+const NOTE_ALIGN_OPTIONS: { value: NoteAlign; label: string; icon: typeof TextAlignLeftIcon }[] = [
+  { value: "center", label: "Centered", icon: TextAlignCenterIcon },
+  { value: "left", label: "Left", icon: TextAlignLeftIcon },
+  { value: "full", label: "Full width", icon: ArrowsOutLineHorizontalIcon },
+];
+
 const PREVIEW_TEXT = "Spaced repetition turns what you read into what you remember.";
 
 export function AppearanceSettings() {
   const [readingFont, setReadingFont] = useReadingFont();
+  const noteLayout = useNoteLayout();
 
   return (
     <div className="flex max-w-xl flex-col gap-8">
@@ -75,6 +91,46 @@ export function AppearanceSettings() {
           ))}
         </div>
       </div>
+      <div className="flex flex-col gap-3">
+        <div>
+          <p id="note-align-label" className="text-sm font-medium">
+            Note width
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Where note text sits on wide screens. Saved on this device.
+          </p>
+        </div>
+        <div
+          role="radiogroup"
+          aria-labelledby="note-align-label"
+          className="flex w-fit items-center gap-0.5 rounded-md border p-0.5"
+        >
+          {NOTE_ALIGN_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant="ghost"
+              role="radio"
+              aria-checked={noteLayout.align === option.value}
+              className={cn(noteLayout.align === option.value && "bg-muted text-foreground")}
+              onClick={() => noteLayout.chooseAlign(option.value)}
+            >
+              <option.icon />
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <label className="flex items-center justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium">Editor border</span>
+          <span className="block text-xs text-muted-foreground">
+            Outline the writing area on the note page. Saved on this device.
+          </span>
+        </span>
+        <Switch checked={noteLayout.border} onCheckedChange={noteLayout.chooseBorder} />
+      </label>
     </div>
   );
 }

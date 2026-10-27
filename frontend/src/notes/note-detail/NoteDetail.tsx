@@ -255,21 +255,21 @@ export function NoteDetail({ note }: NoteDetailProps) {
   };
 
   return (
-    <div className="-m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh">
+    <div className="note-page -m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh">
       <div
         ref={barRef}
         data-condensed={condensed}
-        className="group/bar sticky top-12 z-20 grid h-11 grid-cols-[1fr_minmax(0,44rem)_1fr] items-center gap-3 border-b border-transparent bg-background px-4 transition-colors duration-300 data-[condensed=true]:border-border md:top-0 md:px-8"
+        className="group/bar note-bar sticky top-12 z-20 grid h-11 items-center gap-3 border-b border-transparent bg-background px-4 transition-colors duration-300 data-[condensed=true]:border-border md:top-0 md:px-8"
       >
         <div className="flex items-center gap-1">
           <SidebarTrigger className="-ml-1 hidden md:inline-flex" />
           <Link
             to="/notes"
             search={lastNotesSearch()}
-            className="flex shrink-0 items-center gap-1 rounded-sm text-xs text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="flex h-7 min-w-7 shrink-0 items-center justify-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <ArrowLeftIcon className="size-3.5" />
-            <span className="hidden lg:inline">All Notes</span>
+            <span className="sr-only lg:not-sr-only">All Notes</span>
           </Link>
         </div>
         <button
@@ -333,7 +333,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
       </div>
 
       <header className="px-4 pt-6 md:px-8 md:pt-12">
-        <div className="mx-auto flex max-w-[44rem] flex-col gap-3">
+        <div className="note-column flex flex-col gap-3">
           <div ref={titleRef} className="-mx-2 min-w-0">
             {editingTitle ? (
               <Input
@@ -412,7 +412,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
       </AlertDialog>
 
       <div className="flex-1 px-4 pt-6 pb-20 md:px-8">
-        <div className="mx-auto max-w-[44rem]">
+        <div className="note-column note-sheet">
           <MarkdownEditor
             markdown={content}
             onChange={changeContent}

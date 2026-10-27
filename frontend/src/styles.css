@@ -256,7 +256,7 @@
   }
 
   & blockquote {
-    @apply my-2 border-l-4 border-border pl-4 text-muted-foreground italic;
+    @apply my-2 border-l-2 border-border pl-4 text-muted-foreground italic;
   }
 
   & hr {
@@ -341,7 +341,7 @@
   }
 
   & blockquote {
-    @apply my-4 border-l-2 pl-4;
+    @apply my-4;
   }
 
   & pre {
@@ -364,6 +364,47 @@
 .mdxeditor-contenteditable-wrapper .markdown-paper {
   padding: 0;
   min-height: 50dvh;
+}
+
+.note-column {
+  width: 100%;
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+:root[data-note-align="left"] .note-column {
+  margin-inline: 0;
+}
+
+:root[data-note-align="full"] .note-column {
+  max-width: none;
+}
+
+.note-bar {
+  grid-template-columns: 1fr minmax(0, 44rem) 1fr;
+}
+
+:root:is([data-note-align="left"], [data-note-align="full"]) .note-bar {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+:root[data-note-border="on"] .note-sheet {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  padding: 1rem 1.125rem;
+
+  @media (width >= 48rem) {
+    padding: 1.5rem 2rem;
+  }
+}
+
+html:has(.note-page) {
+  scroll-padding-block: 6.5rem 4.5rem;
+
+  @media (width >= 48rem) {
+    scroll-padding-block: 3.75rem 4.5rem;
+  }
 }
 
 .dark .markdown-content .shiki,

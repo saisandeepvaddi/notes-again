@@ -1,4 +1,5 @@
 import { useAuth } from "@/auth/AuthProvider";
+import { SearchButton } from "@/command-palette/SearchButton";
 import { useDueCount } from "@/notes/notes-list/useDueNotes";
 import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection";
 import ThemeToggle from "@/theme/ThemeToggle";
@@ -78,6 +79,9 @@ function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SearchButton variant="sidebar" />
+              </SidebarMenuItem>
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname.startsWith(item.to);
                 return (

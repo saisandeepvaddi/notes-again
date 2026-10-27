@@ -23,7 +23,9 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 async function request(url: string, init: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS) {
   try {
-    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+    return await fetch(url, { ...init, signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
       throw new Error(
@@ -88,11 +90,13 @@ const handleResponse = async (response: Response, url: string) => {
 
 interface FetcherOptions {
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 }
 export const getFetcher = (url: string, options?: FetcherOptions) => async () => {
   const response = await request(`${getURL()}${url}`, {
     headers: await getHeaders(options?.headers),
     credentials: "include",
+    signal: options?.signal,
   });
   return handleResponse(response, url);
 };

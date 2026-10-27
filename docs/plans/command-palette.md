@@ -1,6 +1,8 @@
 # Plan: command palette and global search
 
-Status: proposal. Branch: `command-palette`.
+Status: built (phases 1–4). Branch: `command-palette`.
+
+Deviations from the plan below: search results are cached under `["notes", "search", q]` instead of a new `["search"]` family, so every existing notes invalidation already refreshes them. Snippets and highlights are built in Python from plain text rather than with FTS5 `snippet()`, which works on raw markdown. Ranking runs in a materialized CTE over `notes_fts` before joining `notes`; joining first made SQLite score every match through the join (185 ms vs 22 ms worst case at 10,000 notes).
 
 ## Goal
 

@@ -214,3 +214,10 @@ def test_capture_tokens_cannot_search_but_app_tokens_can(client):
 
     assert client.get("/api/search?q=abc", headers=mint("capture")).status_code == 403
     assert client.get("/api/search?q=abc", headers=mint("app")).status_code == 200
+
+
+def test_snippets_drop_list_table_and_rule_syntax():
+    from search.query import plain_text
+
+    markdown = "- one\n* [x] two\n3. three\n---\n| a | b |\n|---|:-:|\n> **quote**"
+    assert plain_text(markdown) == "one two three a b quote"

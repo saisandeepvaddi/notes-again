@@ -9,6 +9,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePageCommands, type PaletteCommand } from "@/command-palette/PaletteContext";
+import { forgetRecentNote, rememberRecentNote } from "@/command-palette/recentNotes";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -23,11 +25,12 @@ import {
   CheckCircleIcon,
   ClockIcon,
   DotsThreeIcon,
+  LinkIcon,
   SpinnerGapIcon,
   TrashIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
@@ -101,6 +104,37 @@ export function NoteDetail({ note }: NoteDetailProps) {
     setSaveState("unsaved");
     setContent(value);
   };
+
+  useEffect(() => {
+    rememberRecentNote({ id: note.id, title: noteTitleText(note.name).trim() });
+  }, [note.id, note.name]);
+
+  const pageCommands = useMemo<PaletteCommand[]>(
+    () => [
+      {
+        id: "copy-note-link",
+        label: "Copy link to this note",
+        icon: LinkIcon,
+        keywords: "url share clipboard",
+        run: () => {
+          navigator.clipboard.writeText(window.location.href).then(
+            () => toast.add({ type: "success", description: "Link copied" }),
+            () => toast.add({ type: "error", description: "Couldn't copy the link" }),
+          );
+        },
+      },
+      {
+        id: "trash-note",
+        label: "Move this note to trash",
+        icon: TrashIcon,
+        keywords: "delete remove",
+        destructive: true,
+        run: () => setDeleteOpen(true),
+      },
+    ],
+    [],
+  );
+  usePageCommands("note-detail", pageCommands);
 
   const regularTags = note.tags.filter((tag) => !tag.is_difficulty);
   const project = note.project ?? null;
@@ -223,6 +257,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
         await persist(editVersion.current, { name, content });
       }
       await deleteNote();
+      forgetRecentNote(noteId);
       leaveAfterDelete.current = true;
       setDeleteOpen(false);
       navigate({ to: "/notes", search: lastNotesSearch() });

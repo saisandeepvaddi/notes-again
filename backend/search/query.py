@@ -14,6 +14,10 @@ MARK_END = "\x03"
 
 _FENCE = re.compile(r"^\s*(```|~~~).*$", re.MULTILINE)
 _WHITESPACE = re.compile(r"\s+")
+_LIST_MARKER = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?")
+_RULE_OR_TABLE_DIVIDER = re.compile(
+    r"^\s*(?:[-*_]{3,}|\|?(?:\s*:?-+:?\s*\|)+\s*:?-*:?\s*)$"
+)
 
 
 @dataclass(frozen=True)
@@ -70,7 +74,11 @@ def note_search_condition(raw: str):
 
 def plain_text(markdown: str) -> str:
     text_only = _FENCE.sub(" ", markdown)
-    lines = (markdown_title_text(line) or "" for line in text_only.splitlines())
+    lines = (
+        markdown_title_text(_LIST_MARKER.sub("", line)).replace("|", " ")
+        for line in text_only.splitlines()
+        if not _RULE_OR_TABLE_DIVIDER.match(line)
+    )
     return _WHITESPACE.sub(" ", " ".join(lines)).strip()
 
 

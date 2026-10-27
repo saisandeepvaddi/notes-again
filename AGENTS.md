@@ -41,6 +41,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - API tokens are scoped. The extension's `capture` tokens can only list/create projects and tags and create notes. `app` tokens (the mobile app) can call everything except token management and `/api/system`, which `require_session_user` keeps to real sessions. In local mode `POST /api/auth/token` trades a username and password for an `app` token, and `DELETE /api/auth/token` revokes the caller's own token.
 - Scheduling: each note stores its own `algorithm` (`sm2` or `fsrs`); new notes follow `Settings.default_algorithm` (defaults to `fsrs`).
 - Review status: a note is In review, Paused (`paused_at` set), or Note only (`in_review` false: no pending reminder, never paused, past reviews kept). Move notes between them with `remove_from_review` / `add_to_review` in `backend/notes/bulk.py` so that holds. Labels and the `active | paused | note-only` values live in `frontend/src/notes/reviewStatus.ts`, shared with mobile.
+- Command palette: `frontend/src/command-palette/`, opened with `Cmd/Ctrl+/` (and `Cmd/Ctrl+K` outside the editor, where it would clash with insert-link). Pages add context commands with `usePageCommands` (memoize the array). Search results live under `["notes", "search", q]`, so existing `["notes"]` invalidations keep them fresh.
 - Query cache families: `["notes"]`, `["due-notes"]`, `["trashed-notes"]`, `["projects"]`, `["tags"]`, `["auth-status"]`, `["system"]`. Mutations invalidate by prefix.
 
 ## URL state on the notes list

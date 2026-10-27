@@ -52,7 +52,7 @@ class Note(SQLModel, table=True):
     __tablename__ = "notes"  # type: ignore
     id: int = Field(default=None, primary_key=True)
     name: str = Field(index=True)
-    content: str = Field(index=True)
+    content: str
     created_at: datetime.datetime = Field(default_factory=utcnow)
     updated_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)

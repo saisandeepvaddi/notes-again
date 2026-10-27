@@ -20,6 +20,7 @@ from notes.scheduling import (
     snapshot_for_new_reminder,
 )
 from notes.utils import to_utc
+from search.query import note_search_condition
 from tags.difficulty import DIFFICULTY_TAGS, Difficulty
 
 from .schema import NotePage, NoteResponse
@@ -167,14 +168,9 @@ def _list_conditions(
         )
 
     if search:
-        term = f"%{search.strip()}%"
-        conditions.append(
-            or_(
-                col(Note.name).ilike(term),
-                func.title_text(Note.name).ilike(term),
-                col(Note.content).ilike(term),
-            )
-        )
+        search_condition = note_search_condition(search)
+        if search_condition is not None:
+            conditions.append(search_condition)
 
     if start is not None and end is not None:
         conditions += [col(Note.in_review).is_(True), col(Note.paused_at).is_(None)]

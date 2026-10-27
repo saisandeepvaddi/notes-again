@@ -11,6 +11,7 @@ from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from db.models import Note, Reminder, Settings, Tag, User
 from notes.title_text import markdown_title_text
+from search.index import ensure_search_index
 from tags.difficulty import DIFFICULTY_TAGS
 
 logging.basicConfig(level=logging.INFO)
@@ -87,6 +88,7 @@ def ensure_indexes(engine: Engine) -> None:
         ),
         "CREATE INDEX IF NOT EXISTS ix_notes_deleted_project ON notes (deleted_at, project_id)",
         "CREATE INDEX IF NOT EXISTS ix_note_tags_tag_id ON note_tags (tag_id)",
+        "DROP INDEX IF EXISTS ix_notes_content",
     ]
     with engine.begin() as conn:
         for statement in statements:
@@ -170,6 +172,7 @@ def create_db_and_tables(engine: Engine) -> None:
     add_missing_columns(engine)
     SQLModel.metadata.create_all(engine)
     ensure_indexes(engine)
+    ensure_search_index(engine)
     collapse_legacy_pending_reminders(engine)
     seed_difficulty_tags(engine)
     backfill_note_difficulty(engine)

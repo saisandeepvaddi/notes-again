@@ -145,6 +145,12 @@ def doctor(_args: argparse.Namespace) -> int:
         "latest",
         snapshots[0].created_at.isoformat(timespec="seconds") if snapshots else "none",
     )
+    from search.index import check_search_index
+
+    search_problem = check_search_index(engine)
+    line("search index", "ok" if search_problem is None else "needs attention")
+    if search_problem:
+        problems.append(search_problem)
     offsite = display_replica_url()
     line("off-site", offsite or "not configured")
     if offsite and not shutil.which("litestream"):
@@ -162,6 +168,14 @@ def doctor(_args: argparse.Namespace) -> int:
             print(f"  - {problem}")
         return 1
     print("No problems found.")
+    return 0
+
+
+def reindex(_args: argparse.Namespace) -> int:
+    from search.index import rebuild_search_index
+
+    rebuild_search_index(_open_engine())
+    print("Search index rebuilt.")
     return 0
 
 
@@ -188,6 +202,9 @@ def main() -> int:
     commands.add_parser(
         "doctor", help="print the effective setup and check it"
     ).set_defaults(run=doctor)
+    commands.add_parser(
+        "reindex", help="rebuild the search index from the notes"
+    ).set_defaults(run=reindex)
     args = parser.parse_args()
     return args.run(args)
 

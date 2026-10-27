@@ -368,13 +368,14 @@ docker compose run --rm --entrypoint "" app \
 ## Troubleshooting
 
 Start with `doctor`. It prints the effective setup (sign-in mode, database,
-frontend, backups) and lists likely mistakes:
+frontend, backups, search index) and lists likely mistakes:
 
 - Docker: `docker compose exec app python backend/cli.py doctor`
 - Without Docker: `make doctor`
 
 Other maintenance commands in `backend/cli.py`: `reset-login`, `snapshot`,
-`restore`. Without Docker they're also `make reset-login`, `make snapshot` and
+`restore`, and `reindex` (rebuilds the search index if `doctor` says it's out of
+date). Without Docker they're also `make reset-login`, `make snapshot` and
 `make doctor`, each taking `DB=...`.
 
 - **Port already in use**: another program has port 8000. Set `HOST_PORT` in

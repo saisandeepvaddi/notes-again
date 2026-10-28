@@ -51,6 +51,7 @@ if cors_origins or cors_origin_regex:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Content-Disposition"],
     )
 
 app.add_middleware(ForwardedHeadersMiddleware)

@@ -1,3 +1,4 @@
+import { filenameFromDisposition, saveBlob } from "@/lib/saveFile";
 import { getFetcher, getHeaders, getURL, postFetcher } from "@/utils/fetchers";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -51,13 +52,11 @@ export async function downloadDatabase(): Promise<void> {
     credentials: "include",
   });
   if (!response.ok) throw new Error(`Download failed with ${response.status}`);
-  const match = response.headers.get("Content-Disposition")?.match(/filename="?([^";]+)"?/);
-  const url = URL.createObjectURL(await response.blob());
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = match?.[1] ?? `notes-again-${format(new Date(), "yyyy-MM-dd")}.db`;
-  link.click();
-  URL.revokeObjectURL(url);
+  saveBlob(
+    await response.blob(),
+    filenameFromDisposition(response.headers.get("Content-Disposition")) ??
+      `notes-again-${format(new Date(), "yyyy-MM-dd")}.db`,
+  );
 }
 
 export function formatBytes(bytes: number): string {

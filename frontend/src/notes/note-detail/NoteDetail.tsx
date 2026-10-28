@@ -25,12 +25,14 @@ import {
   CheckCircleIcon,
   ClockIcon,
   DotsThreeIcon,
+  DownloadSimpleIcon,
   LinkIcon,
+  MarkdownLogoIcon,
   SpinnerGapIcon,
   TrashIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
@@ -44,6 +46,7 @@ import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteTitle, noteTitleText } from "../NoteTitle";
+import { copyNoteMarkdown, downloadNoteMarkdown } from "./noteMarkdown";
 import { NoteFooter } from "./NoteFooter";
 import { ProjectPicker } from "../ProjectPicker";
 import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
@@ -109,8 +112,44 @@ export function NoteDetail({ note }: NoteDetailProps) {
     rememberRecentNote({ id: note.id, title: noteTitleText(note.name).trim() });
   }, [note.id, note.name]);
 
+  const flushSaveRef = useRef<() => Promise<unknown>>(async () => undefined);
+  const flushSave = () => flushSaveRef.current();
+
+  const copyMarkdown = useCallback(async () => {
+    try {
+      await copyNoteMarkdown(noteId, () => flushSaveRef.current());
+      toast.add({ type: "success", description: "Copied as Markdown" });
+    } catch (error) {
+      console.error("error:", error);
+      toast.add({ type: "error", priority: "high", description: "Couldn't copy the note" });
+    }
+  }, [noteId]);
+
+  const downloadMarkdown = useCallback(async () => {
+    try {
+      await downloadNoteMarkdown(noteId, () => flushSaveRef.current());
+    } catch (error) {
+      console.error("error:", error);
+      toast.add({ type: "error", priority: "high", description: "Couldn't download the note" });
+    }
+  }, [noteId]);
+
   const pageCommands = useMemo<PaletteCommand[]>(
     () => [
+      {
+        id: "copy-note-markdown",
+        label: "Copy note as Markdown",
+        icon: MarkdownLogoIcon,
+        keywords: "clipboard llm ai agent export frontmatter",
+        run: () => void copyMarkdown(),
+      },
+      {
+        id: "download-note-markdown",
+        label: "Download note as Markdown",
+        icon: DownloadSimpleIcon,
+        keywords: "export save file md",
+        run: () => void downloadMarkdown(),
+      },
       {
         id: "copy-note-link",
         label: "Copy link to this note",
@@ -132,7 +171,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
         run: () => setDeleteOpen(true),
       },
     ],
-    [],
+    [copyMarkdown, downloadMarkdown],
   );
   usePageCommands("note-detail", pageCommands);
 
@@ -250,12 +289,17 @@ export function NoteDetail({ note }: NoteDetailProps) {
     }
   };
 
+  useEffect(() => {
+    flushSaveRef.current = async () => {
+      if (saveState === "saved") return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      await persist(editVersion.current, { name, content });
+    };
+  });
+
   const remove = async () => {
     try {
-      if (saveState !== "saved") {
-        if (saveTimer.current) clearTimeout(saveTimer.current);
-        await persist(editVersion.current, { name, content });
-      }
+      await flushSave();
       await deleteNote();
       forgetRecentNote(noteId);
       leaveAfterDelete.current = true;
@@ -350,7 +394,30 @@ export function NoteDetail({ note }: NoteDetailProps) {
                 </Button>
               }
             />
-            <PopoverContent align="end" className="w-40 p-1">
+            <PopoverContent align="end" className="w-52 gap-0 p-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setActionsOpen(false);
+                  void copyMarkdown();
+                }}
+              >
+                <MarkdownLogoIcon /> Copy as Markdown
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setActionsOpen(false);
+                  void downloadMarkdown();
+                }}
+              >
+                <DownloadSimpleIcon /> Download as Markdown
+              </Button>
+              <Separator className="my-1" />
               <Button
                 size="sm"
                 variant="ghost"

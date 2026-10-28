@@ -1,7 +1,9 @@
 import datetime
 from typing import Any, Literal, cast
+from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, case, func, or_
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,7 @@ from db.models import Note, NoteTag, Project, Reminder, Settings, Tag, utcnow
 from db.setup import SessionDep
 from notes.bulk import MAX_BULK_IDS, ReviewStatus, add_to_review, remove_from_review
 from notes.factory import build_note
+from notes.markdown import note_filename, note_markdown
 from notes.scheduling import (
     Algorithm,
     Rating,
@@ -314,6 +317,23 @@ def get_note(note_id: int, session: SessionDep):
     if note is None or note.deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
     return note
+
+
+@router.get("/{note_id}/markdown", response_class=PlainTextResponse)
+def get_note_markdown(note_id: int, session: SessionDep, download: bool = False):
+    note = session.exec(select(Note).where(Note.id == note_id)).one_or_none()
+    if note is None or note.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Note not found")
+    headers = {}
+    if download:
+        filename = note_filename(note)
+        fallback = filename.encode("ascii", "ignore").decode() or f"note-{note.id}.md"
+        headers["Content-Disposition"] = (
+            f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(filename)}"
+        )
+    return PlainTextResponse(
+        note_markdown(note), media_type="text/markdown; charset=utf-8", headers=headers
+    )
 
 
 class NewNoteBody(BaseModel):

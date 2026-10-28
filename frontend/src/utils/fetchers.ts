@@ -101,6 +101,16 @@ export const getFetcher = (url: string, options?: FetcherOptions) => async () =>
   return handleResponse(response, url);
 };
 
+export const getTextFetcher = (url: string, options?: FetcherOptions) => async () => {
+  const response = await request(`${getURL()}${url}`, {
+    headers: await getHeaders(options?.headers),
+    credentials: "include",
+    signal: options?.signal,
+  });
+  if (!response.ok) await handleResponse(response, url);
+  return { text: await response.text(), headers: response.headers };
+};
+
 export const postFetcher = (url: string, options?: FetcherOptions) => async (body?: string) => {
   const response = await request(`${getURL()}${url}`, {
     method: "POST",

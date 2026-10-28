@@ -1,3 +1,4 @@
+import { filenameFromDisposition, saveBlob } from "@/lib/saveFile";
 import { getHeaders, getURL, postFetcher } from "@/utils/fetchers";
 import { format } from "date-fns";
 import { z } from "zod";
@@ -18,11 +19,6 @@ export async function fetchExportCount(options: ExportOptions): Promise<ExportCo
   return ExportCountSchema.parse(await postFetcher("/export/count")(JSON.stringify(options)));
 }
 
-function filenameFrom(disposition: string | null) {
-  const match = disposition?.match(/filename="?([^";]+)"?/);
-  return match?.[1] ?? `notes-again-${format(new Date(), "yyyy-MM-dd")}.json`;
-}
-
 export async function downloadExport(options: ExportOptions): Promise<void> {
   const response = await fetch(`${getURL()}/export/notes`, {
     method: "POST",
@@ -31,10 +27,9 @@ export async function downloadExport(options: ExportOptions): Promise<void> {
     body: JSON.stringify(options),
   });
   if (!response.ok) throw new Error(`Export failed with ${response.status}`);
-  const url = URL.createObjectURL(await response.blob());
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filenameFrom(response.headers.get("Content-Disposition"));
-  link.click();
-  URL.revokeObjectURL(url);
+  saveBlob(
+    await response.blob(),
+    filenameFromDisposition(response.headers.get("Content-Disposition")) ??
+      `notes-again-${format(new Date(), "yyyy-MM-dd")}.json`,
+  );
 }

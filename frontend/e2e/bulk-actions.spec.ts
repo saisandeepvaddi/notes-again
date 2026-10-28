@@ -1,10 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { API_URL, createNote, createProject, uniqueName } from "./support/api";
-
-async function searchAndWait(page: Page, query: string) {
-  await page.getByLabel("Search notes").fill(query);
-  await page.waitForURL((url) => url.searchParams.get("q") === query);
-}
+import { openFilteredNotes } from "./support/notesList";
 
 test.describe("bulk selection actions", () => {
   test("selecting two notes and moving them to a project applies to both", async ({
@@ -16,8 +12,7 @@ test.describe("bulk selection actions", () => {
     const noteB = await createNote(request, { name: `${prefix} B` });
     const project = await createProject(request, uniqueName("Bulk target project"));
 
-    await page.goto("/notes");
-    await searchAndWait(page, prefix);
+    await openFilteredNotes(page, prefix, 2);
     await expect(page.getByRole("link", { name: noteA.name, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: noteB.name, exact: true })).toBeVisible();
 
@@ -45,8 +40,7 @@ test.describe("bulk selection actions", () => {
     const noteA = await createNote(request, { name: `${prefix} A` });
     const noteB = await createNote(request, { name: `${prefix} B` });
 
-    await page.goto("/notes");
-    await searchAndWait(page, prefix);
+    await openFilteredNotes(page, prefix, 2);
     await page.getByLabel(`Select ${noteA.name}`).click();
     await page.getByLabel(`Select ${noteB.name}`).click();
 

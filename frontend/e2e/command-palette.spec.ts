@@ -76,16 +76,19 @@ test.describe("command palette", () => {
       first_reminder_at: "1970-01-01T00:00:00Z",
     });
 
-    await page.goto("/review");
-    const cardTitle = page.getByRole("heading", { level: 2 }).first();
-    await expect(cardTitle).toBeVisible();
-    const before = await cardTitle.textContent();
+    try {
+      await page.goto("/review");
+      const cardTitle = page.getByRole("heading", { level: 2 }).first();
+      await expect(cardTitle).toBeVisible();
+      const before = await cardTitle.textContent();
 
-    await page.keyboard.press("ControlOrMeta+/");
-    await page.getByRole("combobox").pressSequentially("1234");
-    await page.keyboard.press("Escape");
+      await page.keyboard.press("ControlOrMeta+/");
+      await page.getByRole("combobox").pressSequentially("1234");
+      await page.keyboard.press("Escape");
 
-    await expect(cardTitle).toHaveText(before ?? "");
-    await request.delete(`${API_URL}/notes/${note.id}`);
+      await expect(cardTitle).toHaveText(before ?? "");
+    } finally {
+      await request.delete(`${API_URL}/notes/${note.id}`);
+    }
   });
 });

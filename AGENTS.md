@@ -23,7 +23,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 
 ## Verifying changes
 
-- Frontend: `pnpm typecheck`, `pnpm lint` (oxlint).
+- Frontend: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm test` (vitest unit tests in `frontend/tests/` for pure modules; keep UI flows in E2E).
 - Backend: `.venv/bin/ruff check .`, `.venv/bin/python -m pytest` (from `backend/`).
 - Extension: `pnpm typecheck`, `pnpm test`.
 - Mobile: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm doctor` after dependency changes.

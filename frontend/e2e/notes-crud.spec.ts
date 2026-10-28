@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createNote, uniqueName } from "./support/api";
+import { openFilteredNotes } from "./support/notesList";
 
 const contentEditor = (page: import("@playwright/test").Page) =>
   page.getByRole("textbox", { name: "editable markdown" });
@@ -25,6 +26,7 @@ test.describe("note lifecycle", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     await expect(page).toHaveURL(/\/notes$/);
+    await openFilteredNotes(page, name, 1);
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
 
     await page.getByRole("link", { name, exact: true }).click();
@@ -46,7 +48,7 @@ test.describe("note lifecycle", () => {
 
     await moveNoteToTrash(page);
     await expect(page).toHaveURL(/\/notes$/);
-    await expect(page.getByRole("link", { name: editedName, exact: true })).toHaveCount(0);
+    await openFilteredNotes(page, editedName, 0);
 
     await page.goto("/trash");
     const trashCard = page
@@ -57,8 +59,7 @@ test.describe("note lifecycle", () => {
     await trashCard.getByRole("button", { name: "Restore" }).click();
     await expect(trashCard).toHaveCount(0);
 
-    await page.goto("/notes");
-    await expect(page.getByRole("link", { name: editedName, exact: true })).toBeVisible();
+    await openFilteredNotes(page, editedName, 1);
 
     await page.getByRole("link", { name: editedName, exact: true }).click();
     await moveNoteToTrash(page);

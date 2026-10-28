@@ -15,8 +15,9 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   workers: 1,
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "line" : "html",
+  reporter: process.env.CI ? "line" : [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: FRONTEND_URL,
     trace: "retain-on-failure",
@@ -25,7 +26,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `../backend/.venv/bin/uvicorn --app-dir ../backend main:app --host 127.0.0.1 --port ${BACKEND_PORT}`,
+      command: `../backend/.venv/bin/uvicorn --app-dir ../backend main:app --host 127.0.0.1 --port ${BACKEND_PORT} --log-level warning`,
       url: `${BACKEND_URL}/healthz`,
       reuseExistingServer: false,
       stdout: "pipe",

@@ -2,7 +2,7 @@
 	dev-backend dev-frontend dev-extension dev-extension-firefox dev-mobile \
 	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
 	check check-backend check-frontend check-extension check-mobile \
-	test test-backend test-extension test-e2e test-e2e-ui test-e2e-headed \
+	test test-backend test-frontend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	reset-login snapshot doctor deploy
 
 help:
@@ -38,6 +38,7 @@ help:
 	@echo "Test:"
 	@echo "  make test                     - backend pytest + extension vitest + frontend e2e"
 	@echo "  make test-backend             - backend pytest suite"
+	@echo "  make test-frontend            - frontend vitest unit tests"
 	@echo "  make test-extension           - extension vitest suite"
 	@echo "  make test-e2e                 - frontend Playwright e2e suite (headless)"
 	@echo "  make test-e2e-ui              - e2e suite in Playwright's interactive UI mode"
@@ -124,13 +125,16 @@ check-extension:
 check-mobile:
 	cd mobile && pnpm typecheck && pnpm lint
 
-test: test-backend test-extension test-e2e
+test: test-backend test-frontend test-extension test-e2e
 
 test-backend:
 	cd backend && .venv/bin/python -m pytest
 
 test-extension:
 	cd extension && pnpm test
+
+test-frontend:
+	cd frontend && pnpm test
 
 test-e2e:
 	cd frontend && pnpm test:e2e

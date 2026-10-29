@@ -7,6 +7,7 @@ import AuthGate from "@/auth/AuthGate";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 import { Outlet } from "@tanstack/react-router";
+import { SyncWatcher } from "@/sync/SyncIndicator";
 import AppSidebar from "../AppSidebar";
 function Layout() {
   return (
@@ -28,6 +29,7 @@ function Layout() {
                   </main>
                 </div>
                 <CommandPalette />
+                <SyncWatcher />
               </CommandPaletteProvider>
             </SidebarProvider>
           </AuthGate>

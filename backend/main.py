@@ -15,6 +15,7 @@ from backups.service import run_snapshot_schedule
 from db.setup import setup_db
 from local_auth.router import router as auth_router
 from local_auth.service import ensure_local_auth
+from sync.local import run_sync_schedule
 from trusted_proxies import ForwardedHeadersMiddleware
 
 logging.basicConfig(level=logging.INFO)
@@ -30,9 +31,12 @@ async def lifespan(app: FastAPI):
     if auth.AUTH_MODE == "local":
         ensure_local_auth(engine)
     app.state.engine = engine
-    snapshots = asyncio.create_task(run_snapshot_schedule(engine))
+    tasks = [asyncio.create_task(run_snapshot_schedule(engine))]
+    if auth.AUTH_MODE == "desktop":
+        tasks.append(asyncio.create_task(run_sync_schedule(engine)))
     yield
-    snapshots.cancel()
+    for task in tasks:
+        task.cancel()
     engine.dispose()
     log.info("DB Engine disposed")
 

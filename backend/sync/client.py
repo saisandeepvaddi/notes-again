@@ -251,6 +251,8 @@ def sync_once(engine: Engine, http: httpx.Client) -> SyncOutcome:
         with Session(engine) as session:
             remote = cast(SyncRemote, session.get(SyncRemote, 1))
             remote.last_synced_at = utcnow()
+            if pulled:
+                remote.last_changed_at = remote.last_synced_at
             remote.last_error = None
             session.add(remote)
             conflicts = len(session.exec(select(SyncConflict.note_uid)).all())

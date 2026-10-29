@@ -11,6 +11,12 @@ importers:
       '@base-ui/react':
         specifier: ^1.7.0
         version: 1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.18)(date-fns@4.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@codemirror/merge':
+        specifier: 6.12.2
+        version: 6.12.2
+      '@codemirror/state':
+        specifier: 6.7.2
+        version: 6.7.2
       '@codemirror/view':
         specifier: 6.43.10
         version: 6.43.10

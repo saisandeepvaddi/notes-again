@@ -188,5 +188,6 @@ class SyncRemote(SQLModel, table=True):
     pushed_version: int = Field(default=0)
     pulled_version: int = Field(default=0)
     last_synced_at: datetime.datetime | None = Field(default=None)
+    last_changed_at: datetime.datetime | None = Field(default=None)
     last_error: str | None = Field(default=None)
     created_at: datetime.datetime = Field(default_factory=utcnow)

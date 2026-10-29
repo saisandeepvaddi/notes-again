@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const SETTINGS_SECTIONS = ["appearance", "review", "sign-in", "tokens", "system"] as const;
+export const SETTINGS_SECTIONS = [
+  "appearance",
+  "review",
+  "sign-in",
+  "sync",
+  "tokens",
+  "system",
+] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 

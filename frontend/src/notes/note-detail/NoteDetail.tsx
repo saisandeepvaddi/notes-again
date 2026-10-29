@@ -52,6 +52,7 @@ import { ProjectPicker } from "../ProjectPicker";
 import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
+import { SyncConflictBanner } from "@/sync/ConflictResolver";
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -107,6 +108,26 @@ export function NoteDetail({ note }: NoteDetailProps) {
     setSaveState("unsaved");
     setContent(value);
   };
+
+  const [editorKey, setEditorKey] = useState(0);
+  const replaceText = useCallback((text: { name: string; content: string }) => {
+    editVersion.current += 1;
+    setName(text.name);
+    setContent(text.content);
+    setSaveState("saved");
+    setEditorKey((key) => key + 1);
+  }, []);
+
+  const lastLoaded = useRef({ name: note.name, content: note.content });
+  useEffect(() => {
+    const previous = lastLoaded.current;
+    lastLoaded.current = { name: note.name, content: note.content };
+    const untouched =
+      saveState === "saved" && name === previous.name && content === previous.content;
+    const changedElsewhere = note.name !== previous.name || note.content !== previous.content;
+    if (untouched && changedElsewhere) replaceText(note);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note.name, note.content]);
 
   useEffect(() => {
     rememberRecentNote({ id: note.id, title: noteTitleText(note.name).trim() });
@@ -180,6 +201,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
   const difficulty = getDifficulty(note.tags);
 
   useEffect(() => {
+    lastLoaded.current = { name: note.name, content: note.content };
     setName(note.name);
     setEditingTitle(false);
     setContent(note.content);
@@ -489,6 +511,8 @@ export function NoteDetail({ note }: NoteDetailProps) {
               {STATUS_NOTICES[status]}
             </p>
           )}
+
+          <SyncConflictBanner noteId={note.id} mine={{ name, content }} onResolved={replaceText} />
         </div>
       </header>
 
@@ -516,6 +540,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
       <div className="flex-1 px-4 pt-6 pb-20 md:px-8">
         <div className="note-column note-sheet">
           <MarkdownEditor
+            key={editorKey}
             markdown={content}
             onChange={changeContent}
             className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"

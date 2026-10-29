@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "./ui/sidebar";
+import { SyncIndicator } from "@/sync/SyncIndicator";
 
 const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
@@ -105,6 +106,7 @@ function AppSidebar() {
         <ProjectsSidebarSection />
       </SidebarContent>
       <SidebarFooter className="gap-2">
+        <SyncIndicator />
         <div className="flex items-center justify-between px-1">
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />

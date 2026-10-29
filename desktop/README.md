@@ -10,6 +10,10 @@ A Tauri 2 shell around the regular app. It runs its own copy of the backend on `
 4. Links that leave `127.0.0.1` open in the system browser.
 5. Quitting closes the server's stdin; the server exits when stdin closes, so it also stops if the app crashes.
 
+## Sync
+
+Settings → Sync connects to a self-hosted server with its username and password (traded for an app token named after this computer) or a pasted app token or connect link. The local backend then syncs in the background: within about 10 seconds of a local change, and every minute otherwise. Offline, everything keeps working and changes wait until the server is reachable. A note edited in both places gets a "Changed in two places" banner; Compare versions shows a side-by-side merge where you pick or combine the text. See `backend/sync/` for the protocol.
+
 ## Where things live
 
 | | macOS | Windows | Linux |

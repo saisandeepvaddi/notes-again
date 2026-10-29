@@ -66,16 +66,20 @@ const unused = [
   join(pythonOut, "share"),
   join(pythonOut, "tcl"),
   join(pythonOut, "lib", "pkgconfig"),
+  join(pythonOut, "Scripts"),
+  join(pythonOut, "libs"),
 ];
 for (const path of unused) {
   rmSync(path, { recursive: true, force: true });
 }
-const libDir = join(pythonOut, windows ? "." : "lib");
-for (const name of readdirSync(libDir)) {
-  const tclTk = /^(lib)?(tcl|tk|itcl|thread)\d/i.test(name) || /^_?tk/i.test(name);
-  const unusedLibpython = process.platform === "darwin" && /^libpython.*\.dylib$/.test(name);
-  if (tclTk || unusedLibpython) {
-    rmSync(join(libDir, name), { recursive: true, force: true });
+const libDirs = windows ? [pythonOut, join(pythonOut, "DLLs")] : [join(pythonOut, "lib")];
+for (const libDir of libDirs.filter((dir) => existsSync(dir))) {
+  for (const name of readdirSync(libDir)) {
+    const tclTk = /^(lib)?(tcl|tk|itcl|thread)\d/i.test(name) || /^_?tk/i.test(name);
+    const unusedLibpython = process.platform === "darwin" && /^libpython.*\.dylib$/.test(name);
+    if (tclTk || unusedLibpython) {
+      rmSync(join(libDir, name), { recursive: true, force: true });
+    }
   }
 }
 

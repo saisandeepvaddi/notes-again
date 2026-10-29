@@ -43,6 +43,7 @@ const outputs = [
   ["extension/public/icon/96.png", "rounded", 96],
   ["extension/public/icon/128.png", "padded", 128],
   ["desktop/app-icon.png", "padded", 1024],
+  ["desktop/src-tauri/icons/tray.png", "monochrome", 64],
 ];
 
 const browser = await chromium.launch();

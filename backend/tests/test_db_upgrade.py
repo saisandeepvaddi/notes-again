@@ -7,6 +7,8 @@ from main import app
 
 LEGACY_DROPS = {
     "notes": [
+        "uid",
+        "sync_version",
         "ease_factor",
         "interval_days",
         "algorithm",
@@ -14,9 +16,10 @@ LEGACY_DROPS = {
         "paused_at",
         "in_review",
     ],
-    "reminders": ["rating", "ease_factor", "interval_days", "fsrs_card"],
-    "tags": ["is_difficulty", "default_ease_factor"],
-    "projects": ["paused"],
+    "reminders": ["uid", "rating", "ease_factor", "interval_days", "fsrs_card"],
+    "tags": ["uid", "sync_version", "is_difficulty", "default_ease_factor"],
+    "projects": ["uid", "sync_version", "paused"],
+    "settings": ["sync_version"],
 }
 
 
@@ -75,6 +78,19 @@ def test_an_old_database_is_upgraded_in_place_on_start(tmp_path, monkeypatch):
 
         hits = client.get("/api/search", params={"q": "before search"}).json()["notes"]
         assert [hit["id"] for hit in hits] == [1]
+
+        with app.state.engine.connect() as conn:
+            note_uid, note_version = conn.execute(
+                text("SELECT uid, sync_version FROM notes WHERE id = 1")
+            ).one()
+            reminder_uids = conn.execute(text("SELECT uid FROM reminders")).scalars().all()
+            hard_uid = conn.execute(
+                text("SELECT uid FROM tags WHERE name = 'Hard'")
+            ).scalar_one()
+        assert len(note_uid) == 32
+        assert note_version > 0
+        assert all(reminder_uids)
+        assert hard_uid == "difficulty-hard"
 
 
 def test_adding_missing_columns_twice_is_harmless(tmp_path):

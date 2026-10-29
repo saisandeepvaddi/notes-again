@@ -8,6 +8,7 @@ from notes.router import router as notes_router
 from projects.router import router as projects_router
 from search.router import router as search_router
 from settings.router import router as settings_router
+from sync.server import router as sync_router
 from system.router import router as system_router
 from tags.router import router as tags_router
 from tokens.router import router as tokens_router
@@ -23,3 +24,4 @@ router.include_router(export_router)
 router.include_router(tokens_router)
 router.include_router(system_router)
 router.include_router(search_router)
+router.include_router(sync_router)

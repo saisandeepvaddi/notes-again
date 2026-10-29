@@ -1,10 +1,15 @@
 import datetime
+import uuid
 
 from sqlmodel import Field, Relationship, SQLModel
 
 
 def utcnow() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC)
+
+
+def new_uid() -> str:
+    return uuid.uuid4().hex
 
 
 class User(SQLModel, table=True):
@@ -27,6 +32,8 @@ class NoteTag(SQLModel, table=True):
 class Tag(SQLModel, table=True):
     __tablename__ = "tags"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    uid: str = Field(default_factory=new_uid)
+    sync_version: int = Field(default=0)
     name: str = Field(unique=True, index=True)
     created_at: datetime.datetime = Field(default_factory=utcnow)
 
@@ -39,6 +46,8 @@ class Tag(SQLModel, table=True):
 class Project(SQLModel, table=True):
     __tablename__ = "projects"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    uid: str = Field(default_factory=new_uid)
+    sync_version: int = Field(default=0)
     name: str = Field(unique=True, index=True)
     created_at: datetime.datetime = Field(default_factory=utcnow)
     deleted_at: datetime.datetime | None = Field(default=None)
@@ -51,6 +60,8 @@ class Project(SQLModel, table=True):
 class Note(SQLModel, table=True):
     __tablename__ = "notes"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    uid: str = Field(default_factory=new_uid)
+    sync_version: int = Field(default=0)
     name: str = Field(index=True)
     content: str
     created_at: datetime.datetime = Field(default_factory=utcnow)
@@ -82,6 +93,7 @@ class Note(SQLModel, table=True):
 class Reminder(SQLModel, table=True):
     __tablename__ = "reminders"  # type: ignore
     id: int = Field(default=None, primary_key=True)
+    uid: str = Field(default_factory=new_uid)
     remind_at: datetime.datetime = Field(default_factory=utcnow)
     created_at: datetime.datetime = Field(default_factory=utcnow)
     updated_at: datetime.datetime = Field(default_factory=utcnow)
@@ -100,6 +112,7 @@ class Reminder(SQLModel, table=True):
 class Settings(SQLModel, table=True):
     __tablename__ = "settings"  # type: ignore
     id: int = Field(default=1, primary_key=True)
+    sync_version: int = Field(default=0)
     default_algorithm: str = Field(default="fsrs")
 
 
@@ -135,3 +148,45 @@ class AuthSession(SQLModel, table=True):
     created_at: datetime.datetime = Field(default_factory=utcnow)
     last_used_at: datetime.datetime = Field(default_factory=utcnow)
     expires_at: datetime.datetime
+
+
+class SyncState(SQLModel, table=True):
+    __tablename__ = "sync_state"  # type: ignore
+    id: int = Field(default=1, primary_key=True)
+    version: int = Field(default=0)
+    applying: bool = Field(default=False)
+
+
+class SyncTombstone(SQLModel, table=True):
+    __tablename__ = "sync_tombstones"  # type: ignore
+    kind: str = Field(primary_key=True)
+    uid: str = Field(primary_key=True)
+    version: int = Field(index=True)
+
+
+class SyncBase(SQLModel, table=True):
+    __tablename__ = "sync_bases"  # type: ignore
+    kind: str = Field(primary_key=True)
+    uid: str = Field(primary_key=True)
+    payload: str
+
+
+class SyncConflict(SQLModel, table=True):
+    __tablename__ = "sync_conflicts"  # type: ignore
+    note_uid: str = Field(primary_key=True)
+    their_name: str
+    their_content: str
+    detected_at: datetime.datetime = Field(default_factory=utcnow)
+
+
+class SyncRemote(SQLModel, table=True):
+    __tablename__ = "sync_remote"  # type: ignore
+    id: int = Field(default=1, primary_key=True)
+    url: str
+    token: str
+    username: str | None = Field(default=None)
+    pushed_version: int = Field(default=0)
+    pulled_version: int = Field(default=0)
+    last_synced_at: datetime.datetime | None = Field(default=None)
+    last_error: str | None = Field(default=None)
+    created_at: datetime.datetime = Field(default_factory=utcnow)

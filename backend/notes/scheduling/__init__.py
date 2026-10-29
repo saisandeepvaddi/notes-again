@@ -11,6 +11,7 @@ __all__ = [
     "Rating",
     "new_note_scheduling_state",
     "preview_note",
+    "record_review",
     "restore_from_snapshot",
     "review_note",
     "snapshot_for_new_reminder",
@@ -41,6 +42,13 @@ def review_note(note: Note, rating: Rating) -> datetime.datetime:
     note.ease_factor = new_ease
     note.interval_days = new_interval
     return utcnow() + datetime.timedelta(days=new_interval)
+
+
+def record_review(note: Note, reminder: Reminder, rating: Rating) -> Reminder:
+    due_at = review_note(note, rating)
+    reminder.reviewed_at = utcnow()
+    reminder.rating = rating
+    return Reminder(note_id=note.id, remind_at=due_at, **snapshot_for_new_reminder(note))
 
 
 def restore_from_snapshot(note: Note, reminder: Reminder) -> None:

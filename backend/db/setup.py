@@ -12,6 +12,7 @@ from sqlmodel import Session, SQLModel, col, create_engine, select
 from db.models import Note, Reminder, Settings, Tag, User
 from notes.title_text import markdown_title_text
 from search.index import ensure_search_index
+from sync.tracking import ensure_sync_tracking
 from tags.difficulty import DIFFICULTY_TAGS
 
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +49,8 @@ def add_missing_columns(engine: Engine) -> None:
     existing_tables = set(inspector.get_table_names())
     migrations: dict[str, list[tuple[str, str]]] = {
         "notes": [
+            ("uid", "TEXT"),
+            ("sync_version", "INTEGER NOT NULL DEFAULT 0"),
             ("ease_factor", "REAL NOT NULL DEFAULT 2.5"),
             ("interval_days", "INTEGER NOT NULL DEFAULT 0"),
             ("project_id", "INTEGER"),
@@ -58,8 +61,11 @@ def add_missing_columns(engine: Engine) -> None:
         ],
         "projects": [
             ("paused", "BOOLEAN NOT NULL DEFAULT 0"),
+            ("uid", "TEXT"),
+            ("sync_version", "INTEGER NOT NULL DEFAULT 0"),
         ],
         "reminders": [
+            ("uid", "TEXT"),
             ("rating", "TEXT"),
             ("ease_factor", "REAL"),
             ("interval_days", "INTEGER"),
@@ -68,6 +74,11 @@ def add_missing_columns(engine: Engine) -> None:
         "tags": [
             ("is_difficulty", "BOOLEAN NOT NULL DEFAULT 0"),
             ("default_ease_factor", "REAL"),
+            ("uid", "TEXT"),
+            ("sync_version", "INTEGER NOT NULL DEFAULT 0"),
+        ],
+        "settings": [
+            ("sync_version", "INTEGER NOT NULL DEFAULT 0"),
         ],
     }
     with engine.begin() as conn:
@@ -77,7 +88,9 @@ def add_missing_columns(engine: Engine) -> None:
             existing_columns = {c["name"] for c in inspector.get_columns(table)}
             for name, ddl_type in columns:
                 if name not in existing_columns:
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}"))
+                    conn.execute(
+                        text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}")
+                    )
 
 
 def ensure_indexes(engine: Engine) -> None:
@@ -121,22 +134,33 @@ def collapse_legacy_pending_reminders(engine: Engine) -> None:
         session.commit()
 
 
+def difficulty_tag_uid(difficulty: str) -> str:
+    return f"difficulty-{difficulty}"
+
+
 def seed_difficulty_tags(engine: Engine) -> None:
     with Session(engine) as session:
-        for defaults in DIFFICULTY_TAGS.values():
-            tag = session.exec(select(Tag).where(Tag.name == defaults.name)).one_or_none()
+        for difficulty, defaults in DIFFICULTY_TAGS.items():
+            uid = difficulty_tag_uid(difficulty)
+            tag = session.exec(
+                select(Tag).where(Tag.name == defaults.name)
+            ).one_or_none()
             if tag is None:
                 session.add(
                     Tag(
+                        uid=uid,
                         name=defaults.name,
                         is_difficulty=True,
                         default_ease_factor=defaults.default_ease_factor,
                     )
                 )
-            elif not tag.is_difficulty:
+                continue
+            if not tag.is_difficulty:
                 tag.is_difficulty = True
                 tag.default_ease_factor = defaults.default_ease_factor
-                session.add(tag)
+            if tag.uid != uid:
+                tag.uid = uid
+            session.add(tag)
         session.commit()
 
 
@@ -147,7 +171,9 @@ def backfill_note_difficulty(engine: Engine) -> None:
         ).one()
         difficulty_tag_ids = {
             tag.id
-            for tag in session.exec(select(Tag).where(col(Tag.is_difficulty).is_(True))).all()
+            for tag in session.exec(
+                select(Tag).where(col(Tag.is_difficulty).is_(True))
+            ).all()
         }
         notes = session.exec(
             select(Note)
@@ -173,6 +199,7 @@ def create_db_and_tables(engine: Engine) -> None:
     SQLModel.metadata.create_all(engine)
     ensure_indexes(engine)
     ensure_search_index(engine)
+    ensure_sync_tracking(engine)
     collapse_legacy_pending_reminders(engine)
     seed_difficulty_tags(engine)
     backfill_note_difficulty(engine)
@@ -202,16 +229,20 @@ def _register_sql_functions(dbapi_connection, _connection_record) -> None:
     )
 
 
+def create_engine_for(db_path: Path) -> Engine:
+    engine = create_engine(
+        url=f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    event.listen(engine, "connect", _register_sql_functions)
+    create_db_and_tables(engine=engine)
+    return engine
+
+
 def setup_db() -> Engine | None:
     try:
         db_path = get_sqlite_db_file_path()
-
-        connect_args = {"check_same_thread": False}
-        sqlite_path = f"sqlite:///{db_path}"
-        log.info(f"Database {sqlite_path=}")
-        engine = create_engine(url=sqlite_path, connect_args=connect_args)
-        event.listen(engine, "connect", _register_sql_functions)
-        create_db_and_tables(engine=engine)
+        log.info(f"Database sqlite_path='sqlite:///{db_path}'")
+        engine = create_engine_for(db_path)
         log.info("DB setup completed")
         return engine
 

@@ -18,9 +18,8 @@ from notes.scheduling import (
     Algorithm,
     Rating,
     preview_note,
+    record_review,
     restore_from_snapshot,
-    review_note,
-    snapshot_for_new_reminder,
 )
 from notes.utils import to_utc
 from search.query import note_search_condition
@@ -612,13 +611,7 @@ def patch_note_reminder(reminder_id: int, body: PatchReminderBody, session: Sess
                 status.HTTP_400_BAD_REQUEST, "rating is required to review"
             )
 
-        due_at = review_note(note, body.rating)
-
-        reminder.reviewed_at = utcnow()
-        reminder.rating = body.rating
-        next_reminder = Reminder(
-            note_id=note.id, remind_at=due_at, **snapshot_for_new_reminder(note)
-        )
+        next_reminder = record_review(note, reminder, body.rating)
         session.add_all([reminder, note, next_reminder])
         session.commit()
         session.refresh(note)

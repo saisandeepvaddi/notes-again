@@ -1,0 +1,15 @@
+{
+  "name": "notes-again-desktop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --dir ../frontend build && tauri dev",
+    "bundle-backend": "node scripts/bundle-backend.mjs",
+    "build": "pnpm --dir ../frontend build && node scripts/bundle-backend.mjs && tauri build --config src-tauri/tauri.bundle.conf.json",
+    "icons": "tauri icon app-icon.png",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  }
+}

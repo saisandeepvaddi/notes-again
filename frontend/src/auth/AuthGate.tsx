@@ -36,6 +36,16 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (status.mode === "proxy" || status.mode === "cloudflare-access") {
     return status.authenticated ? <>{children}</> : <ExternalSignInScreen mode={status.mode} />;
   }
+  if (status.mode === "desktop" && !status.authenticated) {
+    return (
+      <div className="grid min-h-dvh place-items-center p-4">
+        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium">This window lost its connection to your notes</p>
+          <p className="text-xs text-muted-foreground">Quit and reopen Notes Again.</p>
+        </div>
+      </div>
+    );
+  }
   if (status.mode === "local") {
     if (!status.authenticated) {
       return <LoginScreen mode="local" firstLaunch={status.setup_required} />;

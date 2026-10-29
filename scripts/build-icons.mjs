@@ -42,6 +42,7 @@ const outputs = [
   ["extension/public/icon/48.png", "rounded", 48],
   ["extension/public/icon/96.png", "rounded", 96],
   ["extension/public/icon/128.png", "padded", 128],
+  ["desktop/app-icon.png", "padded", 1024],
 ];
 
 const browser = await chromium.launch();

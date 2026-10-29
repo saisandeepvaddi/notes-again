@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 import auth
@@ -58,6 +59,8 @@ def auth_status(request: Request, session: SessionDep):
         status_body.setup_required = record is not None and not record.setup_completed
         if identity is not None:
             status_body.username = identity["username"]
+    elif mode == "desktop":
+        status_body.authenticated = auth.desktop_identity(request) is not None
     elif mode == "firebase":
         status_body.firebase = auth.firebase_web_config()
     elif mode in auth.EXTERNAL_MODES:
@@ -70,6 +73,17 @@ def auth_status(request: Request, session: SessionDep):
         if identity is not None:
             status_body.username = identity["username"]
     return status_body
+
+
+@router.get("/desktop")
+def desktop_sign_in(secret: str):
+    if auth.AUTH_MODE != "desktop" or not auth.desktop_secret_matches(secret):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
+    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        auth.DESKTOP_COOKIE, secret, httponly=True, samesite="strict", path="/"
+    )
+    return response
 
 
 def _require_local_mode() -> None:

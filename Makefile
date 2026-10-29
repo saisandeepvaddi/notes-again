@@ -1,6 +1,6 @@
-.PHONY: help run serve install install-backend install-frontend install-extension install-mobile \
-	dev-backend dev-frontend dev-extension dev-extension-firefox dev-mobile \
-	build build-frontend build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
+.PHONY: help run serve install install-backend install-frontend install-extension install-mobile install-desktop \
+	dev-backend dev-frontend dev-extension dev-extension-firefox dev-mobile dev-desktop \
+	build build-frontend build-desktop build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
 	check check-backend check-frontend check-extension check-mobile \
 	test test-backend test-frontend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	reset-login snapshot doctor deploy
@@ -21,10 +21,12 @@ help:
 	@echo "  make dev-extension            - extension dev mode in Chrome, with reload"
 	@echo "  make dev-extension-firefox    - extension dev mode in Firefox"
 	@echo "  make dev-mobile               - Expo dev server for the mobile app (open in Expo Go)"
+	@echo "  make dev-desktop              - desktop app against the repo's backend and SPA build"
 	@echo ""
 	@echo "Build:"
 	@echo "  make build                    - frontend SPA + Chrome and Firefox extensions"
 	@echo "  make build-frontend           - SPA into frontend/dist/client"
+	@echo "  make build-desktop            - desktop installers for this OS into desktop/src-tauri/target/release/bundle"
 	@echo "  make build-extension          - Chrome and Firefox extensions"
 	@echo "  make build-extension-chrome   - Chrome extension into extension/dist/chrome-mv3"
 	@echo "  make build-extension-firefox  - Firefox extension into extension/dist/firefox-mv3"
@@ -58,7 +60,7 @@ run: install-backend install-frontend build-frontend
 serve:
 	DB='$(DB)' scripts/serve.sh
 
-install: install-backend install-frontend install-extension install-mobile
+install: install-backend install-frontend install-extension install-mobile install-desktop
 
 install-backend:
 	cd backend && uv sync
@@ -71,6 +73,9 @@ install-extension:
 
 install-mobile:
 	cd mobile && pnpm install
+
+install-desktop:
+	cd desktop && pnpm install
 
 dev-backend:
 	env -u DB_PATH AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 \
@@ -88,10 +93,16 @@ dev-extension-firefox:
 dev-mobile:
 	cd mobile && pnpm start
 
+dev-desktop:
+	cd desktop && pnpm dev
+
 build: build-frontend build-extension
 
 build-frontend:
 	cd frontend && pnpm build
+
+build-desktop:
+	cd desktop && pnpm build
 
 build-extension: build-extension-chrome build-extension-firefox
 

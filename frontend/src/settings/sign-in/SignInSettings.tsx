@@ -115,6 +115,13 @@ export function SignInSettings() {
         sign in is managed there, not here.
       </Description>
     );
+  } else if (status.configured_mode === "desktop") {
+    body = (
+      <Description>
+        This is the desktop app. Your notes are stored on this computer and only this app can open
+        them, so there's no login.
+      </Description>
+    );
   } else if (status.configured_mode === "none") {
     body = (
       <Description>

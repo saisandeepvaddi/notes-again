@@ -1,0 +1,4 @@
+# Makes desktop/ its own pnpm root. Without this pnpm walks up the tree and
+# adopts an ancestor's workspace (e.g. one in $HOME), installing into it.
+packages:
+  - "."

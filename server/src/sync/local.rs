@@ -123,11 +123,26 @@ fn normalize_url(raw: &str) -> String {
     url
 }
 
-fn device_name() -> String {
+const DEVICE_NAME_LIMIT: usize = 80;
+
+fn device_name_for(host: &str) -> String {
+    let host = host.trim().trim_end_matches(".local");
+    let name = if host.is_empty() {
+        "Desktop app".to_string()
+    } else {
+        format!("Desktop app ({host})")
+    };
+    if crate::text::char_len(&name) <= DEVICE_NAME_LIMIT {
+        return name;
+    }
     format!(
-        "Desktop app ({})",
-        gethostname::gethostname().to_string_lossy()
+        "{})",
+        crate::text::take_chars(&name, DEVICE_NAME_LIMIT - 2).trim_end()
     )
+}
+
+fn device_name() -> String {
+    device_name_for(&gethostname::gethostname().to_string_lossy())
 }
 
 async fn exchange_password(url: &str, username: &str, password: &str) -> Result<String, ApiError> {
@@ -346,4 +361,19 @@ pub fn router(state: AppState) -> Router<AppState> {
         .route("/sync/conflicts", get(list_conflicts))
         .route("/sync/conflicts/{note_id}/resolve", post(resolve))
         .route_layer(axum::middleware::from_fn_with_state(state, require_desktop))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn device_names_fit_the_servers_limit() {
+        assert_eq!(device_name_for("laptop.local"), "Desktop app (laptop)");
+        assert_eq!(device_name_for(""), "Desktop app");
+        let long = "sjc22-bt115_6b0cb7b5-2bb7-4f05-8c7b-71b2d2ebfd38-1C8C2E7C0A9A.local";
+        let name = device_name_for(long);
+        assert!(crate::text::char_len(&name) <= DEVICE_NAME_LIMIT, "{name}");
+        assert!(name.starts_with("Desktop app (sjc22-") && name.ends_with(')'));
+    }
 }

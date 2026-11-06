@@ -29,7 +29,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 - Extension: `pnpm typecheck`, `pnpm test`.
 - Desktop: `cargo build` and `cargo fmt` in `desktop/src-tauri`; `pnpm dev` to run it against the repo's SPA build.
 - Mobile: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm doctor` after dependency changes.
-- E2E: `make test-e2e`. Playwright starts its own server via `cargo run` (8210) and frontend (5290) on a throwaway DB. Specs share that DB and run serially, so seed data with `uniqueName()` from `e2e/support/api.ts`. The first run on a cold Vite server is slow and can time out once.
+- E2E: `make test-e2e`. Playwright starts its own server via `cargo run` (8210) and frontend (5290) on a throwaway DB. With `E2E_BUILT=1` it skips Vite and has the server serve `frontend/dist/client` (build it with `VITE_SERVER_IP=127.0.0.1 VITE_SERVER_PORT=8210`); CI runs it that way. Specs share that DB and run serially, so seed data with `uniqueName()` from `e2e/support/api.ts`. The first run on a cold Vite server is slow and can time out once.
 - The formatters (oxfmt; `cargo fmt` is applied to Rust) have never been applied repo-wide. Run them only on files you touch, so diffs stay limited to your change.
 
 ## Conventions

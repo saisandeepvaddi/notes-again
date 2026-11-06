@@ -22,5 +22,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEwOEU1QzNEMEQyREI1MDMKUldRRHRTME5QVnlPRUZqY2xhbDUvNjA5d09iYXpoeXlLV0J4RFEra3dXNENUQ3lHWkhKZnppUGoK",
+      "endpoints": [
+        "https://github.com/saisandeepvaddi/notes-again/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

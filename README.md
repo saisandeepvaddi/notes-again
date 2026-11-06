@@ -15,15 +15,28 @@ accounts.
   you can restore from.
 - **Browser extension** to save a page or a selection with one hotkey
   ([extension/](extension/README.md)).
+- **Desktop app** for macOS, Windows and Linux that works offline, syncs with
+  your server, and sits in the tray for quick capture and review reminders
+  ([desktop/](desktop/README.md)).
 - **Mobile app** for iOS and Android to review what's due and jot notes down
   away from the desk ([mobile/](mobile/README.md)).
 - **Import** Anki-style decks from JSON, and export your notes back out.
 - **Backups built in**: daily local snapshots, a one-click database download,
   and optional off-site streaming with Litestream.
 
-## Run it
+## Get it
 
-Pick one. Details for each are in [docs/self-hosting.md](docs/self-hosting.md).
+**Desktop app** for macOS, Windows and Linux: download it from the
+[latest release](https://github.com/saisandeepvaddi/notes-again/releases/latest).
+It runs everything on your computer, needs no server, and updates itself. The
+builds aren't code-signed, so macOS and Windows ask you to confirm the first
+launch; the release notes say how. Connect it to a server later
+(Settings → Sync) to use the same notes on other devices.
+
+## Run a server
+
+For syncing between devices, the web app, and the mobile app. Pick one;
+details for each are in [docs/self-hosting.md](docs/self-hosting.md).
 
 **On your computer** (needs git, [Rust](https://rustup.rs), Node 22+ and pnpm):
 

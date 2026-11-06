@@ -27,8 +27,8 @@ Verified on 2026-11-06 against `main`:
 
 These are recommendations; the phases assume them.
 
-- **Signing.** Apple Developer Program ($99/year) for signing and notarization, and Azure Trusted Signing (about $10/month) for Windows. Linux AppImage/deb/rpm stay unsigned, as is usual there. Phase 1 ships unsigned releases first so nothing waits on accounts.
-- **Updates.** `tauri-plugin-updater` with its own signing key, reading `latest.json` from the newest GitHub Release. AppImage, macOS and Windows update themselves; deb and rpm users update through the package.
+- **Signing.** No OS code signing: it's open source, and forks can sign their own builds (documented in `desktop/README.md`). Release notes explain the Gatekeeper and SmartScreen prompts.
+- **Updates.** `tauri-plugin-updater` with its own (free) signing key, reading `latest.json` from the newest GitHub Release. The checks run in Rust and surface in the tray, because the window loads the app from `127.0.0.1`, where Tauri's JavaScript APIs aren't available. AppImage, macOS and Windows update themselves; deb and rpm users update through the package.
 - **macOS builds.** One universal binary (`universal-apple-darwin`) instead of separate Intel and Apple silicon downloads.
 - **Mobile architecture.** Local-first: the phone keeps its own SQLite database (`expo-sqlite`) and syncs with the same `/api/sync` protocol the desktop uses. A cached online client would never work away from the server, and it couldn't pair with a desktop-only setup.
 - **Desktop as a hub.** With no server, the desktop is the phone's sync peer over the local network. With a server, both devices sync with the server and the desktop never acts as a hub.
@@ -51,9 +51,8 @@ Done when every workflow is green on `main`. Needs: `gh auth refresh`.
 
 1. **Releases.** A `desktop-v*` tag builds every platform and attaches the installers to a draft GitHub Release (`tauri-action`). The version comes from the tag and is written into `tauri.conf.json` and `Cargo.toml`.
 2. **Universal macOS build.**
-3. **Auto-update.** Generate the updater key pair (private key in Actions secrets), add `tauri-plugin-updater`, publish `latest.json` with each release. The app checks on launch and daily, and offers the update in the tray and in Settings → About. Includes a "Check for updates" command.
-4. **Signing.** Once the accounts exist: notarized macOS builds, signed Windows builds. Until then, the release notes explain the Gatekeeper and SmartScreen prompts.
-5. **Download path.** README and `docs/self-hosting.md` lead with "Download the desktop app" and link to the latest release; the web app's sidebar offers the desktop download when it's not running inside the desktop app.
+3. **Auto-update.** Generate the updater key pair (private key in Actions secrets), add `tauri-plugin-updater`, publish `latest.json` with each release. The app checks on launch and daily, and offers the update in the tray with a notification. Includes "Check for updates…".
+4. **Download path.** README and `docs/self-hosting.md` lead with "Download the desktop app" and link to the latest release; the web app's sidebar offers the desktop download when it's not running inside the desktop app.
 
 Done when a fresh macOS, Windows and Linux machine can download, install and launch the app from the Release page, and installing an older release updates itself to the newest.
 

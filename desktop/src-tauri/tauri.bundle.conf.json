@@ -1,10 +1,7 @@
 {
   "bundle": {
     "resources": {
-      "../build/python/": "python/",
-      "../build/site-packages/": "site-packages/",
-      "../build/backend/": "backend/",
-      "../build/frontend/": "frontend/"
+      "../../frontend/dist/client/": "frontend/"
     }
   }
 }

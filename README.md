@@ -25,14 +25,14 @@ accounts.
 
 Pick one. Details for each are in [docs/self-hosting.md](docs/self-hosting.md).
 
-**On your computer** (needs git, [uv](https://docs.astral.sh/uv/), Node 22+ and pnpm):
+**On your computer** (needs git, [Rust](https://rustup.rs), Node 22+ and pnpm):
 
 ```sh
 git clone https://github.com/saisandeepvaddi/notes-again && cd notes-again
 make run
 ```
 
-**On a server, guided** (needs git, plus Docker or uv/Node/pnpm; it asks which):
+**On a server, guided** (needs git, plus Docker or Rust/Node/pnpm; it asks which):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/saisandeepvaddi/notes-again/main/install.sh | sh
@@ -54,7 +54,7 @@ off, or switch to Firebase sign-in.
 
 ## Develop
 
-- Backend: FastAPI + SQLModel + SQLite, managed with uv (`backend/`).
+- Server: Rust (axum + sqlx) on SQLite (`server/`).
 - Frontend: TanStack Start in SPA mode, TanStack Router and Query, Tailwind
   (`frontend/`).
 - Extension: WXT (`extension/`).
@@ -62,10 +62,10 @@ off, or switch to Firebase sign-in.
 
 ```sh
 make install
-make dev-backend    # API on :8000, login off
+make dev-server     # API on :8000, login off
 make dev-frontend   # Vite with hot reload on :5273
 make check          # lint + typecheck
-make test           # backend, extension and e2e tests
+make test           # server, frontend, extension and e2e tests
 ```
 
 [AGENTS.md](AGENTS.md) describes the layout and conventions.

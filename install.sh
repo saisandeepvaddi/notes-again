@@ -140,7 +140,7 @@ docker_missing() {
 }
 
 direct_missing() {
-  has uv || say "uv (https://docs.astral.sh/uv/getting-started/installation/)"
+  has cargo || say "Rust (https://rustup.rs)"
   if ! has node; then
     say "Node.js 22 or newer (https://nodejs.org)"
   else
@@ -352,7 +352,7 @@ setup_docker() {
   say "Waiting for the app to come up..."
   healthy=0
   for _ in $(seq 1 60); do
-    if docker compose exec -T app python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=2)" </dev/null >/dev/null 2>&1; then
+    if docker compose exec -T app notes-again healthcheck </dev/null >/dev/null 2>&1; then
       healthy=1
       break
     fi
@@ -380,7 +380,7 @@ setup_docker() {
   fi
   say ""
   say "Update later:    make update   (or: git pull && docker compose up -d --build)"
-  say "Check the setup: docker compose exec app python backend/cli.py doctor"
+  say "Check the setup: docker compose exec app notes-again doctor"
   say "Docs:            $DOCS_URL"
 }
 
@@ -414,8 +414,8 @@ setup_direct() {
   say "Saved your answers to $(pwd)/$ENV_FILE"
   stop_if_firebase_key_missing
 
-  say "Installing dependencies and building the frontend (a minute or two)..."
-  (cd backend && uv sync --frozen) </dev/null
+  say "Building the server and the frontend (the first build takes a few minutes)..."
+  (cd server && cargo build --release --locked) </dev/null
   (cd frontend && CI=1 pnpm install --frozen-lockfile && pnpm build) </dev/null
 
   say ""
@@ -470,7 +470,7 @@ main() {
   say "How do you want to run it?"
   choose method_pick "$method_default" \
     "Docker: runs in a container, restarts on reboot, includes off-site backup$docker_note" \
-    "Directly on this machine: needs uv, Node.js 22+ and pnpm$direct_note"
+    "Directly on this machine: needs Rust, Node.js 22+ and pnpm$direct_note"
   say ""
 
   if [ "$method_pick" = 1 ]; then

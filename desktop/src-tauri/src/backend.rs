@@ -1,21 +1,20 @@
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use tauri::{AppHandle, Manager};
 
-const READY_PREFIX: &str = "NOTES_AGAIN_READY ";
 const COOKIE: &str = "notes_again_desktop";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Default)]
 pub struct Backend {
-    child: Mutex<Option<Child>>,
+    shutdown: Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
+    worker: Mutex<Option<thread::JoinHandle<()>>>,
     connection: Mutex<Option<Connection>>,
 }
 
@@ -34,41 +33,12 @@ impl Connection {
     }
 }
 
-struct BackendPaths {
-    python: PathBuf,
-    app_dir: PathBuf,
-    frontend_dir: PathBuf,
-    site_packages: Option<PathBuf>,
-}
-
-fn backend_paths(app: &AppHandle) -> tauri::Result<BackendPaths> {
+fn frontend_dir(app: &AppHandle) -> tauri::Result<PathBuf> {
     if cfg!(debug_assertions) {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..");
-        let venv = root.join("backend").join(".venv");
-        let python = if cfg!(windows) {
-            venv.join("Scripts").join("python.exe")
-        } else {
-            venv.join("bin").join("python")
-        };
-        return Ok(BackendPaths {
-            python,
-            app_dir: root.join("backend"),
-            frontend_dir: root.join("frontend").join("dist").join("client"),
-            site_packages: None,
-        });
+        return Ok(root.join("frontend").join("dist").join("client"));
     }
-    let resources = app.path().resource_dir()?;
-    let python = if cfg!(windows) {
-        resources.join("python").join("python.exe")
-    } else {
-        resources.join("python").join("bin").join("python3")
-    };
-    Ok(BackendPaths {
-        python,
-        app_dir: resources.join("backend"),
-        frontend_dir: resources.join("frontend"),
-        site_packages: Some(resources.join("site-packages")),
-    })
+    Ok(app.path().resource_dir()?.join("frontend"))
 }
 
 fn launch_secret() -> String {
@@ -77,74 +47,57 @@ fn launch_secret() -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-fn spawn(app: &AppHandle, secret: &str) -> Result<(Child, File, PathBuf), String> {
-    let paths = backend_paths(app).map_err(|e| e.to_string())?;
-    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+fn open_log(app: &AppHandle) -> Result<File, String> {
     let log_dir = app.path().app_log_dir().map_err(|e| e.to_string())?;
-    fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
     fs::create_dir_all(&log_dir).map_err(|e| e.to_string())?;
-    let log_path = log_dir.join("backend.log");
-    let log = File::create(&log_path).map_err(|e| e.to_string())?;
-
-    let mut command = Command::new(&paths.python);
-    command
-        .arg(paths.app_dir.join("desktop_server.py"))
-        .current_dir(&paths.app_dir)
-        .env("DESKTOP_SECRET", secret)
-        .env("DB_PATH", data_dir.join("notes-again.db"))
-        .env("FRONTEND_DIST", &paths.frontend_dir)
-        .env("PYTHONUNBUFFERED", "1")
-        .env("PYTHONNOUSERSITE", "1")
-        .env_remove("PYTHONHOME")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(log.try_clone().map_err(|e| e.to_string())?);
-    if let Some(site_packages) = &paths.site_packages {
-        let python_path =
-            std::env::join_paths([&paths.app_dir, site_packages]).map_err(|e| e.to_string())?;
-        command
-            .env("PYTHONPATH", python_path)
-            .env("PYTHONDONTWRITEBYTECODE", "1");
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        command.creation_flags(CREATE_NO_WINDOW);
-    }
-
-    let child = command
-        .spawn()
-        .map_err(|e| format!("Couldn't run {}: {e}", paths.python.display()))?;
-    Ok((child, log, log_path))
-}
-
-fn wait_for_port(stdout: impl Read + Send + 'static, mut log: File) -> Option<u16> {
-    let mut lines = BufReader::new(stdout).lines().map_while(Result::ok);
-    let port = lines
-        .by_ref()
-        .find_map(|line| line.strip_prefix(READY_PREFIX)?.trim().parse().ok());
-    thread::spawn(move || {
-        for line in lines {
-            let _ = writeln!(log, "{line}");
-        }
-    });
-    port
+    File::create(log_dir.join("backend.log")).map_err(|e| e.to_string())
 }
 
 pub fn start(app: &AppHandle) -> Result<Connection, String> {
-    let secret = launch_secret();
-    let (mut child, log, log_path) = spawn(app, &secret)?;
-    let stdout = child.stdout.take().expect("stdout is piped");
-    let backend = app.state::<Backend>();
-    backend.child.lock().unwrap().replace(child);
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+    let frontend = frontend_dir(app).map_err(|e| e.to_string())?;
+    notes_again_server::log_to(open_log(app)?);
 
-    let port = wait_for_port(stdout, log).ok_or_else(|| {
-        format!(
-            "The notes server stopped while starting. Its log is at {}",
-            log_path.display()
-        )
-    })?;
+    let secret = launch_secret();
+    let db_path = data_dir.join("notes-again.db");
+    let (ready_tx, ready_rx) =
+        std::sync::mpsc::channel::<Result<(u16, tokio::sync::oneshot::Sender<()>), String>>();
+    let server_secret = secret.clone();
+    let worker = thread::Builder::new()
+        .name("notes-server".into())
+        .spawn(move || {
+            let runtime = match tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(2)
+                .enable_all()
+                .build()
+            {
+                Ok(runtime) => runtime,
+                Err(error) => {
+                    let _ = ready_tx.send(Err(error.to_string()));
+                    return;
+                }
+            };
+            runtime.block_on(async move {
+                match notes_again_server::start_desktop(db_path, frontend, server_secret).await {
+                    Ok(server) => {
+                        let _ = ready_tx.send(Ok((server.port, server.shutdown)));
+                        let _ = server.task.await;
+                    }
+                    Err(error) => {
+                        let _ = ready_tx.send(Err(error));
+                    }
+                }
+            });
+        })
+        .map_err(|e| e.to_string())?;
+
+    let (port, shutdown) = ready_rx
+        .recv()
+        .map_err(|_| "The notes server stopped while starting.".to_string())??;
+    let backend = app.state::<Backend>();
+    backend.shutdown.lock().unwrap().replace(shutdown);
+    backend.worker.lock().unwrap().replace(worker);
     let connection = Connection { port, secret };
     backend
         .connection
@@ -161,19 +114,13 @@ pub fn connection(app: &AppHandle) -> Option<Connection> {
 pub fn stop(app: &AppHandle) {
     let backend = app.state::<Backend>();
     backend.connection.lock().unwrap().take();
-    let Some(mut child) = backend.child.lock().unwrap().take() else {
-        return;
-    };
-    drop(child.stdin.take());
-    let deadline = Instant::now() + Duration::from_secs(3);
-    while Instant::now() < deadline {
-        if let Ok(Some(_)) = child.try_wait() {
-            return;
-        }
-        thread::sleep(Duration::from_millis(50));
+    if let Some(shutdown) = backend.shutdown.lock().unwrap().take() {
+        let _ = shutdown.send(());
     }
-    let _ = child.kill();
-    let _ = child.wait();
+    let worker = backend.worker.lock().unwrap().take();
+    if let Some(worker) = worker {
+        let _ = worker.join();
+    }
 }
 
 pub fn request(app: &AppHandle, method: &str, path: &str) -> Option<serde_json::Value> {

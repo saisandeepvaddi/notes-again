@@ -26,12 +26,15 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `../backend/.venv/bin/uvicorn --app-dir ../backend main:app --host 127.0.0.1 --port ${BACKEND_PORT} --log-level warning`,
+      command: `cargo run --quiet --manifest-path ../server/Cargo.toml -- serve --host 127.0.0.1 --port ${BACKEND_PORT}`,
+      timeout: 300_000,
       url: `${BACKEND_URL}/healthz`,
       reuseExistingServer: false,
       stdout: "pipe",
       env: {
         AUTH_DISABLED: "1",
+        RUST_LOG: "warn",
+        BACKUP_INTERVAL_HOURS: "0",
         DB_PATH: dbPath,
         CORS_ORIGINS: FRONTEND_URL,
       },

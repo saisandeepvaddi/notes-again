@@ -1,9 +1,11 @@
-.PHONY: help run serve install install-backend install-frontend install-extension install-mobile install-desktop \
-	dev-backend dev-frontend dev-extension dev-extension-firefox dev-mobile dev-desktop \
-	build build-frontend build-desktop build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
-	check check-backend check-frontend check-extension check-mobile \
-	test test-backend test-frontend test-extension test-e2e test-e2e-ui test-e2e-headed \
+.PHONY: help run serve install install-server install-frontend install-extension install-mobile install-desktop \
+	dev-server dev-frontend dev-extension dev-extension-firefox dev-mobile dev-desktop \
+	build build-server build-frontend build-desktop build-extension build-extension-chrome build-extension-firefox zip-extension docker-build update \
+	check check-server check-frontend check-extension check-mobile \
+	test test-server test-frontend test-extension test-e2e test-e2e-ui test-e2e-headed \
 	reset-login snapshot doctor deploy
+
+SERVER := server/target/release/notes-again-server
 
 help:
 	@echo "Run:"
@@ -13,10 +15,10 @@ help:
 	@echo "  (settings come from .env.local, which ./install.sh writes)"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make install                  - install backend, frontend, extension and mobile deps"
+	@echo "  make install                  - build the server and install frontend, extension and mobile deps"
 	@echo ""
 	@echo "Dev:"
-	@echo "  make dev-backend              - FastAPI on :8000 (auth disabled, CORS for :5273)"
+	@echo "  make dev-server               - Rust server on :8000 (auth disabled, CORS for :5273)"
 	@echo "  make dev-frontend             - Vite dev server on :5273"
 	@echo "  make dev-extension            - extension dev mode in Chrome, with reload"
 	@echo "  make dev-extension-firefox    - extension dev mode in Firefox"
@@ -25,6 +27,7 @@ help:
 	@echo ""
 	@echo "Build:"
 	@echo "  make build                    - frontend SPA + Chrome and Firefox extensions"
+	@echo "  make build-server             - release server binary into server/target/release"
 	@echo "  make build-frontend           - SPA into frontend/dist/client"
 	@echo "  make build-desktop            - desktop installers for this OS into desktop/src-tauri/target/release/bundle"
 	@echo "  make build-extension          - Chrome and Firefox extensions"
@@ -38,8 +41,8 @@ help:
 	@echo "  make check                    - lint + typecheck everything"
 	@echo ""
 	@echo "Test:"
-	@echo "  make test                     - backend pytest + extension vitest + frontend e2e"
-	@echo "  make test-backend             - backend pytest suite"
+	@echo "  make test                     - server tests + frontend and extension vitest + e2e"
+	@echo "  make test-server              - server cargo tests"
 	@echo "  make test-frontend            - frontend vitest unit tests"
 	@echo "  make test-extension           - extension vitest suite"
 	@echo "  make test-e2e                 - frontend Playwright e2e suite (headless)"
@@ -54,16 +57,16 @@ help:
 	@echo "Deploy:"
 	@echo "  make deploy                   - push main and rebuild on the VPS (needs VPS_USER, VPS_HOST)"
 
-run: install-backend install-frontend build-frontend
+run: build-server install-frontend build-frontend
 	DB='$(DB)' scripts/serve.sh
 
 serve:
 	DB='$(DB)' scripts/serve.sh
 
-install: install-backend install-frontend install-extension install-mobile install-desktop
+install: build-server install-frontend install-extension install-mobile install-desktop
 
-install-backend:
-	cd backend && uv sync
+build-server:
+	cd server && cargo build --release --locked
 
 install-frontend:
 	cd frontend && pnpm install
@@ -77,9 +80,8 @@ install-mobile:
 install-desktop:
 	cd desktop && pnpm install
 
-dev-backend:
-	env -u DB_PATH AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 \
-		backend/.venv/bin/uvicorn --app-dir backend main:app --reload
+dev-server:
+	cd server && env -u DB_PATH AUTH_DISABLED=1 CORS_ORIGINS=http://localhost:5273 cargo run -- serve
 
 dev-frontend:
 	cd frontend && pnpm dev
@@ -96,7 +98,7 @@ dev-mobile:
 dev-desktop:
 	cd desktop && pnpm dev
 
-build: build-frontend build-extension
+build: build-server build-frontend build-extension
 
 build-frontend:
 	cd frontend && pnpm build
@@ -122,10 +124,10 @@ update:
 	git pull --ff-only
 	docker compose up -d --build
 
-check: check-backend check-frontend check-extension check-mobile
+check: check-server check-frontend check-extension check-mobile
 
-check-backend:
-	cd backend && .venv/bin/ruff check .
+check-server:
+	cd server && cargo fmt --check && cargo clippy --all-targets -- -D warnings
 
 check-frontend:
 	cd frontend && pnpm typecheck && pnpm lint
@@ -136,10 +138,10 @@ check-extension:
 check-mobile:
 	cd mobile && pnpm typecheck && pnpm lint
 
-test: test-backend test-frontend test-extension test-e2e
+test: test-server test-frontend test-extension test-e2e
 
-test-backend:
-	cd backend && .venv/bin/python -m pytest
+test-server:
+	cd server && cargo test
 
 test-extension:
 	cd extension && pnpm test
@@ -156,14 +158,14 @@ test-e2e-ui:
 test-e2e-headed:
 	cd frontend && pnpm exec playwright test --headed
 
-reset-login:
-	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py reset-login
+reset-login: build-server
+	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) $(SERVER) reset-login
 
-snapshot:
-	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py snapshot
+snapshot: build-server
+	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) $(SERVER) snapshot
 
-doctor:
-	env -u DB_PATH -u FRONTEND_DIST $(if $(DB),DB_PATH=$(DB)) backend/.venv/bin/python backend/cli.py doctor
+doctor: build-server
+	env -u DB_PATH $(if $(DB),DB_PATH=$(DB)) FRONTEND_DIST=frontend/dist/client $(SERVER) doctor
 
 deploy:
 	./deploy.sh

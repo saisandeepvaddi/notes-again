@@ -18,18 +18,23 @@ for name in LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY; do
 done
 
 if [ -z "${TRUSTED_PROXIES:-}" ] && { [ -z "${BIND_ADDRESS:-}" ] || [ "${BIND_ADDRESS}" = "127.0.0.1" ]; }; then
-  gateway=$(python -c 'import socket, struct
-for line in open("/proc/net/route").readlines()[1:]:
-    f = line.split()
-    if f[1] == "00000000":
-        print(socket.inet_ntoa(struct.pack("<L", int(f[2], 16))))
-        break' 2>/dev/null || true)
+  gateway=""
+  hex=$(awk 'NR > 1 && $2 == "00000000" { print $3; exit }' /proc/net/route 2>/dev/null || true)
+  if [ ${#hex} -eq 8 ]; then
+    b4=${hex%??????}
+    rest=${hex#??}
+    b3=${rest%????}
+    rest=${rest#??}
+    b2=${rest%??}
+    b1=${rest#??}
+    gateway="$((0x$b1)).$((0x$b2)).$((0x$b3)).$((0x$b4))"
+  fi
   if [ -n "$gateway" ]; then
     export TRUSTED_PROXIES="127.0.0.1,::1,$gateway"
   fi
 fi
 
-APP="uvicorn --app-dir backend main:app --no-proxy-headers --host 0.0.0.0 --port ${PORT:-8000}"
+APP="notes-again serve --host 0.0.0.0 --port ${PORT:-8000}"
 
 if [ -z "${BACKUP_REPLICA_URL:-}" ] && [ -n "${R2_BUCKET:-}" ] && [ -n "${R2_ENDPOINT:-}" ] \
   && [ -n "${LITESTREAM_ACCESS_KEY_ID:-}" ]; then

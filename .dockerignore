@@ -1,7 +1,5 @@
 **/node_modules
-**/.venv
-**/__pycache__
-*.pyc
+**/target
 frontend/dist
 frontend/.tanstack
 frontend/.vite-hooks

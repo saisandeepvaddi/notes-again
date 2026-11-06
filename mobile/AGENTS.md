@@ -30,4 +30,4 @@ Follow [DESIGN.md](../DESIGN.md), sized for touch: 44pt minimum targets, 15–17
 
 ## Verify
 
-`pnpm typecheck`, `pnpm lint`, and `pnpm doctor` after dependency or `app.json` changes. Run the app against a throwaway backend (`DB_PATH=/tmp/x.db ADMIN_PASSWORD=… backend/.venv/bin/uvicorn --app-dir backend main:app --host 0.0.0.0 --port 8300`) and check the screen you changed in a simulator.
+`pnpm typecheck`, `pnpm lint`, and `pnpm doctor` after dependency or `app.json` changes. Run the app against a throwaway backend (`DB_PATH=/tmp/x.db ADMIN_PASSWORD=… cargo run --manifest-path server/Cargo.toml -- serve --host 0.0.0.0 --port 8300`) and check the screen you changed in a simulator.

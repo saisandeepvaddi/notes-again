@@ -30,8 +30,6 @@ jobs:
         with:
           node-version: 22
 
-      - uses: astral-sh/setup-uv@v6
-
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install Linux build dependencies

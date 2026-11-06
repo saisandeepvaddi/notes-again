@@ -15,7 +15,7 @@ services:
         required: false
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=4)"]
+      test: ["CMD", "notes-again", "healthcheck"]
       interval: 30s
       timeout: 5s
       retries: 3

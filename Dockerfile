@@ -16,11 +16,19 @@ COPY frontend/ ./
 RUN pnpm build
 # Output we care about: /app/frontend/dist/client (index.html + assets)
 
-# --- Stage 2: python runtime ---------------------------------------------------
-FROM python:3.14-slim AS runtime
-WORKDIR /app
+# --- Stage 2: build the server ----------------------------------------------
+FROM rust:1-slim-bookworm AS server
+WORKDIR /app/server
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY server/ ./
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/server/target \
+    cargo build --release --locked \
+    && cp target/release/notes-again-server /usr/local/bin/notes-again
+
+# --- Stage 3: runtime -----------------------------------------------------------
+FROM debian:bookworm-slim AS runtime
+WORKDIR /app
 
 # Litestream: optional continuous SQLite backup to S3-compatible storage, SFTP, etc.
 ARG LITESTREAM_VERSION=0.5.17
@@ -38,21 +46,14 @@ RUN apt-get update \
     && apt-get purge -y --auto-remove wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Python deps first (cached unless pyproject/lock change).
-ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
-COPY backend/pyproject.toml backend/uv.lock ./backend/
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd backend && uv sync --frozen --no-dev
-ENV PATH="/app/backend/.venv/bin:$PATH"
-
-COPY backend/ ./backend/
-COPY --from=frontend /app/frontend/dist/client ./frontend/dist/client
+COPY --from=server /usr/local/bin/notes-again /usr/local/bin/notes-again
+COPY --from=frontend /app/frontend/dist/client ./frontend
 COPY litestream.yml /etc/litestream.yml
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
 ENV DB_PATH=/data/notes-again.db \
-    FRONTEND_DIST=/app/frontend/dist/client \
+    FRONTEND_DIST=/app/frontend \
     PORT=8000
 VOLUME ["/data"]
 EXPOSE 8000

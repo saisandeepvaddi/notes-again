@@ -19,7 +19,7 @@ optional extras.
 
 ## Run without Docker
 
-Needs git, [uv](https://docs.astral.sh/uv/), Node 22+ and pnpm.
+Needs git, [Rust](https://rustup.rs), Node 22+ and pnpm.
 
 ```sh
 git clone https://github.com/saisandeepvaddi/notes-again && cd notes-again
@@ -44,11 +44,11 @@ Settings for this setup live in `.env.local` in the repo folder, which the
 [guided install](#guided-install) writes for you: `BIND_ADDRESS`, `HOST_PORT`,
 `DB_PATH`, `AUTH_MODE` and the backup settings from [Settings](#settings).
 Settings in your shell are ignored, because a Docker `.env` is often loaded
-there (VS Code's Python extension does this by default).
+there (some editor extensions do this by default).
 
 ## Guided install
 
-Needs git, plus either Docker with Compose v2, or uv, Node.js 22+ and pnpm.
+Needs git, plus either Docker with Compose v2, or Rust, Node.js 22+ and pnpm.
 On the server:
 
 ```sh
@@ -62,7 +62,7 @@ from), then asks how to run it:
 
 - **Docker** (the default when Docker is available): runs in a container that
   restarts on reboot, and can add off-site backup.
-- **Directly on this machine**: runs with uv and Node, no containers. You
+- **Directly on this machine**: builds the server with Rust and the frontend with Node, no containers. You
   start it with `scripts/serve.sh`.
 
 Then it asks:
@@ -143,7 +143,7 @@ after the first start:
 ```sh
 docker compose stop app
 docker compose run --rm --entrypoint "" -v "/path/to/notes-again.db:/tmp/restore.db:ro" app \
-  python backend/cli.py restore --yes /tmp/restore.db
+  notes-again restore --yes /tmp/restore.db
 docker compose up -d
 ```
 
@@ -198,7 +198,7 @@ finished. After you sign in, a setup screen asks you to choose:
 
 Reset to a fresh temporary `admin` password. This also signs everyone out.
 
-- Docker: `docker compose exec app python backend/cli.py reset-login`
+- Docker: `docker compose exec app notes-again reset-login`
 - Without Docker: `make reset-login` (add `DB=...` if you use one)
 
 ### Sign-in through your proxy
@@ -348,14 +348,14 @@ From a snapshot in the Docker volume:
 ```sh
 docker compose stop app
 docker compose run --rm --entrypoint "" app \
-  python backend/cli.py restore /data/backups/notes-again-<time>.db
+  notes-again restore /data/backups/notes-again-<time>.db
 docker compose start app
 ```
 
 From a file on the host, see [Bringing an existing database](#bringing-an-existing-database).
 
 Without Docker: stop `make run`, then
-`DB_PATH=<your db> backend/.venv/bin/python backend/cli.py restore <file>`.
+`DB_PATH=<your db> server/target/release/notes-again-server restore <file>`.
 
 From off-site, into a file you can inspect first (needs `BACKUP_REPLICA_URL`
 in `.env`):
@@ -370,10 +370,10 @@ docker compose run --rm --entrypoint "" app \
 Start with `doctor`. It prints the effective setup (sign-in mode, database,
 frontend, backups, search index) and lists likely mistakes:
 
-- Docker: `docker compose exec app python backend/cli.py doctor`
+- Docker: `docker compose exec app notes-again doctor`
 - Without Docker: `make doctor`
 
-Other maintenance commands in `backend/cli.py`: `reset-login`, `snapshot`,
+Other maintenance commands of the `notes-again` binary: `reset-login`, `snapshot`,
 `restore`, and `reindex` (rebuilds the search index if `doctor` says it's out of
 date). Without Docker they're also `make reset-login`, `make snapshot` and
 `make doctor`, each taking `DB=...`.
@@ -381,14 +381,14 @@ date). Without Docker they're also `make reset-login`, `make snapshot` and
 - **Port already in use**: another program has port 8000. Set `HOST_PORT` in
   `.env` (Docker) or `.env.local` (direct), or stop the other program.
 - **Firebase errors on a machine that isn't set up for Firebase**: a Docker
-  `.env` is probably loaded into your terminal (VS Code's Python extension
-  does this by default). `make run` ignores those settings; running `uvicorn`
-  yourself doesn't.
+  `.env` is probably loaded into your terminal (some editor extensions do
+  this by default). `make run` ignores those settings; running the server
+  binary yourself doesn't.
 - **"Frontend not built"**: run `make build-frontend` (not needed with Docker
   or `make run`).
 
 ## Developing
 
-For working on the code rather than running it: `make dev-backend` (port 8000,
+For working on the code rather than running it: `make dev-server` (port 8000,
 login off) plus `make dev-frontend` (Vite with hot reload on port 5273). See
 [AGENTS.md](../AGENTS.md) for the codebase layout and checks.

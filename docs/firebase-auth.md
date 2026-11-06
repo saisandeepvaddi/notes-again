@@ -44,10 +44,10 @@ The server reads the web config at runtime and hands it to the browser, so you d
 docker compose up -d --build
 ```
 
-Running without Docker: `make run` always uses username and password sign-in, so start the backend yourself after `make build-frontend`, with the same variables set and `FIREBASE_CREDENTIALS_FILE` pointing at the JSON file on disk:
+Running without Docker: `make run` always uses username and password sign-in, so start the server yourself after `make build-server build-frontend`, with the same variables set and `FIREBASE_CREDENTIALS_FILE` pointing at the JSON file on disk:
 
 ```sh
-backend/.venv/bin/uvicorn --app-dir backend main:app --host 127.0.0.1 --port 8000
+FRONTEND_DIST=frontend/dist/client server/target/release/notes-again-server serve --host 127.0.0.1 --port 8000
 ```
 
 ## Notes

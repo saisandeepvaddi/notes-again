@@ -1,0 +1,37 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "server/**"
+      - "frontend/**"
+      - "Dockerfile"
+      - "docker-entrypoint.sh"
+      - "litestream.yml"
+      - "scripts/ci/**"
+      - ".github/workflows/docker.yml"
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: Image and Litestream round trip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: notes-again:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Doctor
+        run: docker run --rm --entrypoint "" -e AUTH_DISABLED=1 notes-again:ci notes-again doctor
+      - name: Litestream round trip
+        run: scripts/ci/litestream-roundtrip.sh

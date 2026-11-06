@@ -1,0 +1,45 @@
+name: Apps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "extension/**"
+      - "mobile/**"
+      - ".github/workflows/apps.yml"
+
+concurrency:
+  group: apps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.app }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: frontend
+            run: pnpm typecheck && pnpm lint && pnpm test
+          - app: extension
+            run: pnpm typecheck && pnpm test
+          - app: mobile
+            run: pnpm typecheck && pnpm lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.app }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: ${{ matrix.run }}

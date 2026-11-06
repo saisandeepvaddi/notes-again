@@ -5,6 +5,7 @@ import { ProjectsSidebarSection } from "@/notes/projects/ProjectsSidebarSection"
 import ThemeToggle from "@/theme/ThemeToggle";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  DownloadSimpleIcon,
   GearIcon,
   NotebookIcon,
   RepeatIcon,
@@ -27,6 +28,8 @@ import {
   SidebarSeparator,
 } from "./ui/sidebar";
 import { SyncIndicator } from "@/sync/SyncIndicator";
+
+const DESKTOP_DOWNLOAD_URL = "https://github.com/saisandeepvaddi/notes-again/releases/latest";
 
 const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
@@ -61,6 +64,26 @@ function SignOutButton() {
         >
           <SignOutIcon />
           <span>Sign out</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+function DesktopAppLink() {
+  const { status } = useAuth();
+  if (!status || status.mode === "desktop") {
+    return null;
+  }
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip="Get the desktop app"
+          render={<a href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer" />}
+        >
+          <DownloadSimpleIcon />
+          <span>Get the desktop app</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
@@ -107,6 +130,7 @@ function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="gap-2">
         <SyncIndicator />
+        <DesktopAppLink />
         <div className="flex items-center justify-between px-1">
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />

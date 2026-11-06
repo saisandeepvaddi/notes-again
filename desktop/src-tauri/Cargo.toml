@@ -20,7 +20,9 @@ tauri-plugin-single-instance = "2.5.5"
 getrandom = "0.4.3"
 serde_json = "1"
 notes-again-server = { path = "../../server" }
-tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time"] }
+tauri-plugin-updater = "2.14.1"
+tauri-plugin-process = "2.4.0"
 
 [profile.dev.package."*"]
 opt-level = 3

@@ -1,5 +1,6 @@
 mod backend;
 mod tray;
+mod updates;
 
 use std::thread;
 
@@ -111,6 +112,8 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
@@ -121,6 +124,7 @@ pub fn run() {
                 .build(),
         )
         .manage(backend::Backend::default())
+        .manage(updates::Updates::default())
         .setup(move |app| {
             let handle = app.handle().clone();
             if let Err(error) = tray::create(&handle) {
@@ -129,6 +133,7 @@ pub fn run() {
             if let Err(error) = handle.global_shortcut().register(quick_capture) {
                 eprintln!("Couldn't register {QUICK_CAPTURE}: {error}");
             }
+            updates::watch(handle.clone());
             let window = create_main_window(&handle)?;
             thread::spawn(move || start(handle, window));
             Ok(())

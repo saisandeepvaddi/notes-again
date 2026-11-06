@@ -16,6 +16,7 @@ const NOTIFY_AT_MOST_EVERY: Duration = Duration::from_secs(3 * 60 * 60);
 pub struct Tray {
     icon: TrayIcon,
     review: MenuItem<Wry>,
+    updates: MenuItem<Wry>,
     due: Mutex<Option<u64>>,
     notified_at: Mutex<Option<Instant>>,
 }
@@ -31,6 +32,13 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     )?;
     let review = MenuItem::with_id(app, "review", "Review", true, None::<&str>)?;
     let sync = MenuItem::with_id(app, "sync", "Sync now", true, None::<&str>)?;
+    let updates = MenuItem::with_id(
+        app,
+        "updates",
+        crate::updates::CHECK_LABEL,
+        true,
+        None::<&str>,
+    )?;
     let quit = MenuItem::with_id(app, "quit", "Quit Notes Again", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
@@ -40,6 +48,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
             &review,
             &PredefinedMenuItem::separator(app)?,
             &sync,
+            &updates,
             &PredefinedMenuItem::separator(app)?,
             &quit,
         ],
@@ -61,6 +70,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
                     backend::request(&app, "POST", "/api/sync/run");
                 });
             }
+            "updates" => crate::updates::menu_clicked(app),
             "quit" => app.exit(0),
             _ => {}
         })
@@ -81,10 +91,17 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     app.manage(Tray {
         icon,
         review,
+        updates,
         due: Mutex::new(None),
         notified_at: Mutex::new(None),
     });
     Ok(())
+}
+
+pub fn set_update_label(app: &AppHandle, text: &str) {
+    if let Some(tray) = app.try_state::<Tray>() {
+        let _ = tray.updates.set_text(text);
+    }
 }
 
 fn due_count(app: &AppHandle) -> Option<u64> {

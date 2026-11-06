@@ -8,12 +8,12 @@ A Tauri 2 shell around the regular app. It runs its own copy of the server, comp
 2. `src-tauri/src/backend.rs` starts the `server` crate (`notes_again_server::start_desktop`) on its own Tokio runtime with a random per-launch `DESKTOP_SECRET`. It binds a free port and returns it once it accepts requests.
 3. The window navigates to `/api/auth/desktop?secret=…`, which sets an HttpOnly cookie and redirects to the SPA. Every API request needs that cookie (`AUTH_MODE=desktop`), so other programs on the machine can't read your notes through the port.
 4. Links that leave `127.0.0.1` open in the system browser.
-5. Quitting closes the server's stdin; the server exits when stdin closes, so it also stops if the app crashes.
+5. Quitting shuts the server down with the app, since it runs inside the same process.
 
 ## While it runs
 
 - Closing the window keeps Notes Again in the tray (menu bar on macOS) so sync and reminders continue; quit from the tray menu or with Cmd+Q. Where no tray is available, closing quits.
-- The tray menu opens the app, starts a new note, opens Review (with the due count) and syncs now. On macOS the due count also shows next to the icon.
+- The tray menu opens the app, starts a new note, opens Review (with the due count), syncs now and checks for updates. On macOS the due count also shows next to the icon.
 - A notification says when notes become due, at most once every three hours, and not while the window has focus.
 - Cmd/Ctrl+Alt+Shift+N opens a new note from anywhere (`QUICK_CAPTURE` in `src-tauri/src/lib.rs`).
 - Launching it again focuses the running window instead of starting a second copy, so one server owns the database.
@@ -49,9 +49,21 @@ pnpm build
 
 This builds the SPA, then `tauri build` compiles the app (the server is linked in) and bundles the SPA from `frontend/dist/client` as a resource. Installers land in `src-tauri/target/release/bundle/`; on Apple silicon the `.dmg` is about 9 MB.
 
-Tauri doesn't cross-compile: build on each OS you target. `.github/workflows/desktop.yml` does that on GitHub's macOS (Apple silicon), Windows and Linux runners when run by hand or on a `desktop-v*` tag, and uploads the installers as artifacts.
+Tauri doesn't cross-compile: build on each OS you target. `.github/workflows/desktop.yml` does that on GitHub's runners: a universal macOS build (Apple silicon and Intel), Windows and Linux. It builds on pull requests, uploads installers as artifacts when run by hand, and publishes a release on a `desktop-v*` tag.
 
-Unsigned builds run on the machine that built them. Elsewhere, macOS Gatekeeper blocks them until they're signed and notarized (Apple Developer account), and Windows SmartScreen warns until they're signed. Auto-update isn't set up: Tauri's updater needs a signing key and a place to publish releases.
+## Releases and updates
+
+Push a tag such as `desktop-v0.2.0`. The workflow sets that version in `tauri.conf.json` and `Cargo.toml`, builds every platform, and publishes a GitHub Release with the installers and `latest.json`.
+
+The app checks `releases/latest/download/latest.json` 20 seconds after launch and then daily (`src-tauri/src/updates.rs`). A newer version shows up as "Restart to update to …" in the tray menu, with a notification; choosing it downloads, installs and relaunches. "Check for updates…" checks on demand. macOS, Windows and the AppImage update themselves; `.deb` and `.rpm` installs update through the new package.
+
+Updates are signed with the Tauri updater key, which is separate from OS code signing and free. The public key is in `tauri.conf.json`; the private key is the `TAURI_SIGNING_PRIVATE_KEY` repository secret (and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, empty here). Losing the private key means installed apps can't update anymore, so keep a copy. `tauri.release.conf.json` turns on the updater artifacts only for releases, so pull-request builds don't need the key.
+
+Releases aren't code-signed. On macOS, open the app the first time with right-click → Open (macOS 15 and later: System Settings → Privacy & Security → Open Anyway); Windows SmartScreen asks to confirm with More info → Run anyway. Updates installed by the app don't ask again.
+
+### Forks
+
+To publish your own builds, generate a key with `pnpm tauri signer generate -w ~/.tauri/notes-again.key`, put the public key and your repository's `releases/latest/download/latest.json` URL in `plugins.updater` in `tauri.conf.json`, and add the private key as the `TAURI_SIGNING_PRIVATE_KEY` secret. To sign and notarize for macOS or sign for Windows, add Tauri's signing variables (`APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, or Windows' `certificateThumbprint`/`signCommand`) as secrets and pass them to the `tauri-action` step's `env`; see [Tauri's distribution guides](https://v2.tauri.app/distribute/).
 
 ## Icons
 

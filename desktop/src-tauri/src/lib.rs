@@ -48,16 +48,34 @@ fn show_startup_error(window: &WebviewWindow, message: &str) {
     let _ = window.eval(format!("window.showStartupError({message})"));
 }
 
-fn start(app: AppHandle, window: WebviewWindow) {
-    let connection = match backend::start(&app) {
+fn start_backend(app: &AppHandle, window: &WebviewWindow) -> bool {
+    let connection = match backend::start(app) {
         Ok(connection) => connection,
-        Err(message) => return show_startup_error(&window, &message),
+        Err(message) => {
+            show_startup_error(window, &message);
+            return false;
+        }
     };
     let url = Url::parse(&connection.sign_in_url()).expect("a valid local URL");
     if let Err(error) = window.navigate(url) {
-        return show_startup_error(&window, &error.to_string());
+        show_startup_error(window, &error.to_string());
+        return false;
     }
-    tray::watch_due_notes(app);
+    true
+}
+
+fn start(app: AppHandle, window: WebviewWindow) {
+    if start_backend(&app, &window) {
+        tray::watch_due_notes(app);
+    }
+}
+
+pub fn restart_backend(app: &AppHandle) {
+    backend::stop(app);
+    if let Some(window) = main_window(app) {
+        start_backend(app, &window);
+        show_main(app);
+    }
 }
 
 fn is_local(url: &Url) -> bool {

@@ -76,8 +76,18 @@ async fn run(command: Command) -> Result<ExitCode, String> {
             init_logging("warn");
             let pool = open_pool().await?;
             let config = Config::from_env()?;
-            let taken =
-                backups::create_snapshot(&pool, &config, &tokio::sync::Mutex::new(())).await?;
+            let dir = backups::load_backup_dir(&pool)
+                .await
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| config.backup_dir());
+            let taken = backups::create_snapshot(
+                &pool,
+                &dir,
+                config.backup_keep,
+                &tokio::sync::Mutex::new(()),
+            )
+            .await?;
             println!(
                 "Snapshot written to {} ({} bytes).",
                 taken.path.display(),
@@ -212,8 +222,12 @@ async fn doctor() -> Result<ExitCode, String> {
 
     if let Some(config) = &config {
         println!("Frontend");
-        line("folder", &config.frontend_dist.display());
-        if !config.frontend_dist.join("index.html").is_file() {
+        if !config.web_ui {
+            line("web app", &"off (WEB_UI=off)");
+        } else {
+            line("folder", &config.frontend_dist.display());
+        }
+        if config.web_ui && !config.frontend_dist.join("index.html").is_file() {
             problems.push(format!(
                 "No built frontend at {}. Run `make build-frontend`.",
                 config.frontend_dist.display()
@@ -228,7 +242,7 @@ async fn doctor() -> Result<ExitCode, String> {
         };
         line("local snapshots", &schedule);
         line("folder", &config.backup_dir().display());
-        let latest = backups::list_snapshots(config)
+        let latest = backups::list_snapshots(&config.backup_dir())
             .first()
             .map(|s| s.created_at.0.format("%Y-%m-%dT%H:%M:%S+00:00").to_string());
         line("latest", &latest.unwrap_or_else(|| "none".into()));

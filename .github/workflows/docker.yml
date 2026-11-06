@@ -1,4 +1,4 @@
-name: Docker
+name: Docker and backups
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
       - "docker-entrypoint.sh"
       - "litestream.yml"
       - "scripts/ci/**"
+      - "scripts/serve.sh"
       - ".github/workflows/docker.yml"
 
 concurrency:
@@ -35,3 +36,25 @@ jobs:
         run: docker run --rm --entrypoint "" -e AUTH_DISABLED=1 notes-again:ci notes-again doctor
       - name: Litestream round trip
         run: scripts/ci/litestream-roundtrip.sh
+
+  direct:
+    name: Direct install and Litestream round trip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+      - name: Install Litestream like install.sh does
+        run: |
+          version=$(sed -n 's/^LITESTREAM_VERSION=//p' install.sh)
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v$version/litestream-$version-linux-x86_64.tar.gz" \
+            | tar -C "$HOME/.local/bin" -xz litestream
+          "$HOME/.local/bin/litestream" version
+      - name: Build the server
+        working-directory: server
+        run: cargo build --release --locked
+      - name: Litestream round trip through scripts/serve.sh
+        run: scripts/ci/serve-litestream-roundtrip.sh

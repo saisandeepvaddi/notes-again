@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 
 use crate::auth::external::JwksCache;
@@ -17,6 +18,8 @@ pub struct Inner {
     pub sync_lock: tokio::sync::Mutex<()>,
     pub sync_running: AtomicBool,
     pub snapshot_lock: tokio::sync::Mutex<()>,
+    pub backup_dir_override: RwLock<Option<PathBuf>>,
+    pub restart: Arc<tokio::sync::Notify>,
 }
 
 #[derive(Clone)]
@@ -43,7 +46,17 @@ impl AppState {
             sync_lock: tokio::sync::Mutex::new(()),
             sync_running: AtomicBool::new(false),
             snapshot_lock: tokio::sync::Mutex::new(()),
+            backup_dir_override: RwLock::new(None),
+            restart: Arc::new(tokio::sync::Notify::new()),
         }))
+    }
+
+    pub fn backup_dir(&self) -> PathBuf {
+        self.backup_dir_override
+            .read()
+            .unwrap()
+            .clone()
+            .unwrap_or_else(|| self.config.backup_dir())
     }
 
     pub fn syncing(&self) -> bool {

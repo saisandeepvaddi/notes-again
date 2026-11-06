@@ -23,6 +23,15 @@ A Tauri 2 shell around the regular app. It runs its own copy of the server, comp
 
 Settings → Sync connects to a self-hosted server with its username and password (traded for an app token named after this computer) or a pasted app token or connect link. The local backend then syncs in the background: within about 10 seconds of a local change, and every minute otherwise. Offline, everything keeps working and changes wait until the server is reachable. A note edited in both places gets a "Changed in two places" banner; Compare versions shows a side-by-side merge where you pick or combine the text. See `server/src/sync/` for the protocol.
 
+## Backups
+
+The app takes a snapshot of the database at launch and every 24 hours, keeping the last 7. Settings → Data & backups lists them, with Download for each. There you can also:
+
+- **Choose the snapshot folder.** Point it at a folder in iCloud Drive, Dropbox or on a network drive to keep copies off this computer. The choice is stored for this device only (the `device_settings` table) and never syncs.
+- **Restore a snapshot.** The server records the request next to the database and asks the app to restart its in-process server (`restart_backend` in `src-tauri/src/lib.rs`); the restore runs before the database opens again, the previous database is kept as `notes-again.db.before-restore-<time>`, and the window reloads.
+
+If the app syncs with a server, the server holds another full copy.
+
 ## Where things live
 
 | | macOS | Windows | Linux |

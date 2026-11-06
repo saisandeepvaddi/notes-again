@@ -6,6 +6,7 @@ INSTALL_DIR="${NOTES_AGAIN_DIR:-notes-again}"
 DOCS_URL="https://github.com/saisandeepvaddi/notes-again/blob/main/docs/self-hosting.md"
 FIREBASE_DOCS_URL="https://github.com/saisandeepvaddi/notes-again/blob/main/docs/firebase-auth.md"
 FIREBASE_COMPOSE="docker-compose.yml:docker-compose.firebase.yml"
+LITESTREAM_VERSION=0.5.17
 ENV_FILE=.env
 
 say() { printf '%s\n' "$*"; }
@@ -283,12 +284,23 @@ print_first_launch() {
   fi
 }
 
-setup_docker() {
-  ENV_FILE=.env
-  METHOD=docker
-  ask_network
-  ask_auth
+ask_web_ui() {
+  case "$(current WEB_UI on)" in
+    off | 0 | false | no) web_default=2 ;;
+    *) web_default=1 ;;
+  esac
+  say "Serve the web app from this server too?"
+  choose web_pick "$web_default" \
+    "Yes: open Notes Again in a browser at this address" \
+    "No: only sync the desktop and mobile apps"
+  say ""
+}
 
+save_web_ui() {
+  if [ "$web_pick" = 2 ]; then env_set WEB_UI off; else env_unset WEB_UI; fi
+}
+
+ask_backup() {
   if [ -n "$(current BACKUP_REPLICA_URL "")$(current R2_BUCKET "")" ]; then
     backup_default=2
   else
@@ -318,6 +330,53 @@ setup_docker() {
     ask KEY_ID "Access key id" "$(current LITESTREAM_ACCESS_KEY_ID "")"
     ask_secret SECRET_KEY "Secret access key (leave empty to keep the current one)"
   fi
+  say ""
+}
+
+save_backup() {
+  if [ "$backup_pick" = 2 ]; then
+    env_set BACKUP_REPLICA_URL "$REPLICA_URL"
+    if [ -n "$KEY_ID" ]; then env_set LITESTREAM_ACCESS_KEY_ID "$KEY_ID"; else env_unset LITESTREAM_ACCESS_KEY_ID; fi
+    [ -z "$SECRET_KEY" ] || env_set LITESTREAM_SECRET_ACCESS_KEY "$SECRET_KEY"
+  else
+    env_unset BACKUP_REPLICA_URL R2_BUCKET R2_PATH R2_ENDPOINT \
+      LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY
+  fi
+}
+
+install_litestream() {
+  PATH="$PATH:$HOME/.local/bin"
+  has litestream && return 0
+  case "$(uname -s)" in
+    Darwin) ls_os=darwin ;;
+    Linux) ls_os=linux ;;
+    *) fail "Off-site backup needs Litestream, which this script can't install on $(uname -s)." ;;
+  esac
+  case "$(uname -m)" in
+    x86_64 | amd64) ls_arch=x86_64 ;;
+    arm64 | aarch64) ls_arch=arm64 ;;
+    *) fail "No Litestream build for $(uname -m). Install it from https://litestream.io and run this again." ;;
+  esac
+  has curl || fail "Installing Litestream needs curl."
+  confirm "Off-site backup needs Litestream $LITESTREAM_VERSION. Download it into $HOME/.local/bin?" y \
+    || fail "Install Litestream (https://litestream.io) and run this script again."
+  ls_tmp=$(mktemp -d)
+  curl -fsSL -o "$ls_tmp/litestream.tar.gz" \
+    "https://github.com/benbjohnson/litestream/releases/download/v$LITESTREAM_VERSION/litestream-$LITESTREAM_VERSION-$ls_os-$ls_arch.tar.gz" </dev/null
+  mkdir -p "$HOME/.local/bin"
+  tar -C "$HOME/.local/bin" -xzf "$ls_tmp/litestream.tar.gz" litestream
+  rm -rf "$ls_tmp"
+  say "Installed $("$HOME/.local/bin/litestream" version 2>/dev/null || echo litestream) to $HOME/.local/bin"
+}
+
+setup_docker() {
+  ENV_FILE=.env
+  METHOD=docker
+  ask_network
+  ask_auth
+
+  ask_web_ui
+  ask_backup
 
   env_set BIND_ADDRESS "$BIND"
   env_set HOST_PORT "$PORT_ANSWER"
@@ -327,14 +386,8 @@ setup_docker() {
   elif [ "$(env_get COMPOSE_FILE)" = "$FIREBASE_COMPOSE" ]; then
     env_unset COMPOSE_FILE
   fi
-  if [ "$backup_pick" = 2 ]; then
-    env_set BACKUP_REPLICA_URL "$REPLICA_URL"
-    if [ -n "$KEY_ID" ]; then env_set LITESTREAM_ACCESS_KEY_ID "$KEY_ID"; else env_unset LITESTREAM_ACCESS_KEY_ID; fi
-    [ -z "$SECRET_KEY" ] || env_set LITESTREAM_SECRET_ACCESS_KEY "$SECRET_KEY"
-  else
-    env_unset BACKUP_REPLICA_URL R2_BUCKET R2_PATH R2_ENDPOINT \
-      LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY
-  fi
+  save_web_ui
+  save_backup
   chmod 600 "$ENV_FILE"
 
   say ""
@@ -402,21 +455,28 @@ setup_direct() {
   say ""
 
   ask_auth
-  say "Daily snapshots are kept in a backups/ folder next to the database."
-  say "Off-site backup (Litestream) is only set up by the Docker install."
-  say ""
+  ask_web_ui
+  ask_backup
+  [ "$backup_pick" != 2 ] || install_litestream
 
   env_set BIND_ADDRESS "$BIND"
   env_set HOST_PORT "$PORT_ANSWER"
   if [ "$DB_ANSWER" = "$(default_db_path)" ]; then env_unset DB_PATH; else env_set DB_PATH "$DB_ANSWER"; fi
   save_auth "$(pwd)/firebase-service-account.json"
+  save_web_ui
+  save_backup
   chmod 600 "$ENV_FILE"
   say "Saved your answers to $(pwd)/$ENV_FILE"
   stop_if_firebase_key_missing
 
-  say "Building the server and the frontend (the first build takes a few minutes)..."
-  (cd server && cargo build --release --locked) </dev/null
-  (cd frontend && CI=1 pnpm install --frozen-lockfile && pnpm build) </dev/null
+  if [ "$web_pick" = 2 ]; then
+    say "Building the server (the first build takes a few minutes)..."
+    (cd server && cargo build --release --locked) </dev/null
+  else
+    say "Building the server and the frontend (the first build takes a few minutes)..."
+    (cd server && cargo build --release --locked) </dev/null
+    (cd frontend && CI=1 pnpm install --frozen-lockfile && pnpm build) </dev/null
+  fi
 
   say ""
   say "Notes Again is ready. Start it any time with:"
@@ -469,7 +529,7 @@ main() {
   [ -z "$missing_direct" ] && direct_note="" || direct_note=" (not ready here)"
   say "How do you want to run it?"
   choose method_pick "$method_default" \
-    "Docker: runs in a container, restarts on reboot, includes off-site backup$docker_note" \
+    "Docker: runs in a container and restarts on reboot$docker_note" \
     "Directly on this machine: needs Rust, Node.js 22+ and pnpm$direct_note"
   say ""
 

@@ -395,9 +395,14 @@ async fn snapshot_is_a_readable_copy_next_to_the_database() {
     let app = TestApp::new().await;
     app.named("Backed up").await;
     let config = &app.state.config;
-    let snapshot = create_snapshot(&app.state.db, config, &app.state.snapshot_lock)
-        .await
-        .unwrap();
+    let snapshot = create_snapshot(
+        &app.state.db,
+        &config.backup_dir(),
+        config.backup_keep,
+        &app.state.snapshot_lock,
+    )
+    .await
+    .unwrap();
     assert_eq!(
         snapshot.path.parent().unwrap(),
         config.db_path.parent().unwrap().join("backups")
@@ -441,10 +446,15 @@ async fn old_snapshots_are_pruned() {
             SystemTime::UNIX_EPOCH + Duration::from_secs(1_577_836_800 + day * 86_400),
         );
     }
-    create_snapshot(&app.state.db, config, &app.state.snapshot_lock)
-        .await
-        .unwrap();
-    let names: Vec<String> = list_snapshots(config)
+    create_snapshot(
+        &app.state.db,
+        &folder,
+        config.backup_keep,
+        &app.state.snapshot_lock,
+    )
+    .await
+    .unwrap();
+    let names: Vec<String> = list_snapshots(&folder)
         .iter()
         .map(|s| s.path.file_name().unwrap().to_string_lossy().into_owned())
         .collect();
@@ -455,30 +465,33 @@ async fn old_snapshots_are_pruned() {
 #[tokio::test]
 async fn snapshot_is_due_only_after_the_interval() {
     let app = TestApp::with(|c| c.backup_interval_hours = 24).await;
-    let config = app.state.config.clone();
-    assert!(snapshot_due(&config));
-    let taken = create_snapshot(&app.state.db, &config, &app.state.snapshot_lock)
+    let dir = app.state.backup_dir();
+    assert!(snapshot_due(&dir, 24));
+    let taken = create_snapshot(&app.state.db, &dir, 7, &app.state.snapshot_lock)
         .await
         .unwrap();
-    assert!(!snapshot_due(&config));
+    assert!(!snapshot_due(&dir, 24));
     set_mtime(
         &taken.path,
         SystemTime::now() - Duration::from_secs(25 * 3600),
     );
-    assert!(snapshot_due(&config));
-    let mut off = config.clone();
-    off.backup_interval_hours = 0;
-    assert!(!snapshot_due(&off));
+    assert!(snapshot_due(&dir, 24));
+    assert!(!snapshot_due(&dir, 0));
 }
 
 #[tokio::test]
 async fn restore_swaps_in_the_backup_and_keeps_the_old_file() {
     let app = TestApp::new().await;
     app.named("Before").await;
-    let backup = create_snapshot(&app.state.db, &app.state.config, &app.state.snapshot_lock)
-        .await
-        .unwrap()
-        .path;
+    let backup = create_snapshot(
+        &app.state.db,
+        &app.state.backup_dir(),
+        7,
+        &app.state.snapshot_lock,
+    )
+    .await
+    .unwrap()
+    .path;
     app.named("After").await;
     let live = app.path("live.db");
     notes_again_server::backups::copy_database(&app.state.db, &live)
@@ -685,5 +698,144 @@ async fn an_old_database_is_upgraded_in_place_on_start_and_again_harmlessly() {
     assert_eq!(
         app.get("/api/notes/1").send().await.ok()["name"],
         "Legacy note"
+    );
+}
+
+async fn desktop_app(dir: tempfile::TempDir) -> TestApp {
+    let mut config = base_config(&dir);
+    config.auth_mode = notes_again_server::config::AuthMode::Desktop;
+    config.desktop_secret = Some("secret".into());
+    let app = TestApp::start(dir, config).await;
+    assert_eq!(
+        app.get("/api/auth/desktop?secret=secret")
+            .send()
+            .await
+            .code(),
+        303
+    );
+    app
+}
+
+#[tokio::test]
+async fn snapshots_can_be_listed_and_downloaded_by_name_only() {
+    let app = TestApp::new().await;
+    app.named("In the snapshot").await;
+    let taken = app.post("/api/system/snapshot").send().await.ok();
+    let listed = app.get("/api/system/snapshots").send().await.ok();
+    assert_eq!(names(&listed), [taken["name"].as_str().unwrap()]);
+    let name = taken["name"].as_str().unwrap();
+    let download = app
+        .get(&format!("/api/system/snapshots/{name}"))
+        .send()
+        .await;
+    assert_eq!(download.code(), 200);
+    let copy = app.path("snapshot-download.db");
+    std::fs::write(&copy, &download.body).unwrap();
+    assert_eq!(note_names(&copy).await, ["In the snapshot"]);
+    for bad in [
+        "test.db",
+        "notes-again-..%2F..%2Ftest.db",
+        "notes-again-missing.db",
+    ] {
+        let response = app
+            .get(&format!("/api/system/snapshots/{bad}"))
+            .send()
+            .await;
+        assert_eq!(response.code(), 404, "{bad}");
+    }
+}
+
+#[tokio::test]
+async fn backup_folder_and_restore_are_desktop_only() {
+    let app = TestApp::new().await;
+    let info = app.get("/api/system").send().await.ok();
+    assert_eq!(info["backups"]["can_change_directory"], false);
+    assert_eq!(info["backups"]["can_restore"], false);
+    let change = app
+        .put("/api/system/backups")
+        .json(json!({ "directory": "/tmp" }))
+        .send()
+        .await;
+    assert_eq!(change.code(), 404);
+    let taken = app.post("/api/system/snapshot").send().await.ok();
+    let restore = app
+        .post(&format!(
+            "/api/system/snapshots/{}/restore",
+            taken["name"].as_str().unwrap()
+        ))
+        .send()
+        .await;
+    assert_eq!(restore.code(), 404);
+}
+
+#[tokio::test]
+async fn the_desktop_backup_folder_is_used_validated_and_remembered() {
+    let folder = tempfile::tempdir().unwrap();
+    let app = desktop_app(tempfile::tempdir().unwrap()).await;
+    let relative = app
+        .put("/api/system/backups")
+        .json(json!({ "directory": "relative/folder" }))
+        .send()
+        .await;
+    assert_eq!(relative.code(), 400);
+    let chosen = folder.path().join("Notes backups");
+    let info = app
+        .put("/api/system/backups")
+        .json(json!({ "directory": chosen.display().to_string() }))
+        .send()
+        .await
+        .ok();
+    assert_eq!(info["backups"]["directory"], chosen.display().to_string());
+    assert_eq!(info["backups"]["custom_directory"], true);
+    let taken = app.post("/api/system/snapshot").send().await.ok();
+    assert!(chosen.join(taken["name"].as_str().unwrap()).is_file());
+
+    let app = app.restart(|_| {}).await;
+    assert_eq!(app.state.backup_dir(), chosen);
+    let reset = app
+        .put("/api/system/backups")
+        .json(json!({ "directory": null }))
+        .send()
+        .await
+        .ok();
+    assert_eq!(reset["backups"]["custom_directory"], false);
+    assert_eq!(
+        reset["backups"]["directory"],
+        reset["backups"]["default_directory"]
+    );
+}
+
+#[tokio::test]
+async fn restoring_on_the_desktop_applies_the_snapshot_on_the_next_start() {
+    let app = desktop_app(tempfile::tempdir().unwrap()).await;
+    app.named("Before").await;
+    let taken = app.post("/api/system/snapshot").send().await.ok();
+    app.named("After").await;
+    let restore = app
+        .post(&format!(
+            "/api/system/snapshots/{}/restore",
+            taken["name"].as_str().unwrap()
+        ))
+        .send()
+        .await;
+    assert_eq!(restore.code(), 204);
+    tokio::time::timeout(Duration::from_secs(1), app.state.restart.notified())
+        .await
+        .expect("the desktop app is asked to restart");
+
+    let db_path = app.state.config.db_path.clone();
+    app.state.db.close().await;
+    let restored = notes_again_server::backups::apply_pending_restore(&db_path)
+        .await
+        .unwrap();
+    assert!(restored.is_some());
+    let app = app.restart(|_| {}).await;
+    let names_now = names(&app.get("/api/notes/list").send().await.ok()["items"]);
+    assert_eq!(names_now, ["Before"]);
+    assert!(
+        notes_again_server::backups::apply_pending_restore(&db_path)
+            .await
+            .unwrap()
+            .is_none()
     );
 }

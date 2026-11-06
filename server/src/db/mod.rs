@@ -14,8 +14,6 @@ pub type Tx = sqlx::Transaction<'static, Db>;
 
 pub const BEGIN_WRITE: &str = "BEGIN IMMEDIATE";
 
-static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
-
 const LEGACY_COLUMNS: &[(&str, &[(&str, &str)])] = &[
     (
         "notes",
@@ -120,7 +118,9 @@ async fn add_missing_columns(pool: &Pool) -> Result<(), sqlx::Error> {
 
 pub async fn setup(pool: &Pool) -> Result<(), sqlx::Error> {
     add_missing_columns(pool).await?;
-    MIGRATOR
+    let mut migrator = sqlx::migrate!("./migrations");
+    migrator.set_ignore_missing(true);
+    migrator
         .run(pool)
         .await
         .map_err(|e| sqlx::Error::Migrate(Box::new(e)))?;

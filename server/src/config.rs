@@ -93,6 +93,7 @@ pub struct Config {
     pub cloudflare_audience: String,
     pub db_path: PathBuf,
     pub frontend_dist: PathBuf,
+    pub web_ui: bool,
     pub backup_dir: Option<PathBuf>,
     pub backup_interval_hours: u64,
     pub backup_keep: usize,
@@ -326,6 +327,10 @@ impl Config {
             cloudflare_audience: var("CF_ACCESS_AUD"),
             db_path: default_db_path(),
             frontend_dist: default_frontend_dist(),
+            web_ui: !matches!(
+                var("WEB_UI").to_lowercase().as_str(),
+                "off" | "0" | "false" | "no"
+            ),
             backup_dir: opt_var("BACKUP_DIR").map(PathBuf::from),
             backup_interval_hours: int_var("BACKUP_INTERVAL_HOURS", 24),
             backup_keep: int_var("BACKUP_KEEP", 7).max(1) as usize,
@@ -351,6 +356,7 @@ impl Config {
             cloudflare_audience: String::new(),
             db_path,
             frontend_dist,
+            web_ui: true,
             backup_dir: None,
             backup_interval_hours: 24,
             backup_keep: 7,

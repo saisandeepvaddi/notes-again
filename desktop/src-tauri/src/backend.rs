@@ -2,7 +2,7 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, Once};
 use std::thread;
 use std::time::Duration;
 
@@ -10,6 +10,8 @@ use tauri::{AppHandle, Manager};
 
 const COOKIE: &str = "notes_again_desktop";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
+
+static LOGGING: Once = Once::new();
 
 #[derive(Default)]
 pub struct Backend {
@@ -57,13 +59,21 @@ pub fn start(app: &AppHandle) -> Result<Connection, String> {
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
     let frontend = frontend_dir(app).map_err(|e| e.to_string())?;
-    notes_again_server::log_to(open_log(app)?);
+    let mut log_error = None;
+    LOGGING.call_once(|| match open_log(app) {
+        Ok(file) => notes_again_server::log_to(file),
+        Err(error) => log_error = Some(error),
+    });
+    if let Some(error) = log_error {
+        return Err(error);
+    }
 
     let secret = launch_secret();
     let db_path = data_dir.join("notes-again.db");
     let (ready_tx, ready_rx) =
         std::sync::mpsc::channel::<Result<(u16, tokio::sync::oneshot::Sender<()>), String>>();
     let server_secret = secret.clone();
+    let restart_app = app.clone();
     let worker = thread::Builder::new()
         .name("notes-server".into())
         .spawn(move || {
@@ -82,6 +92,11 @@ pub fn start(app: &AppHandle) -> Result<Connection, String> {
                 match notes_again_server::start_desktop(db_path, frontend, server_secret).await {
                     Ok(server) => {
                         let _ = ready_tx.send(Ok((server.port, server.shutdown)));
+                        let restart = server.restart.clone();
+                        tokio::spawn(async move {
+                            restart.notified().await;
+                            thread::spawn(move || crate::restart_backend(&restart_app));
+                        });
                         let _ = server.task.await;
                     }
                     Err(error) => {

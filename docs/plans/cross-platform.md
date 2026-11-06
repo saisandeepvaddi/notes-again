@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: proposal. Follows the Rust backend (`480877c`).
+Status: in progress. Follows the Rust backend (`480877c`). Phase 0 is done (CI on `main`); Phase 1 is in review; Phase 2 is being built.
 
 ## Goal
 
@@ -62,7 +62,7 @@ Done when a fresh macOS, Windows and Linux machine can download, install and lau
 1. **`WEB_UI=off`.** The server skips the SPA, `/` returns a short page saying this is a Notes Again sync server, and `doctor` no longer reports the missing frontend. `install.sh` asks whether to serve the web app. Docker keeps one image; the setting decides.
 2. **Litestream outside Docker.** `scripts/serve.sh` runs the server under `litestream replicate -exec` when `BACKUP_REPLICA_URL` is set, using the same `litestream.yml`. `install.sh` offers to install Litestream 0.5.17 for direct installs, and `doctor` reports whether replication is active.
 3. **Desktop backups.** Settings → Data & backups gains a backup folder (default: inside the app's data folder; meant to point at iCloud Drive, Dropbox or a NAS share). Scheduled `VACUUM INTO` snapshots go there with the same retention as the server, and a Restore button swaps in a snapshot after restarting the in-process server. Desktops connected to a server already have a second copy there.
-4. **Restore drill in the UI.** Settings shows the latest snapshot and the off-site replica and can download either, so a backup is checkable without a terminal.
+4. **Restore drill in the UI.** Settings lists every snapshot with a Download button, so a backup is checkable without a terminal. Restoring from the off-site replica stays a documented `litestream restore` command: running Litestream from inside the server would tie the server to it.
 
 Done when the Phase 0 Docker round trip still passes, the same round trip passes for `make run` with a file replica, and a desktop restore from its backup folder brings back deleted notes.
 

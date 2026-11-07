@@ -356,3 +356,17 @@ async fn does_not_serve_files_outside_the_build() {
         assert!(!response.text().contains("outside the build"), "{path}");
     }
 }
+
+#[tokio::test]
+async fn with_the_web_ui_off_the_server_only_syncs() {
+    let app = TestApp::with(|c| c.web_ui = false).await;
+    build_dist(&app);
+    let home = app.get("/").send().await;
+    assert_eq!(home.code(), 200);
+    assert!(home.text().contains("WEB_UI=off"));
+    assert!(!home.text().contains("<title>app</title>"));
+    assert_eq!(app.get("/notes/42").send().await.code(), 404);
+    assert_eq!(app.get("/favicon.svg").send().await.code(), 404);
+    assert_eq!(app.get("/api/projects/list").send().await.code(), 200);
+    assert_eq!(app.get("/healthz").send().await.code(), 200);
+}

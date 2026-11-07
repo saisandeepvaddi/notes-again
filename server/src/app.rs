@@ -16,6 +16,14 @@ use tower_http::services::ServeFile;
 use crate::state::AppState;
 
 const MAX_BODY_BYTES: usize = 256 * 1024 * 1024;
+const SYNC_ONLY_PAGE: &str = "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\">\
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
+<title>Notes Again server</title>\
+<body style=\"font-family: system-ui, sans-serif; max-width: 34rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5\">\
+<h1>Notes Again server</h1>\
+<p>This server syncs your notes between devices. Its web app is turned off (<code>WEB_UI=off</code>).</p>\
+<p>Connect the desktop app (Settings &rarr; Sync) or the mobile app to this address.</p>\
+</body></html>";
 
 fn api_router(state: &AppState) -> Router<AppState> {
     Router::new()
@@ -96,6 +104,20 @@ async fn spa(State(state): State<AppState>, request: Request) -> Response {
     }
     if request.method() != Method::GET && request.method() != Method::HEAD {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
+    }
+    if !state.config.web_ui {
+        if path.is_empty() {
+            return (
+                [(CACHE_CONTROL, HeaderValue::from_static("no-cache"))],
+                axum::response::Html(SYNC_ONLY_PAGE),
+            )
+                .into_response();
+        }
+        return (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "message": "Not found" })),
+        )
+            .into_response();
     }
     let root = &state.config.frontend_dist;
     if !path.is_empty()

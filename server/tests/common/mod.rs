@@ -114,8 +114,11 @@ impl TestApp {
         let mut config = self.state.config.clone();
         configure(&mut config);
         self.state.db.close().await;
+        let cookies = self.cookies.lock().unwrap().clone();
         let dir = self.dir;
-        TestApp::start(dir, config).await
+        let app = TestApp::start(dir, config).await;
+        *app.cookies.lock().unwrap() = cookies;
+        app
     }
 
     pub async fn serve(&self) -> Served {

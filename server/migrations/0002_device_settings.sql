@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS device_settings (
+	key VARCHAR NOT NULL,
+	value VARCHAR NOT NULL,
+	PRIMARY KEY (key)
+);

@@ -5,7 +5,6 @@ use chrono::{DateTime, Utc};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{ConnectOptions, Connection};
 
-use crate::config::Config;
 use crate::db::Pool;
 use crate::time::Ts;
 
@@ -26,8 +25,18 @@ fn modified(path: &Path) -> Option<(Ts, u64)> {
     Some((Ts(time), meta.len()))
 }
 
-pub fn list_snapshots(config: &Config) -> Vec<Snapshot> {
-    let Ok(entries) = std::fs::read_dir(config.backup_dir()) else {
+const BACKUP_DIR_KEY: &str = "backup_dir";
+const RESTORE_MARKER_SUFFIX: &str = ".restore-pending";
+
+fn is_snapshot_name(name: &str) -> bool {
+    name.starts_with(SNAPSHOT_PREFIX)
+        && name.ends_with(SNAPSHOT_SUFFIX)
+        && !name.contains(['/', '\\'])
+        && !name.contains("..")
+}
+
+pub fn list_snapshots(dir: &Path) -> Vec<Snapshot> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
         return vec![];
     };
     let mut snapshots: Vec<Snapshot> = entries
@@ -36,7 +45,7 @@ pub fn list_snapshots(config: &Config) -> Vec<Snapshot> {
         .filter(|p| {
             p.file_name()
                 .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with(SNAPSHOT_PREFIX) && n.ends_with(SNAPSHOT_SUFFIX))
+                .is_some_and(is_snapshot_name)
         })
         .filter_map(|path| {
             modified(&path).map(|(created_at, size_bytes)| Snapshot {
@@ -70,24 +79,32 @@ pub async fn copy_database(pool: &Pool, target: &Path) -> Result<(), String> {
     std::fs::rename(&partial, target).map_err(|e| e.to_string())
 }
 
-pub fn prune_snapshots(config: &Config, keep: usize) {
-    for snapshot in list_snapshots(config).into_iter().skip(keep) {
+pub fn find_snapshot(dir: &Path, name: &str) -> Option<Snapshot> {
+    if !is_snapshot_name(name) {
+        return None;
+    }
+    list_snapshots(dir)
+        .into_iter()
+        .find(|s| s.path.file_name().and_then(|n| n.to_str()) == Some(name))
+}
+
+pub fn prune_snapshots(dir: &Path, keep: usize) {
+    for snapshot in list_snapshots(dir).into_iter().skip(keep) {
         let _ = std::fs::remove_file(snapshot.path);
     }
 }
 
 pub async fn create_snapshot(
     pool: &Pool,
-    config: &Config,
+    dir: &Path,
+    keep: usize,
     lock: &tokio::sync::Mutex<()>,
 ) -> Result<Snapshot, String> {
     let _guard = lock.lock().await;
     let stamp = Utc::now().format("%Y%m%d-%H%M%S");
-    let target = config
-        .backup_dir()
-        .join(format!("{SNAPSHOT_PREFIX}{stamp}{SNAPSHOT_SUFFIX}"));
+    let target = dir.join(format!("{SNAPSHOT_PREFIX}{stamp}{SNAPSHOT_SUFFIX}"));
     copy_database(pool, &target).await?;
-    prune_snapshots(config, config.backup_keep);
+    prune_snapshots(dir, keep);
     let (created_at, size_bytes) = modified(&target).ok_or("snapshot vanished")?;
     Ok(Snapshot {
         path: target,
@@ -96,17 +113,78 @@ pub async fn create_snapshot(
     })
 }
 
-pub fn snapshot_due(config: &Config) -> bool {
-    if config.backup_interval_hours == 0 {
+pub fn snapshot_due(dir: &Path, interval_hours: u64) -> bool {
+    if interval_hours == 0 {
         return false;
     }
-    match list_snapshots(config).first() {
+    match list_snapshots(dir).first() {
         None => true,
         Some(latest) => {
-            Ts::now().since(latest.created_at)
-                >= chrono::Duration::hours(config.backup_interval_hours as i64)
+            Ts::now().since(latest.created_at) >= chrono::Duration::hours(interval_hours as i64)
         }
     }
+}
+
+pub async fn load_backup_dir(pool: &Pool) -> Result<Option<PathBuf>, sqlx::Error> {
+    let value: Option<String> =
+        sqlx::query_scalar("SELECT value FROM device_settings WHERE key = ?")
+            .bind(BACKUP_DIR_KEY)
+            .fetch_optional(pool)
+            .await?;
+    Ok(value.filter(|v| !v.is_empty()).map(PathBuf::from))
+}
+
+pub async fn save_backup_dir(pool: &Pool, dir: Option<&Path>) -> Result<(), sqlx::Error> {
+    match dir {
+        Some(dir) => {
+            sqlx::query("INSERT OR REPLACE INTO device_settings (key, value) VALUES (?, ?)")
+                .bind(BACKUP_DIR_KEY)
+                .bind(dir.to_string_lossy().to_string())
+                .execute(pool)
+                .await?;
+        }
+        None => {
+            sqlx::query("DELETE FROM device_settings WHERE key = ?")
+                .bind(BACKUP_DIR_KEY)
+                .execute(pool)
+                .await?;
+        }
+    }
+    Ok(())
+}
+
+pub fn check_backup_dir(dir: &Path) -> Result<(), String> {
+    if !dir.is_absolute() {
+        return Err("Choose a full folder path.".into());
+    }
+    std::fs::create_dir_all(dir).map_err(|e| format!("Can't create {}: {e}", dir.display()))?;
+    let probe = dir.join(".notes-again-write-test");
+    std::fs::write(&probe, b"ok").map_err(|e| format!("Can't write to {}: {e}", dir.display()))?;
+    let _ = std::fs::remove_file(probe);
+    Ok(())
+}
+
+fn restore_marker(db_path: &Path) -> PathBuf {
+    PathBuf::from(format!("{}{RESTORE_MARKER_SUFFIX}", db_path.display()))
+}
+
+pub fn request_restore(db_path: &Path, snapshot: &Path) -> Result<(), String> {
+    std::fs::write(
+        restore_marker(db_path),
+        snapshot.to_string_lossy().as_bytes(),
+    )
+    .map_err(|e| e.to_string())
+}
+
+pub async fn apply_pending_restore(db_path: &Path) -> Result<Option<PathBuf>, String> {
+    let marker = restore_marker(db_path);
+    let Ok(source) = std::fs::read_to_string(&marker) else {
+        return Ok(None);
+    };
+    let _ = std::fs::remove_file(&marker);
+    let source = PathBuf::from(source.trim());
+    restore_database(&source, db_path).await?;
+    Ok(Some(source))
 }
 
 pub async fn run_schedule(state: crate::state::AppState) {
@@ -115,8 +193,16 @@ pub async fn run_schedule(state: crate::state::AppState) {
         return;
     }
     loop {
-        if snapshot_due(&state.config) {
-            match create_snapshot(&state.db, &state.config, &state.snapshot_lock).await {
+        let dir = state.backup_dir();
+        if snapshot_due(&dir, state.config.backup_interval_hours) {
+            match create_snapshot(
+                &state.db,
+                &dir,
+                state.config.backup_keep,
+                &state.snapshot_lock,
+            )
+            .await
+            {
                 Ok(snapshot) => tracing::info!("Wrote local snapshot {}", snapshot.path.display()),
                 Err(error) => tracing::error!("Local snapshot failed: {error}"),
             }

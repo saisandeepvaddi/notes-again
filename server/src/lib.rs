@@ -47,6 +47,10 @@ pub async fn prepare(config: Config) -> Result<AppState, String> {
         .await
         .map_err(|e| format!("Couldn't open the database: {e}"))?;
     let state = AppState::new(pool, config);
+    match backups::load_backup_dir(&state.db).await {
+        Ok(dir) => *state.backup_dir_override.write().unwrap() = dir,
+        Err(error) => tracing::warn!("Couldn't read the backup folder setting: {error}"),
+    }
     if state.config.auth_mode == AuthMode::Local {
         auth::local::ensure_local_auth(&state)
             .await
@@ -77,6 +81,7 @@ pub struct DesktopServer {
     pub port: u16,
     pub shutdown: tokio::sync::oneshot::Sender<()>,
     pub task: tokio::task::JoinHandle<()>,
+    pub restart: std::sync::Arc<tokio::sync::Notify>,
 }
 
 pub async fn start_desktop(
@@ -84,7 +89,13 @@ pub async fn start_desktop(
     frontend_dist: PathBuf,
     secret: String,
 ) -> Result<DesktopServer, String> {
+    match backups::apply_pending_restore(&db_path).await {
+        Ok(Some(source)) => tracing::info!("Restored the database from {}", source.display()),
+        Ok(None) => {}
+        Err(error) => tracing::error!("Couldn't restore the snapshot: {error}"),
+    }
     let state = prepare(Config::desktop(db_path, frontend_dist, secret)).await?;
+    let restart = state.restart.clone();
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
         .await
         .map_err(|e| e.to_string())?;
@@ -104,5 +115,6 @@ pub async fn start_desktop(
         port,
         shutdown,
         task,
+        restart,
     })
 }

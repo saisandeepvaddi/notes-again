@@ -112,6 +112,7 @@ with comments.
 | `BIND_ADDRESS` | `127.0.0.1` | `0.0.0.0` lets other devices on the network connect |
 | `HOST_PORT` | `8000` | Port on the host |
 | `AUTH_MODE` | `local` | `local`, `none`, `firebase`, `proxy` or `cloudflare-access`; see [Sign-in](#sign-in) |
+| `WEB_UI` | `on` | `off` serves only the API, for a server that just syncs the desktop and mobile apps; `/` then shows a short page saying so |
 | `TRUSTED_PROXIES` | this machine | Addresses or networks of your reverse proxy, comma-separated; see [Reaching it from other devices](#reaching-it-from-other-devices) |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | | Create the account with these instead of a temporary password (first start only) |
 | `BACKUP_INTERVAL_HOURS` | `24` | How often to take a local snapshot; `0` turns snapshots off |
@@ -298,9 +299,11 @@ Alternatively, attach `cloudflared` to the app's compose network (usually
 
 ## Backups
 
-Settings → Data & backups shows where the database file is, the latest
-snapshot, and whether off-site backup is on. It also has **Download database**
-(a consistent copy of the live file) and **Snapshot now**.
+Settings → Data & backups shows where the database file is, every local
+snapshot, and whether off-site backup is on. It has **Download database** (a
+consistent copy of the live file), **Snapshot now**, and a Download button for
+each snapshot. In the desktop app it can also change the snapshot folder and
+restore a snapshot; see [desktop/README.md](../desktop/README.md#backups).
 
 ### Local snapshots
 
@@ -315,9 +318,11 @@ off-site backup.
 
 ### Off-site backup with Litestream
 
-Litestream streams every change to object storage. When the container starts
-with an empty volume, it restores the latest copy before the app starts. It
-runs only in the Docker image.
+Litestream streams every change to object storage. When the server starts
+with no database, it restores the latest copy first. The Docker image includes
+Litestream; for a direct install, `install.sh` downloads the same version into
+`~/.local/bin` when you choose off-site backup, and `scripts/serve.sh` runs the
+server under it whenever `BACKUP_REPLICA_URL` is set in `.env.local`.
 
 ```sh
 BACKUP_REPLICA_URL=s3://notes-again-backups/db?endpoint=<account-id>.r2.cloudflarestorage.com

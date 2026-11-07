@@ -5,11 +5,18 @@ import { memo } from "react";
 import { Pressable, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { Badge } from "@/components/badge";
+import { Icon } from "@/components/icon";
 import { useTheme } from "@/hooks/use-theme";
 import { difficultyTint, radius } from "@/theme";
 import { dueLabel, noteExcerpt, noteTitle } from "@/utils/note-format";
 
-export const NoteRow = memo(function NoteRow({ note }: { note: NoteItem }) {
+interface NoteRowProps {
+  note: NoteItem;
+  selected?: boolean;
+  onToggle?: (id: number) => void;
+}
+
+export const NoteRow = memo(function NoteRow({ note, selected, onToggle }: NoteRowProps) {
   const { colors, scheme } = useTheme();
   const router = useRouter();
   const difficulty = getDifficulty(note.tags);
@@ -20,21 +27,31 @@ export const NoteRow = memo(function NoteRow({ note }: { note: NoteItem }) {
 
   return (
     <Pressable
-      accessibilityRole="link"
-      onPress={() => router.push(`/note/${note.id}`)}
+      accessibilityRole={onToggle ? "checkbox" : "link"}
+      accessibilityState={onToggle ? { checked: selected === true } : undefined}
+      onPress={() => (onToggle ? onToggle(note.id) : router.push(`/note/${note.id}`))}
       style={({ pressed }) => ({
         backgroundColor: pressed ? colors.pressed : colors.card,
         borderRadius: radius.lg,
         borderCurve: "continuous",
         borderWidth: 1,
-        borderColor: colors.hairline,
+        borderColor: selected ? colors.primary : colors.hairline,
         padding: 14,
         gap: 8,
       })}
     >
-      <AppText variant="heading" reading numberOfLines={2}>
-        {noteTitle(note)}
-      </AppText>
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+        <AppText variant="heading" reading numberOfLines={2} style={{ flex: 1 }}>
+          {noteTitle(note)}
+        </AppText>
+        {onToggle ? (
+          <Icon
+            ios={selected ? "checkmark.circle.fill" : "circle"}
+            android={selected ? "check_circle" : "radio_button_unchecked"}
+            color={selected ? colors.primary : colors.mutedForeground}
+          />
+        ) : null}
+      </View>
       {excerpt ? (
         <AppText variant="caption" tone="muted" numberOfLines={2}>
           {excerpt}

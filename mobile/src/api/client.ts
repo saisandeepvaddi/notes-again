@@ -43,6 +43,7 @@ interface RequestOptions {
   serverUrl?: string;
   token?: string | null;
   signal?: AbortSignal;
+  raw?: boolean;
 }
 
 async function send(
@@ -71,7 +72,9 @@ export async function request(path: string, options: RequestOptions = {}): Promi
   if (!serverUrl) throw new ApiError("Not connected to a server", 0);
   const token = options.token !== undefined ? options.token : connection?.token;
 
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = {
+    Accept: options.raw ? "text/plain, text/markdown, */*" : "application/json",
+  };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -93,6 +96,7 @@ export async function request(path: string, options: RequestOptions = {}): Promi
     );
   }
   if (response.status === 204) return null;
+  if (options.raw) return await response.text();
   try {
     return await response.json();
   } catch {

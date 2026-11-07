@@ -126,31 +126,15 @@ pub fn snapshot_due(dir: &Path, interval_hours: u64) -> bool {
 }
 
 pub async fn load_backup_dir(pool: &Pool) -> Result<Option<PathBuf>, sqlx::Error> {
-    let value: Option<String> =
-        sqlx::query_scalar("SELECT value FROM device_settings WHERE key = ?")
-            .bind(BACKUP_DIR_KEY)
-            .fetch_optional(pool)
-            .await?;
-    Ok(value.filter(|v| !v.is_empty()).map(PathBuf::from))
+    Ok(crate::db::device_setting(pool, BACKUP_DIR_KEY)
+        .await?
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from))
 }
 
 pub async fn save_backup_dir(pool: &Pool, dir: Option<&Path>) -> Result<(), sqlx::Error> {
-    match dir {
-        Some(dir) => {
-            sqlx::query("INSERT OR REPLACE INTO device_settings (key, value) VALUES (?, ?)")
-                .bind(BACKUP_DIR_KEY)
-                .bind(dir.to_string_lossy().to_string())
-                .execute(pool)
-                .await?;
-        }
-        None => {
-            sqlx::query("DELETE FROM device_settings WHERE key = ?")
-                .bind(BACKUP_DIR_KEY)
-                .execute(pool)
-                .await?;
-        }
-    }
-    Ok(())
+    let value = dir.map(|d| d.to_string_lossy().to_string());
+    crate::db::set_device_setting(pool, BACKUP_DIR_KEY, value.as_deref()).await
 }
 
 pub fn check_backup_dir(dir: &Path) -> Result<(), String> {

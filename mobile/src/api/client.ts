@@ -1,6 +1,6 @@
 import { fetch } from "expo/fetch";
 import type { z } from "zod";
-import { currentConnection } from "./connection-store";
+import { currentConnection, saveConnection } from "./connection-store";
 
 export class ApiError extends Error {
   constructor(
@@ -45,6 +45,26 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
+async function send(
+  serverUrl: string,
+  path: string,
+  options: RequestOptions,
+  headers: Record<string, string>,
+): Promise<Response> {
+  try {
+    return (await fetch(`${serverUrl}/api${path}`, {
+      method: options.method ?? "GET",
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      credentials: "omit",
+      signal: options.signal,
+    })) as unknown as Response;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    throw new ApiError("Couldn't reach the server. Check your connection.", 0);
+  }
+}
+
 export async function request(path: string, options: RequestOptions = {}): Promise<unknown> {
   const connection = currentConnection();
   const serverUrl = options.serverUrl ?? connection?.serverUrl;
@@ -57,16 +77,12 @@ export async function request(path: string, options: RequestOptions = {}): Promi
 
   let response: Response;
   try {
-    response = (await fetch(`${serverUrl}/api${path}`, {
-      method: options.method ?? "GET",
-      headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      credentials: "omit",
-      signal: options.signal,
-    })) as unknown as Response;
+    response = await send(serverUrl, path, options, headers);
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw error;
-    throw new ApiError("Couldn't reach the server. Check your connection.", 0);
+    const fallback = options.serverUrl === undefined ? connection?.fallbackUrl : null;
+    if (!connection || !fallback || !(error instanceof ApiError)) throw error;
+    response = await send(fallback, path, options, headers);
+    await saveConnection({ ...connection, serverUrl: fallback, fallbackUrl: connection.serverUrl });
   }
 
   if (response.status === 401 && options.serverUrl === undefined) onUnauthorized?.();

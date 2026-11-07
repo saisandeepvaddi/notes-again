@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: in progress. Follows the Rust backend (`480877c`). Phase 0 is done (CI on `main`); Phase 1 is in review; Phase 2 is being built.
+Status: in progress. Follows the Rust backend (`480877c`). Phases 0–2 are done; Phase 3 is in review.
 
 ## Goal
 
@@ -70,7 +70,7 @@ Done when the Phase 0 Docker round trip still passes, the same round trip passes
 1. **Fixed port.** The desktop prefers port 47821 on `127.0.0.1` and falls back to a random port only if it's taken; Settings shows the address.
 2. **Extension → desktop.** The extension's options page gains "Use the desktop app", which checks `http://127.0.0.1:47821/healthz`, and the desktop's Settings → API tokens creates a `capture` token for it in one click.
 3. **Local network access.** Opt-in setting "Let my phone connect": the desktop opens a second listener on the local network that accepts only `app` tokens (the desktop cookie never works there). It shows a QR code with the existing `notesagain://connect` link, carrying the desktop's LAN address and a new `app` token. Turning it off revokes those tokens and closes the listener.
-4. **Discovery.** The desktop advertises itself over mDNS (`_notesagain._tcp`) so the phone can reconnect after its IP changes.
+4. **Discovery.** The QR link carries the computer's `<hostname>.local` name as a fallback address (`alt` in the connect link), which macOS, Windows and Linux already answer over mDNS, so the phone reconnects after the IP changes without a custom mDNS service or a native module.
 
 Done when the extension saves into a desktop-only setup, and a phone on the same Wi-Fi can pair by QR and use the existing online mobile app against the desktop.
 

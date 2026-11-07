@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { browser } from "wxt/browser";
 import { createCaptureApi } from "../../lib/api";
-import { DEFAULT_SETTINGS, loadSettings, saveSettings } from "../../lib/settings";
+import { parseConnectLink } from "../../lib/connectLink";
+import { DEFAULT_SETTINGS, DESKTOP_APP_URL, loadSettings, saveSettings } from "../../lib/settings";
 import { hostPermissionPattern, normalizeBaseUrl } from "../../lib/url";
 
 interface Status {
@@ -38,6 +39,35 @@ export function OptionsApp() {
       setLoaded(true);
     })();
   }, []);
+
+  const useDesktopApp = async () => {
+    setStatus({ text: "Looking for the desktop app…" });
+    try {
+      const response = await fetch(`${DESKTOP_APP_URL}/healthz`);
+      if (!response.ok) throw new Error();
+      setServerUrl(DESKTOP_APP_URL);
+      setAppUrl("");
+      setStatus({
+        text: "Found the desktop app. In it, open Settings > Phone & extension > Create a link for the extension, paste the link as the API token, then Save.",
+      });
+    } catch {
+      setStatus({
+        text: `The desktop app isn't running at ${DESKTOP_APP_URL}. Open Notes Again and try again.`,
+        error: true,
+      });
+    }
+  };
+
+  const changeToken = (value: string) => {
+    const link = parseConnectLink(value);
+    if (link) {
+      setServerUrl(link.server);
+      setApiToken(link.token);
+      setStatus({ text: `Filled in the server (${link.server}) and token from the link. Save to keep them.` });
+      return;
+    }
+    setApiToken(value);
+  };
 
   const readForm = async () => {
     const base = normalizeBaseUrl(serverUrl);
@@ -90,6 +120,12 @@ export function OptionsApp() {
 
       <section>
         <h2>Connection</h2>
+        <p className="nl-help">
+          Using the Notes Again desktop app? It can receive pages without a server.{" "}
+          <button type="button" className="nl-link" onClick={() => void useDesktopApp()}>
+            Use the desktop app
+          </button>
+        </p>
         <form onSubmit={save}>
           <div className="nl-field">
             <label className="nl-label" htmlFor="server-url">
@@ -114,11 +150,12 @@ export function OptionsApp() {
               spellCheck={false}
               placeholder={`${TOKEN_PREFIX}…`}
               value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
+              onChange={(e) => changeToken(e.target.value)}
             />
             <p className="nl-help">
-              In the web app, open Settings &gt; API tokens &gt; Create token, then paste it here. It can only save notes, and you can
-              revoke it there any time. Leave empty if the server runs with AUTH_DISABLED=1 (local dev).
+              In the web app, open Settings &gt; API tokens &gt; Create token, then paste it here. A connect link
+              (notesagain://connect?…) also works and fills in the server too. The token can only save notes, and you can revoke
+              it there any time. Leave empty if the server runs with AUTH_DISABLED=1 (local dev).
             </p>
           </div>
 

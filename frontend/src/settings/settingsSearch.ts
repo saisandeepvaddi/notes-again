@@ -5,6 +5,7 @@ export const SETTINGS_SECTIONS = [
   "review",
   "sign-in",
   "sync",
+  "devices",
   "tokens",
   "system",
 ] as const;

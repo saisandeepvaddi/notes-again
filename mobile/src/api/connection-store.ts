@@ -6,6 +6,7 @@ export const ConnectionSchema = z.object({
   token: z.string().nullable(),
   method: z.enum(["password", "token", "open"]),
   username: z.string().nullable().default(null),
+  fallbackUrl: z.string().nullish(),
 });
 export type Connection = z.infer<typeof ConnectionSchema>;
 

@@ -8,6 +8,8 @@ export interface Settings {
   lastNoteOnly: boolean;
 }
 
+export const DESKTOP_APP_URL = "http://127.0.0.1:47821";
+
 export const DEFAULT_SETTINGS: Settings = {
   serverUrl: import.meta.env.WXT_SERVER_URL || "http://localhost:8000",
   appUrl: import.meta.env.WXT_APP_URL ?? "",

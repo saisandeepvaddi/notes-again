@@ -34,6 +34,8 @@ After a rebuild, reload the extension so the browser picks up the new files: Chr
    - **App URL** (local dev only): see below.
 3. **Test connection**, then save something.
 
+With the desktop app instead of a server: in the app open **Settings > Phone & extension > Create a link for the extension**, then in the extension's options choose **Use the desktop app** and paste the link into **API token**; it fills in `http://127.0.0.1:47821` and the token. Saving only works while the desktop app is running.
+
 The token can only save notes: list and create projects/tags and create notes. It can't read, edit or delete anything, and you can revoke it from Settings at any time (the extension will then say so).
 
 ## Where the links point ("Open in Notes Again")

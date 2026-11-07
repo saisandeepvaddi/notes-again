@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::time::Instant;
 
 use crate::auth::external::JwksCache;
@@ -20,6 +20,8 @@ pub struct Inner {
     pub snapshot_lock: tokio::sync::Mutex<()>,
     pub backup_dir_override: RwLock<Option<PathBuf>>,
     pub restart: Arc<tokio::sync::Notify>,
+    pub desktop_port: OnceLock<u16>,
+    pub lan: tokio::sync::Mutex<Option<crate::lan::LanListener>>,
 }
 
 #[derive(Clone)]
@@ -48,6 +50,8 @@ impl AppState {
             snapshot_lock: tokio::sync::Mutex::new(()),
             backup_dir_override: RwLock::new(None),
             restart: Arc::new(tokio::sync::Notify::new()),
+            desktop_port: OnceLock::new(),
+            lan: tokio::sync::Mutex::new(None),
         }))
     }
 

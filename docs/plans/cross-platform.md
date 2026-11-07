@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: in progress. Follows the Rust backend (`480877c`). Phases 0–2 are done; Phase 3 is in review.
+Status: in progress. Follows the Rust backend (`480877c`). Phases 0–3 are done; Phase 4 is in review.
 
 ## Goal
 
@@ -78,25 +78,25 @@ Done when the extension saves into a desktop-only setup, and a phone on the same
 
 Online first, on the current client, so every screen exists before Phase 5 moves the data underneath.
 
-| Feature | Web/desktop | Mobile today | Phase 4 |
+| Feature | Web/desktop | Mobile before | Mobile now |
 |---|---|---|---|
-| Review, undo | ✓ | ✓ | interval previews on the rating buttons |
-| Notes list, filters, sort | ✓ | partial | every filter in `notesSearchSchema` (shared from `frontend/src`) |
-| Search | palette + list | — | search screen over `/api/search` |
-| Create, edit, delete | ✓ | ✓ | attach/detach tags on existing notes |
-| Trash, restore, empty trash | ✓ | — | trash screen |
-| Reschedule | ✓ | — | date picker on the note screen |
-| Organize projects and tags | ✓ | — | pause, resume, remove from/add to review, rename, delete |
-| Bulk actions | ✓ | — | multi-select in the list |
-| Copy/share as Markdown | ✓ | — | share sheet from `/api/notes/{id}/markdown` |
+| Review, undo | ✓ | ✓ | ✓, with interval previews on the rating buttons |
+| Notes list, filters, sort | ✓ | partial | partial: search, project and status filters; no sort or tag filter yet |
+| Search | palette + list | list search | list search (same server matching); no project/tag hits yet |
+| Create, edit, delete | ✓ | ✓ | ✓, plus tags on existing notes |
+| Trash, restore, empty trash | ✓ | — | ✓ |
+| Reschedule | ✓ | — | ✓ (native date picker on the note) |
+| Organize projects and tags | ✓ | — | ✓ pause, resume, remove from/add to review, delete, new project, delete unused tags |
+| Bulk actions | ✓ | — | ✓ multi-select: project, difficulty, pause, resume, review status, trash |
+| Copy/share as Markdown | ✓ | — | ✓ share sheet |
 | Settings: scheduling algorithm | ✓ | — | ✓ |
-| Import, export | ✓ | — | export through the share sheet, import from a file |
-| Tokens, system, backups | session only | — | read-only, pointing to desktop/web |
+| Import, export | ✓ | — | ✓ export through the share sheet, import from a file with a preview |
+| Tokens, system, backups | session only | — | explained in Settings, pointing to desktop/web |
 
 - Shared logic moves into the pure modules mobile already imports from `frontend/src` (filters, pacing labels, review-status labels), keeping them free of `@/` and DOM imports.
-- Mobile gets an E2E suite (Maestro) covering review, capture, search and trash, run in CI on an Android emulator.
+- Mobile gets an E2E suite (Maestro) covering review, capture, search and trash, run in CI on an Android emulator. Not done yet: Maestro needs its own installer, and the local check used the iOS simulator through deep links instead.
 
-Done when every row above is ✓ and the Maestro suite passes.
+Done when every row above is ✓ and the Maestro suite passes. Left: list sort and tag filter, project/tag search hits, and Maestro.
 
 ## Phase 5: local-first mobile
 

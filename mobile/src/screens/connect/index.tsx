@@ -28,10 +28,11 @@ const methodFor = (status: AuthStatus): Method =>
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong. Try again.";
 
-function linkFromParams(params: { server?: string; token?: string }): ConnectLink | null {
+function linkFromParams(params: { server?: string; token?: string; alt?: string }): ConnectLink | null {
   if (!params.server || !params.token) return null;
+  const alt = params.alt ? `&alt=${encodeURIComponent(params.alt)}` : "";
   return parseConnectLink(
-    `notesagain://connect?server=${encodeURIComponent(params.server)}&token=${encodeURIComponent(params.token)}`,
+    `notesagain://connect?server=${encodeURIComponent(params.server)}&token=${encodeURIComponent(params.token)}${alt}`,
   );
 }
 
@@ -59,7 +60,7 @@ function ScanButton() {
 export function ConnectScreen() {
   const { colors } = useTheme();
   const { connect, notice } = useConnection();
-  const params = useLocalSearchParams<{ server?: string; token?: string }>();
+  const params = useLocalSearchParams<{ server?: string; token?: string; alt?: string }>();
   const [dismissedToken, setDismissedToken] = useState<string | null>(null);
   const incomingLink = linkFromParams(params);
   const pendingLink = incomingLink?.token === dismissedToken ? null : incomingLink;

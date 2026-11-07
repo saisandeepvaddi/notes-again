@@ -12,6 +12,9 @@ export default function AppLayout() {
         options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
       />
       <Stack.Screen name="new-note" options={{ presentation: "modal", title: "New note" }} />
+      <Stack.Screen name="trash" options={{ title: "Trash" }} />
+      <Stack.Screen name="organize" options={{ title: "Projects & tags" }} />
+      <Stack.Screen name="transfer" options={{ title: "Import & export" }} />
     </Stack>
   );
 }

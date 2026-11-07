@@ -47,10 +47,21 @@ export function useDueNotes() {
 
 export type NotesStatus = ReviewStatus;
 
+export const NOTES_SORTS = [
+  { value: "due", label: "Due date", order: "asc" },
+  { value: "created", label: "Newest", order: "desc" },
+  { value: "name", label: "Title", order: "asc" },
+  { value: "difficulty", label: "Difficulty", order: "asc" },
+  { value: "project", label: "Project", order: "asc" },
+] as const;
+export type NotesSort = (typeof NOTES_SORTS)[number]["value"];
+
 export interface NotesFilters {
   search: string;
   projectId: number | null;
+  tagId: number | null;
   status: NotesStatus | null;
+  sort: NotesSort;
 }
 
 export function useNotes(filters: NotesFilters) {
@@ -60,11 +71,12 @@ export function useNotes(filters: NotesFilters) {
       const params = new URLSearchParams({
         limit: String(NOTES_PAGE_SIZE),
         offset: String(pageParam),
-        sort: "due",
-        order: "asc",
+        sort: filters.sort,
+        order: NOTES_SORTS.find((option) => option.value === filters.sort)?.order ?? "asc",
       });
       if (filters.search.trim()) params.set("search", filters.search.trim());
       if (filters.projectId != null) params.set("project_id", String(filters.projectId));
+      if (filters.tagId != null) params.set("tag_id", String(filters.tagId));
       if (filters.status) params.set("status", filters.status);
       return api(NotePageSchema, `/notes/list?${params}`, { signal });
     },
@@ -230,4 +242,47 @@ export function useCreateTag() {
       api(TagSchema, "/tags/create", { method: "POST", body: { name } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tags"] }),
   });
+}
+
+export function useSetNoteTags(id: number) {
+  return useNoteMutation(async ({ add, remove }: { add: number[]; remove: number[] }) => {
+    let note: NoteItem | null = null;
+    for (const tagId of add) {
+      note = await api(NoteItemSchema, `/notes/${id}/tags/${tagId}`, { method: "POST" });
+    }
+    for (const tagId of remove) {
+      note = await api(NoteItemSchema, `/notes/${id}/tags/${tagId}`, { method: "DELETE" });
+    }
+    return note ?? api(NoteItemSchema, `/notes/${id}`);
+  });
+}
+
+export function useReschedule(id: number) {
+  return useNoteMutation((remindAt: Date) =>
+    api(NoteItemSchema, `/notes/${id}/reminders/pending`, {
+      method: "PATCH",
+      body: { remind_at: remindAt.toISOString() },
+    }),
+  );
+}
+
+const IntervalsSchema = z.object({
+  again: z.coerce.date(),
+  hard: z.coerce.date(),
+  good: z.coerce.date(),
+  easy: z.coerce.date(),
+});
+export type NoteIntervals = z.infer<typeof IntervalsSchema>;
+
+export function useNoteIntervals(note: NoteItem | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["note-intervals", note?.id, note?.updated_at?.getTime()],
+    queryFn: ({ signal }) => api(IntervalsSchema, `/notes/${note?.id}/intervals`, { signal }),
+    enabled: enabled && note !== undefined && note.in_review,
+    staleTime: 30_000,
+  });
+}
+
+export async function fetchNoteMarkdown(id: number): Promise<string> {
+  return api(z.string(), `/notes/${id}/markdown`, { raw: true });
 }

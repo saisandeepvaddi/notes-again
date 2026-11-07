@@ -6,15 +6,19 @@ import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { type ReactNode } from "react";
-import { Alert, TextInput, View } from "react-native";
+import { Alert, Share, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  fetchNoteMarkdown,
   isDue,
   pendingReminder,
   useDeleteNote,
   useNote,
+  useNoteIntervals,
+  useReschedule,
   useSetDifficulty,
+  useSetNoteTags,
   useSetReviewStatus,
   useSetProject,
 } from "@/api/notes";
@@ -23,7 +27,9 @@ import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { DifficultyPicker } from "@/components/difficulty-picker";
+import { HeaderButton } from "@/components/header-button";
 import { HeaderTextButton } from "@/components/header-text-button";
+import { NextReviewPicker } from "@/components/next-review-picker";
 import { NoteBody } from "@/components/note-body";
 import {
   type RichEditorController,
@@ -36,6 +42,7 @@ import { NoteMeta } from "@/components/note-meta";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatingBar } from "@/components/rating-bar";
 import { ReviewStatusPicker } from "@/components/review-status-picker";
+import { TagPicker } from "@/components/tag-picker";
 import { ErrorState, InlineError, LoadingState } from "@/components/screen-state";
 import { Divider, SettingRow } from "@/components/setting-row";
 import { UndoBar } from "@/components/undo-bar";
@@ -87,7 +94,11 @@ function NoteSettings({ note }: { note: NoteItem }) {
   const setDifficulty = useSetDifficulty(note.id);
   const setProject = useSetProject(note.id);
   const setReviewStatus = useSetReviewStatus(note.id);
+  const setTags = useSetNoteTags(note.id);
+  const reschedule = useReschedule(note.id);
   const status = reviewStatusOf(note);
+  const pending = pendingReminder(note);
+  const tagIds = note.tags.filter((tag) => !tag.is_difficulty).map((tag) => tag.id);
   const deleteNote = useDeleteNote(note.id);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,7 +112,7 @@ function NoteSettings({ note }: { note: NoteItem }) {
   };
 
   const confirmDelete = () =>
-    Alert.alert("Move to trash?", "You can restore it from the trash on the web app.", [
+    Alert.alert("Move to trash?", "You can restore it from Trash in Settings.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Move to trash",
@@ -128,6 +139,23 @@ function NoteSettings({ note }: { note: NoteItem }) {
         />
       </View>
       <Divider color={colors.border} />
+      <View style={{ gap: 8 }}>
+        <AppText variant="label" tone="muted">
+          Tags
+        </AppText>
+        <TagPicker
+          value={tagIds}
+          onChange={(next) =>
+            void save(() =>
+              setTags.mutateAsync({
+                add: next.filter((id) => !tagIds.includes(id)),
+                remove: tagIds.filter((id) => !next.includes(id)),
+              }),
+            )
+          }
+        />
+      </View>
+      <Divider color={colors.border} />
       <SettingRow label="Project">
         <ProjectPicker
           value={note.project?.id ?? null}
@@ -149,6 +177,18 @@ function NoteSettings({ note }: { note: NoteItem }) {
           {STATUS_HINTS[status]}
         </AppText>
       </View>
+      {status === "active" && pending ? (
+        <>
+          <Divider color={colors.border} />
+          <SettingRow label="Next review">
+            <NextReviewPicker
+              value={pending.remind_at}
+              disabled={reschedule.isPending}
+              onChange={(date) => void save(() => reschedule.mutateAsync(date))}
+            />
+          </SettingRow>
+        </>
+      ) : null}
       {error ? <InlineError message={error} /> : null}
       <Button variant="destructive" onPress={confirmDelete} loading={deleteNote.isPending}>
         Move to trash
@@ -191,6 +231,15 @@ function NoteHeading({ note, children }: { note: NoteItem; children: ReactNode }
   );
 }
 
+async function shareNote(note: NoteItem) {
+  try {
+    const markdown = await fetchNoteMarkdown(note.id);
+    await Share.share({ message: markdown, title: noteTitle(note) });
+  } catch (failure) {
+    Alert.alert("Couldn’t share this note", errorText(failure));
+  }
+}
+
 function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorController }) {
   const { colors } = useTheme();
   const { family } = useReadingFont();
@@ -199,10 +248,19 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
     <>
       <Stack.Screen
         options={{
-          headerRight:
-            autosave.status === "idle"
-              ? undefined
-              : () => <SaveIndicator status={autosave.status} onRetry={autosave.retry} />,
+          headerRight: () => (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {autosave.status === "idle" ? null : (
+                <SaveIndicator status={autosave.status} onRetry={autosave.retry} />
+              )}
+              <HeaderButton
+                ios="square.and.arrow.up"
+                android="share"
+                label="Share as Markdown"
+                onPress={() => void shareNote(note)}
+              />
+            </View>
+          ),
         }}
       />
       <NoteHeading note={note}>
@@ -247,6 +305,7 @@ function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
   const editor = useRichEditor();
   const { attachScroll, onScroll } = editor.bridge;
   const due = isDue(note);
+  const intervals = useNoteIntervals(note, due);
   const showPanel =
     !editor.toolbarVisible && (due || actions.last !== null || actions.error !== null);
 
@@ -306,7 +365,7 @@ function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
               <AppText variant="caption" tone="muted" style={{ textAlign: "center" }}>
                 Due for review. How well did you remember it?
               </AppText>
-              <RatingBar onRate={rate} disabled={actions.pending} />
+              <RatingBar onRate={rate} disabled={actions.pending} intervals={intervals.data} />
             </>
           ) : null}
         </View>

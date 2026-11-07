@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/api/client";
-import { DUE_PAGE_SIZE } from "@/api/notes";
+import { DUE_PAGE_SIZE, useNoteIntervals } from "@/api/notes";
 import { AppText } from "@/components/app-text";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -102,6 +102,7 @@ function Session({ initial, total }: { initial: NoteItem[]; total: number }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const actions = useReviewActions();
   const current = queue[0];
+  const intervals = useNoteIntervals(current);
 
   const loadMore = async () => {
     setLoadingMore(true);
@@ -196,7 +197,11 @@ function Session({ initial, total }: { initial: NoteItem[]; total: number }) {
             <AppText variant="caption" tone="muted" style={{ textAlign: "center" }}>
               How well did you remember this?
             </AppText>
-            <RatingBar onRate={(rating) => void rate(rating)} disabled={actions.pending} />
+            <RatingBar
+              onRate={(rating) => void rate(rating)}
+              disabled={actions.pending}
+              intervals={intervals.data}
+            />
           </>
         ) : null}
       </View>

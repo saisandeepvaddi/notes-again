@@ -90,11 +90,49 @@ struct Pending {
     deleted: bool,
 }
 
+async fn echoes(conn: &mut Conn) -> Result<HashMap<(String, String), i64>, sqlx::Error> {
+    let rows: Vec<(String, String, i64)> =
+        sqlx::query_as("SELECT kind, uid, version FROM sync_echoes")
+            .fetch_all(conn)
+            .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(kind, uid, version)| ((kind, uid), version))
+        .collect())
+}
+
+async fn is_echo(
+    conn: &mut Conn,
+    kind: Kind,
+    uid: &str,
+    version: i64,
+) -> Result<bool, sqlx::Error> {
+    let echoed: Option<i64> =
+        sqlx::query_scalar("SELECT version FROM sync_echoes WHERE kind = ? AND uid = ?")
+            .bind(kind.as_str())
+            .bind(uid)
+            .fetch_optional(conn)
+            .await?;
+    Ok(echoed == Some(version))
+}
+
+async fn settle_pushed_version(conn: &mut Conn, pushed: i64) -> Result<(), sqlx::Error> {
+    let current = current_version(conn).await?;
+    if current > pushed && pending_changes(conn, pushed, current).await?.is_empty() {
+        sqlx::query("UPDATE sync_remote SET pushed_version = ? WHERE id = 1")
+            .bind(current)
+            .execute(conn)
+            .await?;
+    }
+    Ok(())
+}
+
 async fn pending_changes(
     conn: &mut Conn,
     since: i64,
     until: i64,
 ) -> Result<Vec<Pending>, sqlx::Error> {
+    let echoed = echoes(&mut *conn).await?;
     let conflicted: HashSet<String> = sqlx::query_scalar("SELECT note_uid FROM sync_conflicts")
         .fetch_all(&mut *conn)
         .await?
@@ -151,6 +189,8 @@ async fn pending_changes(
             });
         }
     }
+    pending
+        .retain(|p| echoed.get(&(p.kind.as_str().to_string(), p.uid.clone())) != Some(&p.version));
     pending.sort_by_key(|p| (p.kind.index(), p.version));
     Ok(pending)
 }
@@ -205,11 +245,15 @@ async fn handle_result(
     result: &ChangeResult,
 ) -> Result<(), SyncError> {
     let row = find_row(conn, item.kind, &item.uid).await?;
+    let echoed = match &row {
+        Some(row) => is_echo(conn, item.kind, &item.uid, row.sync_version).await?,
+        None => false,
+    };
     let data = result.data.clone();
     match result.status {
         Status::Deleted => {
             if let Some(row) = &row
-                && (item.deleted || unchanged_since(&Some(row.clone()), item))
+                && (item.deleted || echoed || unchanged_since(&Some(row.clone()), item))
             {
                 delete_row(conn, item.kind, row).await?;
             }
@@ -234,7 +278,7 @@ async fn handle_result(
         }
         _ => {}
     }
-    let unchanged = item.deleted || unchanged_since(&row, item);
+    let unchanged = item.deleted || echoed || unchanged_since(&row, item);
     let Some(data) = data else {
         return Ok(());
     };
@@ -305,10 +349,12 @@ async fn push(state: &AppState, remote: &Remote) -> Result<usize, SyncError> {
         set_applying(&mut tx, false).await?;
         tx.commit().await?;
     }
+    let mut conn = state.db.acquire().await?;
     sqlx::query("UPDATE sync_remote SET pushed_version = ? WHERE id = 1")
         .bind(until)
-        .execute(&state.db)
+        .execute(&mut *conn)
         .await?;
+    settle_pushed_version(&mut conn, until).await?;
     Ok(count)
 }
 
@@ -320,7 +366,10 @@ async fn apply_pulled(
     pushed: i64,
 ) -> Result<bool, sqlx::Error> {
     let row = find_row(conn, kind, uid).await?;
-    if row.as_ref().is_some_and(|r| r.sync_version > pushed) {
+    if let Some(found) = &row
+        && found.sync_version > pushed
+        && !is_echo(conn, kind, uid, found.sync_version).await?
+    {
         return Ok(false);
     }
     let Some(data) = data else {
@@ -406,6 +455,7 @@ async fn pull(state: &AppState, remote: &Remote) -> Result<usize, SyncError> {
             .bind(page.version)
             .execute(&mut *tx)
             .await?;
+        settle_pushed_version(&mut tx, row.pushed_version).await?;
         tx.commit().await?;
         if !page.more {
             return Ok(applied);

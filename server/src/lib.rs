@@ -8,6 +8,7 @@ pub mod error;
 pub mod files;
 pub mod groups;
 pub mod imports;
+pub mod lan;
 pub mod notes;
 pub mod params;
 pub mod scheduling;
@@ -59,6 +60,7 @@ pub async fn prepare(config: Config) -> Result<AppState, String> {
     tokio::spawn(backups::run_schedule(state.clone()));
     if state.config.auth_mode == AuthMode::Desktop {
         tokio::spawn(sync::local::run_schedule(state.clone()));
+        lan::restore(&state).await;
     }
     Ok(state)
 }
@@ -96,19 +98,21 @@ pub async fn start_desktop(
     }
     let state = prepare(Config::desktop(db_path, frontend_dist, secret)).await?;
     let restart = state.restart.clone();
-    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+    let listener = lan::bind(lan::DESKTOP_PORT, "127.0.0.1")
         .await
         .map_err(|e| e.to_string())?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
+    let _ = state.desktop_port.set(port);
     let (shutdown, signal) = tokio::sync::oneshot::channel::<()>();
     let pool = state.db.clone();
     let task = tokio::spawn(async move {
         let stop = async {
             let _ = signal.await;
         };
-        if let Err(error) = app::serve(listener, state, stop).await {
+        if let Err(error) = app::serve(listener, state.clone(), stop).await {
             tracing::error!("The notes server stopped: {error}");
         }
+        lan::stop(&state).await;
         pool.close().await;
     });
     Ok(DesktopServer {

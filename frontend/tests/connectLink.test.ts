@@ -7,6 +7,16 @@ describe("connect links", () => {
     expect(parseConnectLink(buildConnectLink(link))).toEqual(link);
   });
 
+  it("carries an optional fallback address", () => {
+    const link = {
+      server: "http://192.168.1.20:47822",
+      token: "nal_abc",
+      alt: "http://laptop.local:47822",
+    };
+    expect(parseConnectLink(buildConnectLink(link))).toEqual(link);
+    expect(buildConnectLink({ server: "http://x", token: "nal_abc" })).not.toContain("alt=");
+  });
+
   it("ignores surrounding whitespace from scanners and pastes", () => {
     const link = buildConnectLink({ server: "http://10.0.0.2:8000", token: "nal_abc" });
     expect(parseConnectLink(`  ${link}\n`)).toEqual({

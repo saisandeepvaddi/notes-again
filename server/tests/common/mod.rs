@@ -113,6 +113,7 @@ impl TestApp {
     pub async fn restart(self, configure: impl FnOnce(&mut Config)) -> TestApp {
         let mut config = self.state.config.clone();
         configure(&mut config);
+        notes_again_server::lan::stop(&self.state).await;
         self.state.db.close().await;
         let cookies = self.cookies.lock().unwrap().clone();
         let dir = self.dir;

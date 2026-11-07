@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CloudCheckIcon,
+  DeviceMobileIcon,
   HardDrivesIcon,
   PaintBrushIcon,
   PlugsConnectedIcon,
@@ -15,6 +16,7 @@ import { ApiTokens } from "./api-tokens/ApiTokens";
 import { AppearanceSettings } from "./appearance/AppearanceSettings";
 import { SettingsForm } from "./SettingsForm";
 import { SETTINGS_SECTIONS, type SettingsSection } from "./settingsSearch";
+import { DevicesSettings } from "./devices/DevicesSettings";
 import { SignInSettings } from "./sign-in/SignInSettings";
 import { SyncSettings } from "./sync/SyncSettings";
 import { SystemSettings } from "./system/SystemSettings";
@@ -28,6 +30,11 @@ const SECTIONS: Record<
   review: { label: "Review", icon: RepeatIcon, content: <SettingsForm /> },
   "sign-in": { label: "Sign-in", icon: SignInIcon, content: <SignInSettings /> },
   sync: { label: "Sync", icon: CloudCheckIcon, content: <SyncSettings /> },
+  devices: {
+    label: "Phone & extension",
+    icon: DeviceMobileIcon,
+    content: <DevicesSettings />,
+  },
   tokens: { label: "API tokens", icon: PlugsConnectedIcon, content: <ApiTokens /> },
   system: { label: "System", icon: HardDrivesIcon, content: <SystemSettings /> },
 };
@@ -40,7 +47,9 @@ interface SettingsContainerProps {
 export function SettingsContainer({ section, onSectionChange }: SettingsContainerProps) {
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
-  const sections = SETTINGS_SECTIONS.filter((value) => value !== "sync" || isDesktop);
+  const sections = SETTINGS_SECTIONS.filter(
+    (value) => (value !== "sync" && value !== "devices") || isDesktop,
+  );
   return (
     <Tabs
       value={section}
@@ -63,7 +72,7 @@ export function SettingsContainer({ section, onSectionChange }: SettingsContaine
           );
         })}
       </TabsList>
-      {SETTINGS_SECTIONS.map((value) => (
+      {sections.map((value) => (
         <TabsContent key={value} value={value} className="min-w-0">
           <Suspense fallback={<SettingsSkeleton />}>
             <ClientOnly>{SECTIONS[value].content}</ClientOnly>

@@ -5,7 +5,7 @@ A Tauri 2 shell around the regular app. It runs its own copy of the server, comp
 ## How it starts
 
 1. The window opens on `src/index.html`, a loading screen.
-2. `src-tauri/src/backend.rs` starts the `server` crate (`notes_again_server::start_desktop`) on its own Tokio runtime with a random per-launch `DESKTOP_SECRET`. It binds a free port and returns it once it accepts requests.
+2. `src-tauri/src/backend.rs` starts the `server` crate (`notes_again_server::start_desktop`) on its own Tokio runtime with a random per-launch `DESKTOP_SECRET`. It binds `127.0.0.1:47821` (a random free port if that's taken) and returns the port once it accepts requests. The fixed port lets the browser extension find the app.
 3. The window navigates to `/api/auth/desktop?secret=…`, which sets an HttpOnly cookie and redirects to the SPA. Every API request needs that cookie (`AUTH_MODE=desktop`), so other programs on the machine can't read your notes through the port.
 4. Links that leave `127.0.0.1` open in the system browser.
 5. Quitting shuts the server down with the app, since it runs inside the same process.
@@ -31,6 +31,15 @@ The app takes a snapshot of the database at launch and every 24 hours, keeping t
 - **Restore a snapshot.** The server records the request next to the database and asks the app to restart its in-process server (`restart_backend` in `src-tauri/src/lib.rs`); the restore runs before the database opens again, the previous database is kept as `notes-again.db.before-restore-<time>`, and the window reloads.
 
 If the app syncs with a server, the server holds another full copy.
+
+## Phone and browser extension
+
+Settings → Phone & extension (`src/settings/devices/` in the frontend, `server/src/lan.rs` on the server):
+
+- **Browser extension**: "Create a link for the extension" makes a capture-only token and a `notesagain://connect` link holding `http://127.0.0.1:47821`. In the extension's options, "Use the desktop app" checks that the app is running, and pasting the link fills in the server and token.
+- **Phone**: "Let my phone connect" opens a second listener on the local network (port 47822, or a free one), and "Pair a phone" shows a QR code with an `app` token and two addresses: the computer's LAN IP and its `<hostname>.local` name, which the phone falls back to when the IP changes. Turning it off closes the listener and revokes every token it paired. The setting is per device (`device_settings`) and comes back on at the next launch.
+
+The network listener only answers `/healthz`, `/api/auth/status` and API calls with a bearer token; it drops cookies, so the desktop's own launch cookie never works there, and it serves no web app. Tokens can't manage tokens, read `/api/system`, change phone access, or touch the desktop's sync settings. Traffic stays inside the local network but isn't encrypted yet (planned: pinned TLS). Because the app isn't code-signed, macOS and Windows ask whether Notes Again may accept incoming connections the first time this is turned on (and possibly after an update); choose Allow.
 
 ## Where things live
 

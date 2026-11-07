@@ -350,6 +350,11 @@ async fn require_desktop(State(state): State<AppState>, request: Request, next: 
     if state.config.auth_mode != AuthMode::Desktop {
         return ApiError::not_found("Not found").into_response();
     }
+    if let Some(identity) = request.extensions().get::<crate::auth::Identity>()
+        && let Err(error) = identity.require_session()
+    {
+        return error.into_response();
+    }
     next.run(request).await
 }
 

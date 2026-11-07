@@ -162,3 +162,33 @@ pub async fn sqlite_version(pool: &Pool) -> Result<String, sqlx::Error> {
         .fetch_one(pool)
         .await
 }
+
+pub async fn device_setting(pool: &Pool, key: &str) -> Result<Option<String>, sqlx::Error> {
+    sqlx::query_scalar("SELECT value FROM device_settings WHERE key = ?")
+        .bind(key)
+        .fetch_optional(pool)
+        .await
+}
+
+pub async fn set_device_setting(
+    pool: &Pool,
+    key: &str,
+    value: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    match value {
+        Some(value) => {
+            sqlx::query("INSERT OR REPLACE INTO device_settings (key, value) VALUES (?, ?)")
+                .bind(key)
+                .bind(value)
+                .execute(pool)
+                .await?;
+        }
+        None => {
+            sqlx::query("DELETE FROM device_settings WHERE key = ?")
+                .bind(key)
+                .execute(pool)
+                .await?;
+        }
+    }
+    Ok(())
+}

@@ -36,6 +36,7 @@ fn api_router(state: &AppState) -> Router<AppState> {
         .merge(crate::search::router())
         .merge(crate::sync::server::router())
         .merge(crate::sync::local::router(state.clone()))
+        .merge(crate::lan::router())
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             crate::auth::require_user,

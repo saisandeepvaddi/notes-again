@@ -6,7 +6,7 @@ import { ApiError, api, normalizeServerUrl } from "./client";
 import type { Connection } from "./connection-store";
 
 const AuthStatusSchema = z.object({
-  mode: z.enum(["local", "firebase", "none", "proxy", "cloudflare-access"]),
+  mode: z.enum(["local", "firebase", "none", "proxy", "cloudflare-access", "desktop"]),
   configured_mode: z.string(),
   setup_required: z.boolean().default(false),
 });
@@ -68,7 +68,26 @@ export async function revokeOwnToken(serverUrl: string, token: string) {
 }
 
 export async function connectionFromLink(link: ConnectLink): Promise<Connection> {
-  const serverUrl = normalizeServerUrl(link.server);
-  await verifyAccess(serverUrl, link.token);
-  return { serverUrl, token: link.token, method: "token", username: null };
+  const primary = normalizeServerUrl(link.server);
+  const fallback = link.alt ? normalizeServerUrl(link.alt) : null;
+  try {
+    await verifyAccess(primary, link.token);
+    return {
+      serverUrl: primary,
+      token: link.token,
+      method: "token",
+      username: null,
+      fallbackUrl: fallback,
+    };
+  } catch (error) {
+    if (!fallback || !(error instanceof ApiError) || error.status !== 0) throw error;
+    await verifyAccess(fallback, link.token);
+    return {
+      serverUrl: fallback,
+      token: link.token,
+      method: "token",
+      username: null,
+      fallbackUrl: primary,
+    };
+  }
 }

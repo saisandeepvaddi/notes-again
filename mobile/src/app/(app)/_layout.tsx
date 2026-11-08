@@ -15,6 +15,11 @@ export default function AppLayout() {
       <Stack.Screen name="trash" options={{ title: "Trash" }} />
       <Stack.Screen name="organize" options={{ title: "Projects & tags" }} />
       <Stack.Screen name="transfer" options={{ title: "Import & export" }} />
+      <Stack.Screen name="sync" options={{ title: "Sync" }} />
+      <Stack.Screen
+        name="sync-scan"
+        options={{ presentation: "fullScreenModal", headerShown: false }}
+      />
     </Stack>
   );
 }

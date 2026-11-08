@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["NotesCoreModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.notescore.NotesCoreModule"]
+  }
+}

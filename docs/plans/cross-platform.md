@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: in progress. Follows the Rust backend (`480877c`). Phases 0–4 are done; Phase 5 is being built in steps (5a, the desktop relay fix, is in review).
+Status: in progress. Follows the Rust backend (`480877c`). Phases 0–4 and 5a are done; 5b (the embedded server on the phone) is in review.
 
 ## Goal
 
@@ -30,7 +30,7 @@ These are recommendations; the phases assume them.
 - **Signing.** No OS code signing: it's open source, and forks can sign their own builds (documented in `desktop/README.md`). Release notes explain the Gatekeeper and SmartScreen prompts.
 - **Updates.** `tauri-plugin-updater` with its own (free) signing key, reading `latest.json` from the newest GitHub Release. The checks run in Rust and surface in the tray, because the window loads the app from `127.0.0.1`, where Tauri's JavaScript APIs aren't available. AppImage, macOS and Windows update themselves; deb and rpm users update through the package.
 - **macOS builds.** One universal binary (`universal-apple-darwin`) instead of separate Intel and Apple silicon downloads.
-- **Mobile architecture.** Local-first: the phone keeps its own SQLite database (`expo-sqlite`) and syncs with the same `/api/sync` protocol the desktop uses. A cached online client would never work away from the server, and it couldn't pair with a desktop-only setup.
+- **Mobile architecture.** Local-first, by embedding the Rust server in the app (`mobile/modules/notes-core`), exactly as the desktop does, rather than porting it to TypeScript: one implementation of the schema, scheduling and sync. The cost is an Expo development build instead of Expo Go (Expo Go falls back to the old remote flow).
 - **Desktop as a hub.** With no server, the desktop is the phone's sync peer over the local network. With a server, both devices sync with the server and the desktop never acts as a hub.
 - **Local network security.** The desktop's network listener only accepts `app` tokens, is off by default, and is enabled through QR pairing. Traffic is plain HTTP inside the local network in the first version; pinned TLS (the certificate fingerprint carried in the QR link) follows in Phase 6.
 - **Session-only features.** Token management and `/api/system` stay out of reach of `app` tokens by design. On mobile they appear read-only, with a pointer to the desktop or web app.
@@ -100,13 +100,9 @@ Done when every row above is ✓ and the Maestro suite passes. Left: list sort a
 
 ## Phase 5: local-first mobile
 
-1. **Local database.** `expo-sqlite` with the same schema. Generate it from `server/migrations` and `ensure.sql`, so triggers, `sync_version` and tombstones behave identically, rather than re-describing it in TypeScript.
-2. **Sync client in TypeScript.** Port `sync/client.rs` (push, pull, bases, conflicts, `applying`) and reuse `sync/merge.rs` behaviour, checked by running the existing Rust sync scenarios against the TS client through a shared JSON fixture suite.
-3. **Screens read locally.** The Phase 4 screens switch from HTTP to the local database; scheduling (SM2, FSRS) runs on the device, ported from `server/src/scheduling` with cross-checked vectors from the Rust tests.
-4. **Sync loop.** On foreground, every minute while open, and after local changes; background fetch when the OS allows. Conflict screen matching the desktop's.
-5. **Desktop as a hub** (done first, as 5a). Rows applied from upstream now get a new local `sync_version` and tombstone, with the version recorded in `sync_echoes`; the desktop's push skips echoes. Covered by `server/tests/sync_relay.rs` (server, desktop, and a phone-like client syncing through the desktop).
-
-Done when the phone works in airplane mode, syncs once back online, and the three-device test passes.
+1. **5a, desktop as a hub** (done). Rows applied from upstream get a new local `sync_version` and tombstone, with the version recorded in `sync_echoes`; the desktop's push skips echoes. `server/tests/sync_relay.rs` covers server → desktop → phone and back.
+2. **5b, the server on the phone** (in review). `mobile/modules/notes-core` links the server crate (C ABI for iOS, JNI for Android) and the app starts it on `127.0.0.1` at launch with a per-launch secret; the existing screens talk to it unchanged. Settings → Sync connects it to a server or a desktop (QR or password) through the desktop sync endpoints, with a conflict picker. Verified on the iOS simulator: opens offline with no Connect step, pulls a server's notes through its own background sync, and keeps showing them with the server stopped.
+3. **5c, what's left**: a release build measured on a device (start time, size), Android built and run on an emulator (CI already builds the Android library), mobile E2E (Maestro), and syncing when the app returns to the foreground rather than only on the 10 s loop.
 
 ## Phase 6: hardening
 

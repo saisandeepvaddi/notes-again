@@ -1,0 +1,61 @@
+name: Mobile native core
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "server/**"
+      - "mobile/modules/notes-core/**"
+      - ".github/workflows/mobile-native.yml"
+
+concurrency:
+  group: mobile-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mobile/modules/notes-core/rust
+      - working-directory: mobile/modules/notes-core/rust
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+
+  ios:
+    name: iOS library
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mobile/modules/notes-core/rust
+      - run: mobile/modules/notes-core/scripts/build-ios.sh
+
+  android:
+    name: Android library
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mobile/modules/notes-core/rust
+      - run: cargo install cargo-ndk --locked
+      - run: mobile/modules/notes-core/scripts/build-android.sh
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}

@@ -80,8 +80,9 @@ pub fn desktop_secret_matches(state: &AppState, candidate: Option<&str>) -> bool
 }
 
 pub fn desktop_identity(state: &AppState, headers: &axum::http::HeaderMap) -> Option<Identity> {
-    desktop_secret_matches(state, cookie(headers, DESKTOP_COOKIE).as_deref())
-        .then(|| Identity::session(None, "desktop".into(), None))
+    let by_cookie = desktop_secret_matches(state, cookie(headers, DESKTOP_COOKIE).as_deref());
+    let by_bearer = desktop_secret_matches(state, bearer_token(headers).as_deref());
+    (by_cookie || by_bearer).then(|| Identity::session(None, "desktop".into(), None))
 }
 
 pub async fn local_identity(

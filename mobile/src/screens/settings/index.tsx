@@ -17,7 +17,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { space } from "@/theme";
 import { ReadingFontPicker } from "./reading-font-picker";
 
-const METHOD_LABELS = {
+const METHOD_LABELS: Record<"password" | "token" | "open", string> = {
   password: "Username and password",
   token: "API token",
   open: "Sign-in turned off",
@@ -95,25 +95,42 @@ export function SettingsScreen() {
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ padding: space.gutter, gap: 16, paddingBottom: 40 }}
     >
-      <Card>
-        <AppText variant="heading">Connection</AppText>
-        <SettingRow label="Server" description={connection.serverUrl} />
-        <Divider color={colors.border} />
-        <SettingRow
-          label="Signed in with"
-          description={
-            connection.method === "password" && connection.username
-              ? `${METHOD_LABELS.password} (${connection.username})`
-              : METHOD_LABELS[connection.method]
-          }
-        />
-        <Button
-          variant="outline"
-          onPress={() => void WebBrowser.openBrowserAsync(connection.serverUrl)}
-        >
-          Open the web app
-        </Button>
-      </Card>
+      {connection.method === "local" ? (
+        <Card>
+          <AppText variant="heading">Your notes</AppText>
+          <AppText tone="muted">
+            Stored on this phone, so everything works offline. Sync keeps them up to date with a
+            server or your computer.
+          </AppText>
+          <NavRow
+            label="Sync"
+            description="Connect a server or the desktop app"
+            ios="arrow.triangle.2.circlepath"
+            android="sync"
+            onPress={() => router.push("/sync")}
+          />
+        </Card>
+      ) : (
+        <Card>
+          <AppText variant="heading">Connection</AppText>
+          <SettingRow label="Server" description={connection.serverUrl} />
+          <Divider color={colors.border} />
+          <SettingRow
+            label="Signed in with"
+            description={
+              connection.method === "password" && connection.username
+                ? `${METHOD_LABELS.password} (${connection.username})`
+                : METHOD_LABELS[connection.method]
+            }
+          />
+          <Button
+            variant="outline"
+            onPress={() => void WebBrowser.openBrowserAsync(connection.serverUrl)}
+          >
+            Open the web app
+          </Button>
+        </Card>
+      )}
 
       <Card>
         <AppText variant="heading">Appearance</AppText>
@@ -161,9 +178,11 @@ export function SettingsScreen() {
         </AppText>
       </Card>
 
-      <Button variant="destructive" onPress={signOut} loading={leaving}>
-        Sign out
-      </Button>
+      {connection.method === "local" ? null : (
+        <Button variant="destructive" onPress={signOut} loading={leaving}>
+          Sign out
+        </Button>
+      )}
       <AppText variant="caption" tone="muted" style={{ textAlign: "center" }}>
         Notes Again {Constants.expoConfig?.version ?? ""}
       </AppText>

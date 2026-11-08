@@ -2,14 +2,6 @@ name: Desktop app
 
 on:
   workflow_dispatch:
-  push:
-    tags: ["desktop-v*"]
-  pull_request:
-    paths:
-      - "desktop/**"
-      - "server/**"
-      - "frontend/**"
-      - ".github/workflows/desktop.yml"
 
 concurrency:
   group: desktop-${{ github.ref }}

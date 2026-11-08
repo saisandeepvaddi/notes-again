@@ -1,12 +1,7 @@
 name: Server
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    paths:
-      - "server/**"
-      - ".github/workflows/server.yml"
+  workflow_dispatch:
 
 concurrency:
   group: server-${{ github.ref }}

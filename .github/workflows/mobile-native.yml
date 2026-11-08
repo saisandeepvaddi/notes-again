@@ -1,13 +1,7 @@
 name: Mobile native core
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    paths:
-      - "server/**"
-      - "mobile/modules/notes-core/**"
-      - ".github/workflows/mobile-native.yml"
+  workflow_dispatch:
 
 concurrency:
   group: mobile-native-${{ github.ref }}

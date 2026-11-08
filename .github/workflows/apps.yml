@@ -1,14 +1,7 @@
 name: Apps
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    paths:
-      - "frontend/**"
-      - "extension/**"
-      - "mobile/**"
-      - ".github/workflows/apps.yml"
+  workflow_dispatch:
 
 concurrency:
   group: apps-${{ github.ref }}

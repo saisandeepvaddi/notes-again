@@ -15,6 +15,7 @@ import {
   localServerAlive,
   restartLocalServer,
   startLocalServer,
+  syncLocalServer,
 } from "./local-server";
 
 interface ConnectionState {
@@ -47,16 +48,26 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     if (!hasLocalServer) return;
     const subscription = AppState.addEventListener("change", (status) => {
       const current = latest.current;
-      if (status !== "active" || current?.method !== "local") return;
-      void localServerAlive(current.serverUrl).then(async (alive) => {
-        if (alive) return;
-        try {
-          adoptLocal(await restartLocalServer());
-          void queryClient.invalidateQueries();
-        } catch (error) {
-          setNotice(error instanceof Error ? error.message : "The notes server stopped.");
+      if (current?.method !== "local") return;
+      if (status === "background") {
+        void syncLocalServer(current);
+        return;
+      }
+      if (status !== "active") return;
+      void (async () => {
+        let local = current;
+        if (!(await localServerAlive(current.serverUrl))) {
+          try {
+            local = await restartLocalServer();
+            adoptLocal(local);
+          } catch (error) {
+            setNotice(error instanceof Error ? error.message : "The notes server stopped.");
+            return;
+          }
         }
-      });
+        await syncLocalServer(local);
+        void queryClient.invalidateQueries();
+      })();
     });
     return () => subscription.remove();
   }, [queryClient]);

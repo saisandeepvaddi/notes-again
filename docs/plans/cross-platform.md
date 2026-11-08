@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: in progress. Follows the Rust backend (`480877c`). Phases 0–4 and 5a are done; 5b (the embedded server on the phone) is in review.
+Status: in progress. Follows the Rust backend (`480877c`). Phases 0–4 and 5a–5c are done for macOS and iOS; Android, Windows and Linux testing is deferred.
 
 ## Goal
 
@@ -102,7 +102,7 @@ Done when every row above is ✓ and the Maestro suite passes. Left: list sort a
 
 1. **5a, desktop as a hub** (done). Rows applied from upstream get a new local `sync_version` and tombstone, with the version recorded in `sync_echoes`; the desktop's push skips echoes. `server/tests/sync_relay.rs` covers server → desktop → phone and back.
 2. **5b, the server on the phone** (in review). `mobile/modules/notes-core` links the server crate (C ABI for iOS, JNI for Android) and the app starts it on `127.0.0.1` at launch with a per-launch secret; the existing screens talk to it unchanged. Settings → Sync connects it to a server or a desktop (QR or password) through the desktop sync endpoints, with a conflict picker. Verified on the iOS simulator: opens offline with no Connect step, pulls a server's notes through its own background sync, and keeps showing them with the server stopped.
-3. **5c, what's left**: a release build measured on a device (start time, size), Android built and run on an emulator (CI already builds the Android library), mobile E2E (Maestro), and syncing when the app returns to the foreground rather than only on the 10 s loop.
+3. **5c** (macOS/iOS only for now). Syncs on foreground and background; the server starts natively at `didFinishLaunching`, so on a release simulator build it answers within about a second of process start (was 3 s, waiting on React Native). Release executable is about 13 MB per architecture, stripped, server included. Still open: a physical device, Android (deferred), Maestro.
 
 ## Phase 6: hardening
 

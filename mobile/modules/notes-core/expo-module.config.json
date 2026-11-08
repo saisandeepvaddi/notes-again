@@ -1,9 +1,19 @@
 {
-  "platforms": ["apple", "android"],
+  "platforms": [
+    "apple",
+    "android"
+  ],
   "apple": {
-    "modules": ["NotesCoreModule"]
+    "modules": [
+      "NotesCoreModule"
+    ],
+    "appDelegateSubscribers": [
+      "NotesCoreAppDelegate"
+    ]
   },
   "android": {
-    "modules": ["expo.modules.notescore.NotesCoreModule"]
+    "modules": [
+      "expo.modules.notescore.NotesCoreModule"
+    ]
   }
 }

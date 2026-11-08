@@ -1,8 +1,7 @@
 import { NativeModule, requireOptionalNativeModule } from "expo";
 
 declare class NotesCoreModule extends NativeModule<Record<string, never>> {
-  readonly dataDirectory: string;
-  start(databasePath: string, secret: string): Promise<number>;
+  start(): Promise<{ port: number; secret: string }>;
   stop(): Promise<void>;
 }
 

@@ -263,6 +263,34 @@ async fn desktop_sign_in_rejects_a_wrong_secret() {
 }
 
 #[tokio::test]
+async fn the_launch_secret_also_works_as_a_bearer_token() {
+    let app = desktop().await;
+    app.clear_cookies();
+    let with_secret = app
+        .get("/api/projects/list")
+        .without_cookies()
+        .bearer(SECRET)
+        .send()
+        .await;
+    assert_eq!(with_secret.code(), 200);
+    let status = app
+        .get("/api/auth/status")
+        .without_cookies()
+        .bearer(SECRET)
+        .send()
+        .await
+        .ok();
+    assert_eq!(status["authenticated"], true);
+    let wrong = app
+        .get("/api/projects/list")
+        .without_cookies()
+        .bearer("not-the-secret")
+        .send()
+        .await;
+    assert_eq!(wrong.code(), 401);
+}
+
+#[tokio::test]
 async fn desktop_sign_in_is_unavailable_in_other_modes() {
     let app = TestApp::with(|c| c.desktop_secret = Some(SECRET.into())).await;
     let response = app

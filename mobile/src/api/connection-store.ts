@@ -4,7 +4,7 @@ import { z } from "zod";
 export const ConnectionSchema = z.object({
   serverUrl: z.string(),
   token: z.string().nullable(),
-  method: z.enum(["password", "token", "open"]),
+  method: z.enum(["password", "token", "open", "local"]),
   username: z.string().nullable().default(null),
   fallbackUrl: z.string().nullish(),
 });
@@ -43,6 +43,10 @@ export async function loadConnection(): Promise<Connection | null> {
 
 export async function saveConnection(connection: Connection) {
   await storage.set(JSON.stringify(connection));
+  current = connection;
+}
+
+export function keepInMemory(connection: Connection) {
   current = connection;
 }
 

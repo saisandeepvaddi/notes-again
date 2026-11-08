@@ -1,4 +1,4 @@
-import { parseConnectLink } from "@web/settings/api-tokens/connectLink";
+import { type ConnectLink, parseConnectLink } from "@web/settings/api-tokens/connectLink";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
@@ -68,7 +68,15 @@ function Panel({ children }: { children: ReactNode }) {
   );
 }
 
-function PermissionPrompt({ canAsk, onAsk }: { canAsk: boolean; onAsk: () => void }) {
+function PermissionPrompt({
+  canAsk,
+  onAsk,
+  purpose,
+}: {
+  canAsk: boolean;
+  onAsk: () => void;
+  purpose?: string;
+}) {
   const { colors } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -76,8 +84,8 @@ function PermissionPrompt({ canAsk, onAsk }: { canAsk: boolean; onAsk: () => voi
         <Icon ios="camera" android="photo_camera" size={36} color={colors.primary} />
         <AppText variant="title">Allow the camera</AppText>
         <AppText tone="muted">
-          Notes Again uses the camera only to read the sign-in QR code shown in the web app under
-          Settings → API tokens.
+          {purpose ??
+            "Notes Again uses the camera only to read the sign-in QR code shown in the web app under Settings → API tokens."}
         </AppText>
         {canAsk ? (
           <Button onPress={onAsk}>Allow camera</Button>
@@ -90,7 +98,12 @@ function PermissionPrompt({ canAsk, onAsk }: { canAsk: boolean; onAsk: () => voi
   );
 }
 
-export function ScanScreen() {
+interface ScanScreenProps {
+  onLink?: (link: ConnectLink) => Promise<void>;
+  purpose?: string;
+}
+
+export function ScanScreen({ onLink, purpose }: ScanScreenProps = {}) {
   const { colors } = useTheme();
   const { connect } = useConnection();
   const [permission, requestPermission] = useCameraPermissions();
@@ -103,7 +116,11 @@ export function ScanScreen() {
   }
   if (!permission.granted) {
     return (
-      <PermissionPrompt canAsk={permission.canAskAgain} onAsk={() => void requestPermission()} />
+      <PermissionPrompt
+        canAsk={permission.canAskAgain}
+        onAsk={() => void requestPermission()}
+        purpose={purpose}
+      />
     );
   }
 
@@ -117,11 +134,14 @@ export function ScanScreen() {
     }
     setChecking(true);
     try {
-      const connection = await connectionFromLink(link);
+      if (onLink) {
+        await onLink(link);
+      } else {
+        await connect(await connectionFromLink(link));
+      }
       if (process.env.EXPO_OS !== "web") {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      await connect(connection);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Couldn’t connect with that code.");
       setChecking(false);
@@ -173,10 +193,13 @@ export function ScanScreen() {
           </>
         ) : (
           <>
-            <AppText variant="heading">Scan the sign-in code</AppText>
+            <AppText variant="heading">
+              {onLink ? "Scan the sync code" : "Scan the sign-in code"}
+            </AppText>
             <AppText tone="muted">
-              In the web app, open Settings → API tokens, create a token with Full access, and point
-              the camera at the QR code.
+              {onLink
+                ? "On your computer, open Notes Again: Settings → Phone & extension → Pair a phone in the desktop app, or Settings → API tokens on a server. Then point the camera at the QR code."
+                : "In the web app, open Settings → API tokens, create a token with Full access, and point the camera at the QR code."}
             </AppText>
           </>
         )}

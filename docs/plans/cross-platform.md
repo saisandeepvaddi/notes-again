@@ -1,6 +1,6 @@
 # Plan: desktop, mobile and web as equals
 
-Status: in progress. Follows the Rust backend (`480877c`). Phases 0–3 are done; Phase 4 is in review.
+Status: in progress. Follows the Rust backend (`480877c`). Phases 0–4 are done; Phase 5 is being built in steps (5a, the desktop relay fix, is in review).
 
 ## Goal
 
@@ -104,7 +104,7 @@ Done when every row above is ✓ and the Maestro suite passes. Left: list sort a
 2. **Sync client in TypeScript.** Port `sync/client.rs` (push, pull, bases, conflicts, `applying`) and reuse `sync/merge.rs` behaviour, checked by running the existing Rust sync scenarios against the TS client through a shared JSON fixture suite.
 3. **Screens read locally.** The Phase 4 screens switch from HTTP to the local database; scheduling (SM2, FSRS) runs on the device, ported from `server/src/scheduling` with cross-checked vectors from the Rust tests.
 4. **Sync loop.** On foreground, every minute while open, and after local changes; background fetch when the OS allows. Conflict screen matching the desktop's.
-5. **Desktop as a hub.** Fix the relay gap: rows applied from upstream must still get a new local `sync_version` for downstream peers, while the desktop's own push skips them. Replace "don't bump while applying" with recording the version each applied row received, and have the client push skip rows whose version matches. Covered by a new three-device sync test (server, desktop, phone-as-client).
+5. **Desktop as a hub** (done first, as 5a). Rows applied from upstream now get a new local `sync_version` and tombstone, with the version recorded in `sync_echoes`; the desktop's push skips echoes. Covered by `server/tests/sync_relay.rs` (server, desktop, and a phone-like client syncing through the desktop).
 
 Done when the phone works in airplane mode, syncs once back online, and the three-device test passes.
 

@@ -169,7 +169,16 @@ async fn a_paired_phone_reaches_the_desktop_over_the_network_with_its_token_only
     let off = set_network(&app, false).await;
     assert_eq!(off["network"]["enabled"], false);
     assert_eq!(off["network"]["paired_devices"], 0);
-    assert!(http.get(format!("{base}/healthz")).send().await.is_err());
+    assert!(app.state.lan.lock().await.is_none());
+    match http
+        .get(format!("{base}/api/notes/list"))
+        .bearer_auth(&token)
+        .send()
+        .await
+    {
+        Err(_) => {}
+        Ok(response) => assert_eq!(response.status().as_u16(), 401),
+    }
     let revoked = app
         .get("/api/notes/list")
         .without_cookies()

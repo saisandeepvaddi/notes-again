@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createContext, use, useEffect, useState, type ReactNode } from "react";
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
+import { AppState } from "react-native";
 import { setUnauthorizedListener } from "./client";
 import { revokeOwnToken } from "./connect";
 import {
@@ -7,7 +8,14 @@ import {
   loadConnection,
   saveConnection,
   type Connection,
+  keepInMemory,
 } from "./connection-store";
+import {
+  hasLocalServer,
+  localServerAlive,
+  restartLocalServer,
+  startLocalServer,
+} from "./local-server";
 
 interface ConnectionState {
   ready: boolean;
@@ -25,7 +33,44 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connection, setConnection] = useState<Connection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const latest = useRef<Connection | null>(null);
   useEffect(() => {
+    latest.current = connection;
+  }, [connection]);
+
+  const adoptLocal = (local: Connection) => {
+    keepInMemory(local);
+    setConnection(local);
+  };
+
+  useEffect(() => {
+    if (!hasLocalServer) return;
+    const subscription = AppState.addEventListener("change", (status) => {
+      const current = latest.current;
+      if (status !== "active" || current?.method !== "local") return;
+      void localServerAlive(current.serverUrl).then(async (alive) => {
+        if (alive) return;
+        try {
+          adoptLocal(await restartLocalServer());
+          void queryClient.invalidateQueries();
+        } catch (error) {
+          setNotice(error instanceof Error ? error.message : "The notes server stopped.");
+        }
+      });
+    });
+    return () => subscription.remove();
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (hasLocalServer) {
+      startLocalServer()
+        .then(adoptLocal)
+        .catch((error: unknown) =>
+          setNotice(error instanceof Error ? error.message : "The notes server didn’t start."),
+        )
+        .finally(() => setReady(true));
+      return;
+    }
     loadConnection().then((stored) => {
       setConnection(stored);
       setReady(true);
@@ -34,6 +79,17 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setUnauthorizedListener(() => {
+      if (latest.current?.method === "local") {
+        void restartLocalServer()
+          .then((local) => {
+            adoptLocal(local);
+            void queryClient.invalidateQueries();
+          })
+          .catch((error: unknown) =>
+            setNotice(error instanceof Error ? error.message : "The notes server stopped."),
+          );
+        return;
+      }
       void clearConnection().then(() => {
         queryClient.clear();
         setNotice("Your sign-in ended. Connect again to keep going.");

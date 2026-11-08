@@ -1,0 +1,4 @@
+module NotesAgainCore {
+  header "notes_again.h"
+  export *
+}

@@ -1,39 +1,53 @@
 # Notes Again mobile
 
-An iOS and Android app for the parts of Notes Again you want on your phone:
-reviewing what's due, reading notes, quick edits, and writing new notes. Organizing,
-importing, the trash and settings stay in the web app.
+An iOS and Android app with everything Notes Again does: reviewing, reading and
+writing notes, projects and tags, the trash, import and export. Your notes are stored
+on the phone, so it all works offline; sync keeps them in step with a server or the
+desktop app.
 
-Built with [Expo](https://expo.dev) and React Native.
+Built with [Expo](https://expo.dev) and React Native. The phone runs the same Rust
+server as the desktop app, inside the app (`modules/notes-core`), and the screens talk
+to it on `127.0.0.1`.
 
-## Connect to your server
+## Sync
 
-Open the app and enter the address you use for Notes Again in a browser
-(`notes.example.com`, or `http://192.168.1.20:8000` for a server on your network).
-The app checks how the server signs people in:
+Settings → Sync connects the phone's notes to:
 
-- **Username and password** (the default `local` sign-in): sign in as you would on
-  the web. The app gets its own token, listed under Settings → API tokens as
-  "Mobile app (device name)". Signing out of the app revokes it.
-- **QR code or API token**: in the web app, open Settings → API tokens and create a
-  token with **Full access**. The dialog shows a QR code; tap **Scan QR code** in the
-  app and point the camera at it. You can also paste the token by hand. Use this for Firebase, proxy or
-  Cloudflare Access sign-in, or if you'd rather not type your password on the phone.
-  Capture-only tokens made for the browser extension won't work here.
-- **Sign-in turned off**: the app connects straight away.
+- **The desktop app**, with no server: in the desktop app turn on Settings → Phone &
+  extension → Let my phone connect, tap Pair a phone, and scan the QR code. The phone
+  syncs whenever both are on the same Wi-Fi and the desktop app is open.
+- **A Notes Again server**: sign in with its username and password, or scan the QR code
+  from the web app's Settings → API tokens (a token with **Full access**). Use the QR
+  code for Firebase, proxy or Cloudflare Access sign-in.
+
+Changes made offline sync when the phone can reach the other side again. A note edited
+in two places shows up under Changed in two places in the Sync screen, where you pick
+the version to keep.
 
 A server behind Cloudflare Access or a sign-in proxy has to let the app's requests
 reach `/api`, for example with a separate Access application for the `/api` path that
-uses a Bypass policy. The app can't complete those browser sign-in pages itself, and
-the server still requires its API token on every request.
+uses a Bypass policy.
 
 ## Run it
+
+The app needs a development build (it includes native code, so Expo Go can't load it).
+On a Mac with Xcode, Rust and CocoaPods:
 
 ```sh
 cd mobile
 pnpm install
-pnpm start          # then press i (iOS simulator), a (Android) or scan the QR code with Expo Go
+modules/notes-core/scripts/build-ios.sh     # the Rust server as an XCFramework
+pnpm ios                                     # prebuild, build and launch in the simulator
 ```
+
+Android needs the Android SDK and NDK plus `cargo install cargo-ndk`, then
+`modules/notes-core/scripts/build-android.sh` and `pnpm android`.
+
+After the first build, `pnpm start` serves JavaScript changes to the installed
+development build. Rebuild only when native code or `modules/notes-core` changes.
+
+Without the native module (for example in Expo Go), the app falls back to connecting
+straight to a server, as it did before it kept its own notes.
 
 From a phone, the server address must be reachable from the phone, so use your
 computer's LAN address rather than `localhost`. For a local backend that phones can

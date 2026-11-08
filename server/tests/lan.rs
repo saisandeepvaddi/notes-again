@@ -130,6 +130,14 @@ async fn a_paired_phone_reaches_the_desktop_over_the_network_with_its_token_only
         .await,
         401
     );
+    assert_eq!(
+        status_of(
+            http.get(format!("{base}/api/notes/list"))
+                .bearer_auth(SECRET)
+        )
+        .await,
+        401
+    );
 
     let listed: Value = http
         .get(format!("{base}/api/notes/list"))

@@ -2,6 +2,7 @@
 
 Personal, self-hosted spaced-repetition app: freeform markdown notes organized into projects and tags, resurfaced for review on an SM2/FSRS schedule. Single user per deployment.
 
+- Current status, owner rules and next steps for a new agent: [docs/handoff.md](docs/handoff.md)
 - Product intent and audience: [PRODUCT.md](PRODUCT.md)
 - Visual system (colors, type, components): [DESIGN.md](DESIGN.md)
 - Running and self-hosting (make run, install.sh, Docker, sign-in, backups): [docs/self-hosting.md](docs/self-hosting.md)

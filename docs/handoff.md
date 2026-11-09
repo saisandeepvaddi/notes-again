@@ -84,6 +84,10 @@ Not verified yet:
 
 ## What's next, in order
 
+The owner approved [the knowledge-workflow checklist](plans/knowledge-workflow.md) on 2026-11-09: writing safety first, then readable-article clipping, single-note BYOK chat, attachments/history, connected notes/library chat, and everyday navigation/reading. Follow that checklist for new product work. The platform hardening items below remain open; mobile list sorting and tag filtering already exist in the current implementation.
+
+Web writing safety is done: browser-local new-note recovery, confirmed discard, inline save failures and navigation protection when storage fails. Next is iOS draft/dismissal safety and flushing pending edits before sharing, then article clipping. Verification and remaining checkboxes are in the knowledge-workflow plan.
+
 1. **Mobile accessibility pass** (Phase 6). Screen reader labels on icon-only buttons, rows and badges, and dynamic type support. You can check most of it with `pnpm typecheck` and `pnpm lint` and by reading the code; driving VoiceOver needs a device.
 2. **Remaining Phase 4 parity:** list sort, tag filter, and project/tag hits in mobile search.
 3. **Desktop cold start** against a 2 s budget. Ask the owner to quit the installed app first.

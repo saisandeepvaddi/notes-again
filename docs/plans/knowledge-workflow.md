@@ -23,13 +23,13 @@ Capture useful material, connect it to your thinking, discuss it, and remember i
 
 ### 2. Readable-article clipping
 
-- [ ] Offer Link only, Readable article and Selection modes; preserve the existing selection workflow.
-- [ ] Extract the main article from the rendered browser page without requiring an LLM; sanitize and convert it to editable Markdown.
-- [ ] Preserve headings, lists, links, tables and code; preview extraction and explain fallback to link-only.
-- [ ] Store source URL, capture time and available author/publication metadata.
-- [ ] Warn about duplicate source URLs without silently overwriting existing writing.
-- [ ] Allow captures to start as Note only; do not automatically schedule long articles for review.
-- [ ] Test representative articles, code-heavy pages, inaccessible/restricted pages and extraction failures.
+- [x] Offer Link only, Readable article and Selection modes; preserve the existing selection workflow.
+- [x] Extract the main article from the rendered browser page without requiring an LLM; sanitize and convert it to editable Markdown.
+- [x] Preserve headings, lists, links, tables and code; preview extraction and explain fallback to link-only.
+- [x] Store source URL, capture time and available author/publication metadata. JSON-quoted YAML frontmatter stays in ordinary note content for sync/export portability.
+- [x] Warn about duplicate source URLs without silently overwriting existing writing. Deliberately scoped to the last 500 successful captures from this browser for the same server/token; no library reads or capture-token expansion. Not library-wide deduplication; deleted notes may still produce a reminder.
+- [x] Allow captures to start as Note only; do not automatically schedule long articles for review.
+- [x] Test representative articles, code-heavy pages, inaccessible/restricted pages and extraction failures.
 
 Offline article text comes first. Durable offline images depend on Stage 4 attachments. Do not promise exact whole-site reproduction or bypass access restrictions.
 
@@ -81,3 +81,4 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - The audit found mobile sorting and tag filtering already implemented, despite the older handoff listing them as missing.
 - 2026-11-09: iOS writing-safety implementation added. Drafts use a temporary file and replacement in the app's persistent documents directory, with explicit discard and storage-failure dismissal guards. Note saves are serialized; sharing, deletion and navigation await pending edits, and failed navigation saves require explicit confirmation to leave. Mobile typecheck/lint and frontend typecheck/lint/51 unit tests passed. Native export is blocked by the pre-existing Expo DOM asset failure reproduced on main; native UI behavior remains unverified.
 - 2026-11-09: Stage 1 native verification completed. The DOM export regression check passed after disabling bundle splitting. An unsigned release build passed XCTest on iOS 27.2: draft recovery after Close, swipe dismissal and process relaunch; confirmed discard; note creation; and sharing the latest edits. Both native tests passed in a repeated run, then the reusable `pnpm check:ios-ui` command passed on a fresh disposable simulator, including a simulator-clipboard Markdown assertion. Generated simulators were deleted; existing app data was untouched. Next: Stage 2 readable-article clipping.
+- 2026-11-09: Stage 2 completed in the extension. Link only, Readable article and Selection share an editable Markdown preview; switching modes keeps content edits. Readability extracts from a bounded page clone, DOMPurify sanitizes, and Turndown preserves text structure, simple tables and code whitespace. Source metadata is portable frontmatter; images/media are excluded. Articles default to Note only without overriding explicit choices. Duplicate reminders use 500 browser-local, server/token-scoped hashed source identities, not note-library access. Typecheck, touched-file lint, 70 unit/component tests and the Chromium production build passed. Three loaded-extension browser scenarios passed twice (6/6), using disposable profiles and an in-memory API fixture; desktop, narrow/dark and restricted-popup screenshots were inspected. Toolbar/context-menu gestures still need a manual smoke test. Next: Stage 3 single-note BYOK chat.

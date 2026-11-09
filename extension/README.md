@@ -2,10 +2,25 @@
 
 Browser extension (Chrome/Edge/Brave and Firefox, Manifest V3) that saves the current page, or a text selection, as a note.
 
-- **Save page**: toolbar button, `Alt+Shift+N`, or right-click the page. Name is the page title; content is the URL, a blank line, then the h1 and description/first paragraph when there is one.
+- **Save page**: toolbar button, `Alt+Shift+N`, or right-click the page. Choose **Link only** (the default) or **Readable article** (the main article as editable Markdown).
 - **Save selection**: right-click a selection, or `Alt+Shift+S`. Content is the URL, a blank line, then the selection.
-- Both open a dialog where name, content, project and tags can be edited. Project and tags are created on the fly if they don't exist ("new" badge).
+- All modes open a dialog where name, Markdown, project and tags can be edited. Switching modes preserves your content edits for each mode. Project and tags are created on the fly if they don't exist ("new" badge).
+- Readable articles default to **Note only**, without a review schedule. An explicit review choice is kept, even when remembered preferences arrive later.
 - On pages that can't host the dialog (`chrome://`, web stores, PDF viewers) the same form opens in a small popup window.
+
+### Readable articles and source details
+
+Mozilla Readability extracts from a copy of the current page's DOM. DOMPurify removes unsafe HTML, and Turndown converts the result into Markdown, preserving headings, lists, links, simple tables, quotes and code whitespace. Relative links become absolute. Extraction uses no LLM or remote extraction service, and it never changes the original page. You review and edit the Markdown before saving; extraction itself does not save anything.
+
+Captures include JSON-quoted YAML frontmatter: `source_url`, `captured_at`, and, when extraction provides them, `source_author`, `source_published_at` and `source_site`. These are part of the note's editable content, not new server columns, so they travel with normal note sync, backups and Markdown exports.
+
+Empty, failed, restricted or oversized pages explain why Readable article is unavailable; Link only and any available selection remain usable. Extraction is bounded to 30,000 elements and 2 million markup characters. It captures available page text, not an exact site reproduction, and does not bypass sign-in or paywalls. Images and embedded media are not saved; image alternative text is retained where available. Durable offline images await attachment support.
+
+### Duplicate warnings
+
+The extension warns when a source URL appears in its last 500 successful captures for the same server and API token. Fragments and common tracking parameters are ignored, but meaningful query parameters are kept. History stores SHA-256 fingerprints and save times in browser-local extension storage, not raw source URLs or tokens. It is not synced and does not query the note library or broaden capture-token permissions.
+
+This is a recent-capture reminder, not library-wide deduplication: it cannot detect saves from other browsers or earlier versions, and deleting a note does not remove its reminder. Changing the token, clearing extension storage or reinstalling forgets the history. Saving again always creates a separate note; it never overwrites existing writing. A history/preferences storage failure after a successful save does not turn that save into a reported failure.
 
 ## Develop
 
@@ -14,6 +29,7 @@ pnpm install
 pnpm dev            # Chrome, with reload
 pnpm dev:firefox
 pnpm test           # unit tests (vitest)
+pnpm test:browser   # build, then test the loaded extension in disposable Chromium
 pnpm typecheck
 pnpm build          # dist/chrome-mv3
 pnpm build:firefox  # dist/firefox-mv3
@@ -22,6 +38,8 @@ pnpm build:firefox  # dist/firefox-mv3
 `extension/` is its own pnpm root (`pnpm-workspace.yaml`). Keep it that way: without it pnpm adopts the nearest ancestor workspace and installs into it.
 
 Load unpacked: Chrome `chrome://extensions` > Developer mode > Load unpacked > `dist/chrome-mv3`. Firefox `about:debugging` > This Firefox > Load Temporary Add-on > `dist/firefox-mv3/manifest.json`.
+
+`pnpm test:browser` needs Playwright's Chromium (`pnpm exec playwright install chromium` once, if missing). It uses a temporary browser profile and an in-memory local API fixture, never an installed app's database. It verifies extraction, edited saves, Note only, recent duplicate warnings, link-only and selection capture, and the restricted-page popup; screenshots are written under ignored `test-results/`. Toolbar and context-menu user gestures themselves still need a manual smoke test.
 
 After a rebuild, reload the extension so the browser picks up the new files: Chrome shows a refresh icon on the extension's card in `chrome://extensions`; Firefox's temporary add-ons show a "Reload" button in `about:debugging`. Neither auto-reloads on `pnpm build`; use `pnpm dev` / `pnpm dev:firefox` instead if you want that.
 
@@ -69,7 +87,7 @@ All requests come from the background script, so backend CORS needs no change an
 
 `lib/api/index.ts` is the single swap point. Today it's implemented over the existing routes (`lib/api/existingRoutes.ts`): `POST /api/projects/create` and `/api/tags/create` (idempotent, case-insensitive), then `POST /api/notes/create`. Switching to a dedicated import endpoint means adding another `CaptureApi` implementation and returning it there.
 
-Known gaps of the existing-routes approach: three round-trips per save, and no server-side dedupe by URL (the backend has no source-URL column).
+Known gaps of the existing-routes approach: separate project/tag requests when creating them, and no server-side dedupe by URL (the backend has no source-URL column). Duplicate warnings use the bounded browser-local history described above.
 
 ## Security model
 

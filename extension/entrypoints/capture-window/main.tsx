@@ -16,6 +16,12 @@ async function loadContext(): Promise<CaptureContext> {
     url: pending?.url ?? "",
     title: pending?.title ?? "",
     selection: pending?.selection,
+    capturedAt: new Date().toISOString(),
+    article: {
+      ok: false,
+      reason:
+        "This browser page does not allow article extraction. Use Link only or the available selection.",
+    },
   };
 }
 

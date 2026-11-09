@@ -6,4 +6,6 @@ dist
 *.zip
 stats.html
 web-ext-artifacts
+test-results
+playwright-report
 **/.DS_Store

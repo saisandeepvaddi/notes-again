@@ -3,7 +3,12 @@ import { browser } from "wxt/browser";
 import { defineUnlistedScript } from "wxt/utils/define-unlisted-script";
 import { normalizeSelection } from "../lib/capture/draft";
 import { extractPageInfo } from "../lib/capture/extract";
-import { isOpenDialogMessage, type CaptureContext, type OpenDialogMessage } from "../lib/capture/types";
+import { extractArticle } from "../lib/capture/article";
+import {
+  isOpenDialogMessage,
+  type CaptureContext,
+  type OpenDialogMessage,
+} from "../lib/capture/types";
 import { CaptureDialog } from "../lib/ui/CaptureDialog";
 import styles from "../lib/ui/styles.css?inline";
 import { cleanUrl } from "../lib/url";
@@ -30,13 +35,17 @@ function applyStyles(shadow: ShadowRoot) {
 
 function buildContext(message: OpenDialogMessage): CaptureContext {
   const info = extractPageInfo(document);
-  const selection = normalizeSelection(window.getSelection()?.toString() || message.selectionText || "");
+  const selection = normalizeSelection(
+    window.getSelection()?.toString() || message.selectionText || "",
+  );
   return {
     mode: message.mode === "selection" && selection ? "selection" : "page",
     url: cleanUrl(location.href),
     title: info.title || message.tabTitle || "",
     excerpt: info.excerpt,
     selection,
+    capturedAt: new Date().toISOString(),
+    article: extractArticle(document, location.href),
   };
 }
 
@@ -45,7 +54,8 @@ function openDialog(message: OpenDialogMessage) {
   const ctx = buildContext(message);
 
   const host = document.createElement("notes-again-capture");
-  host.style.cssText = "all: initial !important; position: fixed !important; inset: 0 !important; z-index: 2147483647 !important;";
+  host.style.cssText =
+    "all: initial !important; position: fixed !important; inset: 0 !important; z-index: 2147483647 !important;";
   for (const type of ["keydown", "keyup", "keypress"]) {
     host.addEventListener(type, (e) => e.stopPropagation());
   }

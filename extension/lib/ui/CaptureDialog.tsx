@@ -1,7 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { CaptureError } from "../api/types";
 import { buildDraft } from "../capture/draft";
-import type { CaptureContext } from "../capture/types";
+import type { CaptureContext, CaptureMode } from "../capture/types";
 import { callBackground, type LookupsResult, type SaveResult } from "../messaging";
 import { Combobox } from "./Combobox";
 
@@ -23,22 +31,31 @@ type SaveState =
   | { state: "error"; message: string };
 
 const asCaptureError = (err: unknown) =>
-  err instanceof CaptureError ? err : new CaptureError("http", err instanceof Error ? err.message : String(err));
+  err instanceof CaptureError
+    ? err
+    : new CaptureError("http", err instanceof Error ? err.message : String(err));
 
 export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
   const initial = useMemo(() => buildDraft(ctx), [ctx]);
   const [name, setName] = useState(initial.name);
   const [content, setContent] = useState(initial.content);
+  const [mode, setMode] = useState<CaptureMode>(ctx.mode === "selection" ? "selection" : "link");
+  const modeRef = useRef(mode);
+  const drafts = useRef<Partial<Record<CaptureMode, string>>>({});
+  const [previous, setPrevious] = useState<string | null>(null);
+  const [historyUnavailable, setHistoryUnavailable] = useState(false);
   const [project, setProject] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [noteOnly, setNoteOnly] = useState(false);
   const [lookups, setLookups] = useState<LookupState>({ state: "loading" });
   const [save, setSave] = useState<SaveState>({ state: "idle" });
+  const savePending = useRef(false);
   const projectTouched = useRef(false);
   const noteOnlyTouched = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const dirty = name !== initial.name || content !== initial.content || project.length > 0 || tags.length > 0;
+  const dirty =
+    name !== initial.name || content !== initial.content || project.length > 0 || tags.length > 0;
 
   const loadLookups = useCallback(async () => {
     setLookups({ state: "loading" });
@@ -49,7 +66,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
         setProject([result.lastProject]);
       }
       if (!noteOnlyTouched.current) {
-        setNoteOnly(result.lastNoteOnly);
+        setNoteOnly(modeRef.current === "article" || result.lastNoteOnly);
       }
     } catch (err) {
       setLookups({ state: "error", error: asCaptureError(err) });
@@ -62,8 +79,33 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
     nameRef.current?.select();
   }, [loadLookups]);
 
+  useEffect(() => {
+    let active = true;
+    void callBackground<string | null>({ type: "previous-capture", sourceUrl: ctx.url }).then(
+      (date) => {
+        if (active) setPrevious(date);
+      },
+      () => {
+        if (active) setHistoryUnavailable(true);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [ctx.url]);
+
+  const changeMode = (next: CaptureMode) => {
+    drafts.current[mode] = content;
+    const draft = buildDraft(ctx, next);
+    setContent(drafts.current[next] ?? draft.content);
+    if (name === buildDraft(ctx, mode).name) setName(draft.name);
+    modeRef.current = next;
+    setMode(next);
+    if (next === "article" && !noteOnlyTouched.current) setNoteOnly(true);
+  };
+
   const submit = async () => {
-    if (save.state === "saving") {
+    if (savePending.current || save.state === "saving" || save.state === "saved") {
       return;
     }
     if (!name.trim()) {
@@ -71,14 +113,24 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
       return;
     }
     setSave({ state: "saving" });
+    savePending.current = true;
     try {
       const saved = await callBackground<SaveResult>({
         type: "save",
-        draft: { name: name.trim(), content, project: project[0] ?? null, tags, noteOnly, sourceUrl: ctx.url },
+        draft: {
+          name: name.trim(),
+          content,
+          project: project[0] ?? null,
+          tags,
+          noteOnly,
+          sourceUrl: ctx.url,
+        },
       });
       setSave({ state: "saved", saved });
     } catch (err) {
       setSave({ state: "error", message: asCaptureError(err).message });
+    } finally {
+      savePending.current = false;
     }
   };
 
@@ -88,7 +140,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === "Escape" && save.state !== "saving") {
       onClose();
     } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -105,7 +157,12 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
       className={rootClass}
       onKeyDown={onKeyDown}
       onMouseDown={(e) => {
-        if (variant === "overlay" && e.target === e.currentTarget && !dirty && save.state !== "saving") {
+        if (
+          variant === "overlay" &&
+          e.target === e.currentTarget &&
+          !dirty &&
+          save.state !== "saving"
+        ) {
           onClose();
         }
       }}
@@ -113,12 +170,20 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
       <div className="nl-card" role="dialog" aria-modal="true" aria-label="Save to Notes Again">
         <header className="nl-header">
           <div>
-            <h2 className="nl-title">{ctx.mode === "selection" ? "Save selection" : "Save page"}</h2>
+            <h2 className="nl-title">
+              {ctx.mode === "selection" ? "Save selection" : "Save page"}
+            </h2>
             <p className="nl-sub" title={ctx.url}>
               {ctx.url || "No URL available for this page"}
             </p>
           </div>
-          <button type="button" className="nl-icon-button" aria-label="Close" onClick={onClose}>
+          <button
+            type="button"
+            className="nl-icon-button"
+            aria-label="Close"
+            onClick={onClose}
+            disabled={saving}
+          >
             ×
           </button>
         </header>
@@ -127,7 +192,12 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
           <div className="nl-saved">
             <p className="nl-saved-title">Saved “{save.saved.name}”</p>
             <div className="nl-actions">
-              <a className="nl-button nl-primary" href={save.saved.openUrl} target="_blank" rel="noopener noreferrer">
+              <a
+                className="nl-button nl-primary"
+                href={save.saved.openUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Open in Notes Again
               </a>
               <button type="button" className="nl-button" onClick={onClose} autoFocus>
@@ -137,12 +207,61 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
           </div>
         ) : (
           <form onSubmit={onSubmit}>
+            <div className="nl-field">
+              <label className="nl-label" htmlFor="nl-mode">
+                Capture
+              </label>
+              <select
+                id="nl-mode"
+                className="nl-input"
+                value={mode}
+                onChange={(e) => changeMode(e.target.value as CaptureMode)}
+                disabled={saving}
+                aria-describedby="nl-mode-hint"
+              >
+                <option value="link">Link only</option>
+                <option value="article" disabled={!ctx.article?.ok}>
+                  Readable article
+                </option>
+                <option value="selection" disabled={!ctx.selection}>
+                  Selection
+                </option>
+              </select>
+              <p id="nl-mode-hint" className="nl-mode-hint">
+                {mode === "article"
+                  ? "Review the editable Markdown below. Article text stays offline; images and embedded media are not saved."
+                  : ctx.article?.ok
+                    ? "Keep just the link, or choose Readable article to save the page text."
+                    : (ctx.article?.reason ??
+                      "Article extraction is unavailable here. You can still save the link.")}
+              </p>
+            </div>
+            {previous && (
+              <div className="nl-notice" role="status">
+                <p>
+                  This URL was saved from this browser before. Saving again creates a separate note;
+                  nothing is overwritten.
+                </p>
+                <p className="nl-mode-hint">
+                  Checks the last 500 captures for this server and token, not your whole library.
+                </p>
+              </div>
+            )}
+            {historyUnavailable && (
+              <p className="nl-mode-hint" role="status">
+                Recent-capture check unavailable. Saving will still create a new note.
+              </p>
+            )}
             {lookups.state === "error" && (
               <div className="nl-banner" role="alert">
                 <p>{lookups.error.message}</p>
                 <div className="nl-actions">
                   {lookups.error.kind !== "http" && (
-                    <button type="button" className="nl-button" onClick={() => void callBackground({ type: "open-options" })}>
+                    <button
+                      type="button"
+                      className="nl-button"
+                      onClick={() => void callBackground({ type: "open-options" })}
+                    >
                       Open settings
                     </button>
                   )}
@@ -169,12 +288,12 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
 
             <div className="nl-field">
               <label className="nl-label" htmlFor="nl-content">
-                Content
+                Markdown preview · editable
               </label>
               <textarea
                 id="nl-content"
                 className="nl-input nl-textarea"
-                rows={ctx.mode === "selection" ? 9 : 6}
+                rows={mode === "link" ? 6 : 12}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 disabled={saving}
@@ -191,7 +310,14 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
               }}
               placeholder="Choose or create a project"
             />
-            <Combobox label="Tags" options={options.tags} value={tags} onChange={setTags} multiple placeholder="Add tags" />
+            <Combobox
+              label="Tags"
+              options={options.tags}
+              value={tags}
+              onChange={setTags}
+              multiple
+              placeholder="Add tags"
+            />
 
             <label className="nl-check">
               <input
@@ -205,7 +331,9 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
               />
               <span>
                 <span className="nl-check-title">Note only</span>
-                <span className="nl-check-hint">Save it as a plain note, without adding it to review.</span>
+                <span className="nl-check-hint">
+                  Save it as a plain note, without adding it to review.
+                </span>
               </span>
             </label>
 
@@ -216,7 +344,9 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
             )}
 
             <div className="nl-actions nl-footer">
-              <span className="nl-hint">{navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}+Enter to save</span>
+              <span className="nl-hint">
+                {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}+Enter to save
+              </span>
               <button type="button" className="nl-button" onClick={onClose} disabled={saving}>
                 Cancel
               </button>

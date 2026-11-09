@@ -1,9 +1,23 @@
+export type CaptureMode = "link" | "article" | "selection";
+
+export interface Article {
+  title: string;
+  markdown: string;
+  author?: string;
+  publishedAt?: string;
+  siteName?: string;
+}
+
+export type ArticleResult = { ok: true; article: Article } | { ok: false; reason: string };
+
 export interface CaptureContext {
   mode: "page" | "selection";
   url: string;
   title: string;
   excerpt?: string;
   selection?: string;
+  capturedAt?: string;
+  article?: ArticleResult;
 }
 
 export interface OpenDialogMessage {

@@ -2,7 +2,7 @@
 
 For an agent picking up work on this repo. Read this first, then [AGENTS.md](../AGENTS.md), which holds the conventions and is kept current. This file covers what AGENTS.md doesn't: the owner's standing rules, where the work stands, and what's left.
 
-Last updated 2026-11-09, at `main` = `21c7f9d`.
+Last updated 2026-11-09: writing safety and readable-article clipping verified locally.
 
 ## What the app is
 
@@ -86,7 +86,7 @@ Not verified yet:
 
 The owner approved [the knowledge-workflow checklist](plans/knowledge-workflow.md) on 2026-11-09: writing safety first, then readable-article clipping, single-note BYOK chat, attachments/history, connected notes/library chat, and everyday navigation/reading. Follow that checklist for new product work. The platform hardening items below remain open; mobile list sorting and tag filtering already exist in the current implementation.
 
-Stage 1 writing safety is complete on web and iOS. Expo's DOM export failure is mitigated by disabling bundle splitting in `mobile/metro.config.js`; `pnpm check:ios-export` checks the resulting resources. `pnpm check:ios-ui` builds an unsigned release app and tests draft recovery, swipe dismissal, relaunch, discard, creation and sharing on a fresh disposable simulator. It works headlessly through XCTest; no Simulator.app interaction or Maestro installer is needed. Verified on iOS 27.2, including copied Markdown containing the latest edits. Next: Stage 2 readable-article clipping. Verification and remaining checkboxes are in the knowledge-workflow plan.
+Stages 1–2 are complete. Writing safety is verified on web and iOS; `pnpm check:ios-export` and `pnpm check:ios-ui` cover the DOM-export workaround and native draft/sharing flows on disposable simulators. Readable-article clipping lives in `extension/lib/capture/article.ts`: Readability → DOMPurify → Turndown, with editable Markdown, portable source frontmatter, link/selection fallback and Note only defaults. Duplicate reminders cover the last 500 captures in this browser for the same server/token, not the whole library; no new token privileges or backend schema. Extension `pnpm test:browser` builds and exercises the actual extension in a disposable Chromium profile against an in-memory API fixture. Next: Stage 3 single-note BYOK chat. See the knowledge-workflow plan for checks and scope.
 
 1. **Mobile accessibility pass** (Phase 6). Screen reader labels on icon-only buttons, rows and badges, and dynamic type support. You can check most of it with `pnpm typecheck` and `pnpm lint` and by reading the code; driving VoiceOver needs a device.
 2. **Remaining Phase 4 parity:** list sort, tag filter, and project/tag hits in mobile search.

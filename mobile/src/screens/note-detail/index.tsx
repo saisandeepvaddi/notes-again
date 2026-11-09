@@ -4,6 +4,7 @@ import { RATING_OPTIONS } from "@web/notes/rating";
 import { reviewStatusOf, type ReviewStatus } from "@web/notes/reviewStatus";
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
+import { useNavigation, usePreventRemove } from "expo-router/react-navigation";
 import { useState } from "react";
 import { type ReactNode } from "react";
 import { Alert, Share, TextInput, View } from "react-native";
@@ -88,7 +89,13 @@ function ReviewHistory({ note }: { note: NoteItem }) {
   );
 }
 
-function NoteSettings({ note }: { note: NoteItem }) {
+function NoteSettings({
+  note,
+  beforeDelete,
+}: {
+  note: NoteItem;
+  beforeDelete?: () => Promise<void>;
+}) {
   const { colors } = useTheme();
   const router = useRouter();
   const setDifficulty = useSetDifficulty(note.id);
@@ -119,6 +126,7 @@ function NoteSettings({ note }: { note: NoteItem }) {
         style: "destructive",
         onPress: () =>
           void save(async () => {
+            await beforeDelete?.();
             await deleteNote.mutateAsync();
             router.back();
           }),
@@ -231,8 +239,9 @@ function NoteHeading({ note, children }: { note: NoteItem; children: ReactNode }
   );
 }
 
-async function shareNote(note: NoteItem) {
+async function shareNote(note: NoteItem, beforeShare: () => Promise<void>) {
   try {
+    await beforeShare();
     const markdown = await fetchNoteMarkdown(note.id);
     await Share.share({ message: markdown, title: noteTitle(note) });
   } catch (failure) {
@@ -244,6 +253,38 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
   const { colors } = useTheme();
   const { family } = useReadingFont();
   const autosave = useNoteAutosave(note);
+  const navigation = useNavigation();
+  const [sharing, setSharing] = useState(false);
+  usePreventRemove(
+    autosave.status === "pending" || autosave.status === "saving" || autosave.status === "error",
+    ({ data }) => {
+      void autosave.flush().then(
+        () => navigation.dispatch(data.action),
+        () =>
+          Alert.alert(
+            "Couldn’t save your changes",
+            "Keep editing and retry, or leave without saving your last changes.",
+            [
+              { text: "Keep editing", style: "cancel" },
+              {
+                text: "Leave without saving",
+                style: "destructive",
+                onPress: () => navigation.dispatch(data.action),
+              },
+            ],
+          ),
+      );
+    },
+  );
+  const share = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      await shareNote({ ...note, name: autosave.name.trim() || note.name }, autosave.flush);
+    } finally {
+      setSharing(false);
+    }
+  };
   return (
     <>
       <Stack.Screen
@@ -257,7 +298,8 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
                 ios="square.and.arrow.up"
                 android="share"
                 label="Share as Markdown"
-                onPress={() => void shareNote(note)}
+                onPress={() => void share()}
+                disabled={sharing}
               />
             </View>
           ),
@@ -294,6 +336,7 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
         minHeight={120}
         onChange={autosave.setContent}
       />
+      <NoteSettings note={note} beforeDelete={autosave.flush} />
     </>
   );
 }
@@ -336,7 +379,7 @@ function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
             <NoteBody markdown={note.content} />
           </>
         )}
-        <NoteSettings note={note} />
+        {!live ? <NoteSettings note={note} /> : null}
         <ReviewHistory note={note} />
       </KeyboardAwareScrollView>
       {showPanel ? (

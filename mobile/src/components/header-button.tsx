@@ -9,14 +9,17 @@ interface HeaderButtonProps {
   android: IconProps["android"];
   label: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
-export function HeaderButton({ ios, android, label, onPress }: HeaderButtonProps) {
+export function HeaderButton({ ios, android, label, onPress, disabled }: HeaderButtonProps) {
   const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled === true }}
+      disabled={disabled}
       onPress={onPress}
       hitSlop={8}
       style={({ pressed }) => ({
@@ -24,7 +27,7 @@ export function HeaderButton({ ios, android, label, onPress }: HeaderButtonProps
         height: 36,
         alignItems: "center",
         justifyContent: "center",
-        opacity: pressed ? 0.6 : 1,
+        opacity: disabled ? 0.4 : pressed ? 0.6 : 1,
       })}
     >
       <Icon ios={ios} android={android} color={colors.primary} />

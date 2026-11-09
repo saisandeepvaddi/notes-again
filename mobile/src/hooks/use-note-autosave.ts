@@ -1,62 +1,32 @@
 import type { NoteItem } from "@web/notes/new-note-form/types";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 import { useUpdateNote } from "@/api/notes";
+import { createNoteSaveQueue, type SaveStatus } from "@/utils/note-save-queue";
 
-const AUTOSAVE_DELAY_MS = 800;
-
-export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
+export type { SaveStatus } from "@/utils/note-save-queue";
 
 export function useNoteAutosave(note: NoteItem) {
   const updateNote = useUpdateNote(note.id);
   const [name, setName] = useState(note.name);
   const [status, setStatus] = useState<SaveStatus>("idle");
-  const latest = useRef({ name: note.name, content: note.content });
-  const saved = useRef({ name: note.name, content: note.content });
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const flush = async () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    const next = {
-      name: latest.current.name.trim() || saved.current.name,
-      content: latest.current.content,
-    };
-    if (next.name === saved.current.name && next.content === saved.current.content) {
-      setStatus((prev) => (prev === "pending" ? "idle" : prev));
-      return;
-    }
-    setStatus("saving");
-    try {
-      await updateNote.mutateAsync(next);
-      saved.current = next;
-      setStatus(
-        latest.current.content === next.content && latest.current.name.trim() === next.name
-          ? "saved"
-          : "pending",
-      );
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  const schedule = (next: { name: string; content: string }) => {
-    latest.current = next;
-    setStatus("pending");
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => void flush(), AUTOSAVE_DELAY_MS);
-  };
+  const [queue] = useState(() =>
+    createNoteSaveQueue(
+      { name: note.name, content: note.content },
+      (text) => updateNote.mutateAsync(text),
+      setStatus,
+    ),
+  );
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state !== "active" && timer.current) void flush();
+      if (state !== "active") void queue.flush().catch(() => undefined);
     });
     return () => {
       subscription.remove();
-      if (timer.current) void flush();
+      void queue.flush().catch(() => undefined);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [queue]);
 
   useEffect(() => {
     if (status !== "saved") return;
@@ -67,13 +37,14 @@ export function useNoteAutosave(note: NoteItem) {
   return {
     name,
     status,
-    retry: () => void flush(),
+    flush: queue.flush,
+    retry: () => void queue.flush().catch(() => undefined),
     setName: (value: string) => {
       setName(value);
-      schedule({ name: value, content: latest.current.content });
+      queue.update({ name: value });
     },
     setContent: (value: string) => {
-      schedule({ name: latest.current.name, content: value });
+      queue.update({ content: value });
     },
   };
 }

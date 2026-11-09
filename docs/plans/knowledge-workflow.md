@@ -14,10 +14,12 @@ Capture useful material, connect it to your thinking, discuss it, and remember i
 - [x] Web: offer explicit draft discard and clear the draft only after successful creation or confirmed discard.
 - [x] Web: explain failed creation inline and allow retry without losing input.
 - [x] Web: warn before leaving if browser storage cannot preserve the draft.
-- [ ] iOS: persist unfinished new notes and protect modal dismissal, not just the Cancel button.
-- [ ] iOS: flush pending edits before Markdown sharing and prevent silent loss on save failure.
+- [x] iOS implementation: persist unfinished new notes and protect modal dismissal, not just the Cancel button.
+- [x] iOS implementation: flush pending edits before Markdown sharing and prevent silent loss on save failure.
 - [x] Web: add regression coverage for recovery, discard, successful creation, failed creation/retry, unavailable storage and navigation during creation.
-- [ ] iOS: add regression coverage for draft recovery, dismissal and sharing pending edits.
+- [x] Add pure save-queue regression coverage for debounce, concurrent flushes, edits during a request, failures and retry. Draft serialization uses the shared web module and its tests.
+- [ ] iOS: verify device draft storage, modal dismissal and sharing pending edits in native UI; add native UI regression coverage.
+- [ ] Resolve the existing Expo DOM export failure (`Asset not found: _expo/static/js/web/__common-*.js`) before production native verification. Reproduced on both this branch and an isolated main snapshot, including with `--clear`.
 
 ### 2. Readable-article clipping
 
@@ -77,3 +79,4 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 
 - 2026-11-09: Stage 1 web writing safety completed: one recoverable browser-local draft, including note settings; confirmed discard; inline creation errors; unavailable-storage navigation protection; pending-creation edit protection. Typecheck, lint and 44 unit tests passed. The full E2E run passed 51/52 tests, with an unrelated API-token test timing out; the six writing-safety tests and three token/settings tests then passed twice each (18/18). Desktop and phone-sized web renders were inspected. iOS writing safety remains next.
 - The audit found mobile sorting and tag filtering already implemented, despite the older handoff listing them as missing.
+- 2026-11-09: iOS writing-safety implementation added. Drafts use a temporary file and replacement in the app's persistent documents directory, with explicit discard and storage-failure dismissal guards. Note saves are serialized; sharing, deletion and navigation await pending edits, and failed navigation saves require explicit confirmation to leave. Mobile typecheck/lint and frontend typecheck/lint/51 unit tests passed. Native export is blocked by the pre-existing Expo DOM asset failure reproduced on main; native UI behavior remains unverified.

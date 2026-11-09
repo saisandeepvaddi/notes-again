@@ -13,15 +13,26 @@ interface ConnectQrCodeProps {
   token: string;
   server?: string;
   alt?: string | null;
+  fingerprint?: string | null;
 }
 
-export function ConnectQrCode({ token, server: fixedServer, alt }: ConnectQrCodeProps) {
+export function ConnectQrCode({
+  token,
+  server: fixedServer,
+  alt,
+  fingerprint,
+}: ConnectQrCodeProps) {
   const [server, setServer] = useState(() => fixedServer ?? defaultServer());
   const [image, setImage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const link = buildConnectLink({ server: server.trim(), token, alt: alt ?? undefined });
+    const link = buildConnectLink({
+      server: server.trim(),
+      token,
+      alt: alt ?? undefined,
+      fp: fingerprint ?? undefined,
+    });
     QRCode.toDataURL(link, {
       errorCorrectionLevel: "M",
       margin: 2,
@@ -33,7 +44,7 @@ export function ConnectQrCode({ token, server: fixedServer, alt }: ConnectQrCode
     return () => {
       cancelled = true;
     };
-  }, [server, token, alt]);
+  }, [server, token, alt, fingerprint]);
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg bg-muted/50 p-4 sm:flex-row sm:items-start">

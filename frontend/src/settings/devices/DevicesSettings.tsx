@@ -151,6 +151,7 @@ function PhoneSection() {
               token={pairingInfo.token}
               server={pairingInfo.server}
               alt={pairingInfo.alt}
+              fingerprint={pairingInfo.fingerprint}
             />
           ) : (
             <div>

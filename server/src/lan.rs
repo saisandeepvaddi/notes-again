@@ -1,4 +1,9 @@
 use std::net::{IpAddr, SocketAddr, UdpSocket};
+use std::sync::Arc;
+use std::time::Duration;
+
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64;
 
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -22,11 +27,38 @@ pub const DESKTOP_PORT: u16 = 47821;
 pub const LAN_PORT: u16 = 47822;
 const LAN_SETTING: &str = "lan_access";
 const PAIRED_BY: &str = "desktop-pairing";
+const CERT_SETTING: &str = "lan_cert";
+const KEY_SETTING: &str = "lan_key";
 
 pub struct LanListener {
     pub port: u16,
-    shutdown: tokio::sync::oneshot::Sender<()>,
+    pub fingerprint: String,
+    handle: axum_server::Handle<SocketAddr>,
     task: tokio::task::JoinHandle<()>,
+}
+
+async fn identity(state: &AppState) -> Result<crate::tls::Identity, String> {
+    let stored = (
+        crate::db::device_setting(&state.db, CERT_SETTING)
+            .await
+            .map_err(|e| e.to_string())?,
+        crate::db::device_setting(&state.db, KEY_SETTING)
+            .await
+            .map_err(|e| e.to_string())?,
+    );
+    if let (Some(cert), Some(key)) = stored
+        && let (Ok(cert), Ok(key)) = (BASE64.decode(cert), BASE64.decode(key))
+    {
+        return Ok(crate::tls::Identity { cert, key });
+    }
+    let fresh = crate::tls::generate_identity()?;
+    crate::db::set_device_setting(&state.db, CERT_SETTING, Some(&BASE64.encode(&fresh.cert)))
+        .await
+        .map_err(|e| e.to_string())?;
+    crate::db::set_device_setting(&state.db, KEY_SETTING, Some(&BASE64.encode(&fresh.key)))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(fresh)
 }
 
 pub async fn bind(preferred: u16, host: &str) -> std::io::Result<tokio::net::TcpListener> {
@@ -73,19 +105,23 @@ pub async fn start(state: &AppState) -> std::io::Result<u16> {
     if let Some(listener) = lan.as_ref() {
         return Ok(listener.port);
     }
-    let listener = bind(LAN_PORT, "0.0.0.0").await?;
+    let identity = identity(state).await.map_err(std::io::Error::other)?;
+    let config = crate::tls::server_config(&identity).map_err(std::io::Error::other)?;
+    let listener = std::net::TcpListener::bind(("0.0.0.0", LAN_PORT))
+        .or_else(|_| std::net::TcpListener::bind(("0.0.0.0", 0)))?;
+    listener.set_nonblocking(true)?;
     let port = listener.local_addr()?.port();
-    let (shutdown, signal) = tokio::sync::oneshot::channel::<()>();
+    let handle = axum_server::Handle::new();
+    let server = axum_server::tls_rustls::from_tcp_rustls(
+        listener,
+        axum_server::tls_rustls::RustlsConfig::from_config(Arc::new(config)),
+    )?
+    .handle(handle.clone());
     let app = router_for_network(state.clone());
     let task = tokio::spawn(async move {
-        let served = axum::serve(
-            listener,
-            app.into_make_service_with_connect_info::<SocketAddr>(),
-        )
-        .with_graceful_shutdown(async {
-            let _ = signal.await;
-        })
-        .await;
+        let served = server
+            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+            .await;
         if let Err(error) = served {
             tracing::error!("The local network listener stopped: {error}");
         }
@@ -93,7 +129,8 @@ pub async fn start(state: &AppState) -> std::io::Result<u16> {
     tracing::info!("Phones on this network can connect on port {port}");
     *lan = Some(LanListener {
         port,
-        shutdown,
+        fingerprint: crate::tls::fingerprint(&identity.cert),
+        handle,
         task,
     });
     Ok(port)
@@ -102,7 +139,9 @@ pub async fn start(state: &AppState) -> std::io::Result<u16> {
 pub async fn stop(state: &AppState) {
     let listener = state.lan.lock().await.take();
     if let Some(listener) = listener {
-        let _ = listener.shutdown.send(());
+        listener
+            .handle
+            .graceful_shutdown(Some(Duration::from_secs(1)));
         let _ = listener.task.await;
     }
 }
@@ -137,9 +176,9 @@ fn mdns_host() -> Option<String> {
 
 fn network_urls(port: u16) -> Vec<String> {
     lan_ip()
-        .map(|ip| format!("http://{ip}:{port}"))
+        .map(|ip| format!("https://{ip}:{port}"))
         .into_iter()
-        .chain(mdns_host().map(|host| format!("http://{host}:{port}")))
+        .chain(mdns_host().map(|host| format!("https://{host}:{port}")))
         .collect()
 }
 
@@ -147,6 +186,7 @@ fn network_urls(port: u16) -> Vec<String> {
 struct NetworkAccess {
     enabled: bool,
     port: Option<u16>,
+    fingerprint: Option<String>,
     urls: Vec<String>,
     paired_devices: i64,
 }
@@ -165,7 +205,10 @@ fn guard(state: &AppState, identity: &Identity) -> Result<(), ApiError> {
 }
 
 async fn connections_info(state: &AppState) -> ApiResult<Connections> {
-    let port = state.lan.lock().await.as_ref().map(|l| l.port);
+    let (port, fingerprint) = match state.lan.lock().await.as_ref() {
+        Some(listener) => (Some(listener.port), Some(listener.fingerprint.clone())),
+        None => (None, None),
+    };
     let paired_devices: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM api_tokens WHERE created_by = ? AND revoked_at IS NULL",
     )
@@ -180,6 +223,7 @@ async fn connections_info(state: &AppState) -> ApiResult<Connections> {
         network: NetworkAccess {
             enabled: port.is_some(),
             port,
+            fingerprint,
             urls: port.map(network_urls).unwrap_or_default(),
             paired_devices,
         },
@@ -231,6 +275,7 @@ struct Pairing {
     token: String,
     server: String,
     alt: Option<String>,
+    fingerprint: String,
 }
 
 async fn pair(
@@ -238,7 +283,13 @@ async fn pair(
     Extension(identity): Extension<Identity>,
 ) -> ApiResult<Json<Pairing>> {
     guard(&state, &identity)?;
-    let Some(port) = state.lan.lock().await.as_ref().map(|l| l.port) else {
+    let Some((port, fingerprint)) = state
+        .lan
+        .lock()
+        .await
+        .as_ref()
+        .map(|l| (l.port, l.fingerprint.clone()))
+    else {
         return Err(ApiError::conflict("Turn on phone access first."));
     };
     let mut urls = network_urls(port).into_iter();
@@ -255,6 +306,7 @@ async fn pair(
         token: created.token,
         server,
         alt: urls.next(),
+        fingerprint,
     }))
 }
 
@@ -273,7 +325,7 @@ mod tests {
     fn network_urls_use_the_port() {
         for url in network_urls(47822) {
             assert!(
-                url.starts_with("http://") && url.ends_with(":47822"),
+                url.starts_with("https://") && url.ends_with(":47822"),
                 "{url}"
             );
         }

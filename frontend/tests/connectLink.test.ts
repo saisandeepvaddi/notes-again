@@ -17,6 +17,16 @@ describe("connect links", () => {
     expect(buildConnectLink({ server: "http://x", token: "nal_abc" })).not.toContain("alt=");
   });
 
+  it("carries a pinned certificate fingerprint", () => {
+    const link = {
+      server: "https://192.168.1.20:47822",
+      token: "nal_abc",
+      alt: "https://laptop.local:47822",
+      fp: "ab".repeat(32),
+    };
+    expect(parseConnectLink(buildConnectLink(link))).toEqual(link);
+  });
+
   it("ignores surrounding whitespace from scanners and pastes", () => {
     const link = buildConnectLink({ server: "http://10.0.0.2:8000", token: "nal_abc" });
     expect(parseConnectLink(`  ${link}\n`)).toEqual({

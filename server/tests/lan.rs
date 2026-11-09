@@ -30,8 +30,11 @@ async fn set_network(app: &TestApp, enabled: bool) -> Value {
         .ok()
 }
 
-fn client() -> reqwest::Client {
-    reqwest::Client::new()
+fn client(fingerprint: &str) -> reqwest::Client {
+    reqwest::Client::builder()
+        .use_preconfigured_tls(notes_again_server::tls::pinned_client_config(fingerprint))
+        .build()
+        .unwrap()
 }
 
 async fn status_of(request: reqwest::RequestBuilder) -> u16 {
@@ -87,20 +90,33 @@ async fn a_paired_phone_reaches_the_desktop_over_the_network_with_its_token_only
     let info = set_network(&app, true).await;
     assert_eq!(info["network"]["enabled"], true);
     let port = info["network"]["port"].as_u64().unwrap();
-    let base = format!("http://127.0.0.1:{port}");
+    let fingerprint = info["network"]["fingerprint"].as_str().unwrap().to_string();
+    assert_eq!(fingerprint.len(), 64);
+    let base = format!("https://127.0.0.1:{port}");
 
     let pairing = app.post("/api/desktop/network/pair").send().await.ok();
     let token = pairing["token"].as_str().unwrap().to_string();
     assert!(token.starts_with("nal_"));
-    assert!(
-        pairing["server"]
-            .as_str()
-            .unwrap()
-            .ends_with(&format!(":{port}"))
-    );
+    assert_eq!(pairing["fingerprint"], fingerprint.as_str());
+    let server = pairing["server"].as_str().unwrap();
+    assert!(server.starts_with("https://") && server.ends_with(&format!(":{port}")));
     app.named("On the desktop").await;
 
-    let http = client();
+    let http = client(&fingerprint);
+    let impostor = client(&"0".repeat(64));
+    assert!(
+        impostor
+            .get(format!("{base}/healthz"))
+            .send()
+            .await
+            .is_err()
+    );
+    assert!(
+        reqwest::get(format!("http://127.0.0.1:{port}/healthz"))
+            .await
+            .map(|r| r.status().as_u16() != 200)
+            .unwrap_or(true)
+    );
     assert_eq!(status_of(http.get(format!("{base}/healthz"))).await, 200);
     assert_eq!(
         status_of(http.get(format!("{base}/api/auth/status"))).await,
@@ -204,9 +220,14 @@ async fn phone_access_is_remembered_across_restarts() {
     let info = app.get("/api/desktop/connections").send().await.ok();
     assert_eq!(info["network"]["enabled"], true);
     let port = info["network"]["port"].as_u64().unwrap();
+    let fingerprint = info["network"]["fingerprint"].as_str().unwrap();
     assert_eq!(
-        status_of(client().get(format!("http://127.0.0.1:{port}/healthz"))).await,
+        status_of(client(fingerprint).get(format!("https://127.0.0.1:{port}/healthz"))).await,
         200
     );
+    let first = fingerprint.to_string();
+    let app = app.restart(|_| {}).await;
+    let again = app.get("/api/desktop/connections").send().await.ok();
+    assert_eq!(again["network"]["fingerprint"], first.as_str());
     set_network(&app, false).await;
 }

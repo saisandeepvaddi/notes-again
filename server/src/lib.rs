@@ -19,6 +19,7 @@ pub mod sync;
 pub mod system;
 pub mod text;
 pub mod time;
+pub mod tls;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;

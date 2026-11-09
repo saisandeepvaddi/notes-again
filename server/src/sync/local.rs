@@ -110,6 +110,8 @@ struct ConnectBody {
     password: Option<String>,
     #[serde(default)]
     token: Option<String>,
+    #[serde(default)]
+    fingerprint: Option<String>,
 }
 
 fn normalize_url(raw: &str) -> String {
@@ -145,8 +147,13 @@ fn device_name() -> String {
     device_name_for(&gethostname::gethostname().to_string_lossy())
 }
 
-async fn exchange_password(url: &str, username: &str, password: &str) -> Result<String, ApiError> {
-    let remote = Remote::new(url, None);
+async fn exchange_password(
+    url: &str,
+    pin: Option<&str>,
+    username: &str,
+    password: &str,
+) -> Result<String, ApiError> {
+    let remote = Remote::pinned(url, None, pin);
     let response = remote
         .request(reqwest::Method::POST, "/api/auth/token")
         .json(&json!({ "username": username, "password": password, "device_name": device_name() }))
@@ -179,8 +186,8 @@ async fn exchange_password(url: &str, username: &str, password: &str) -> Result<
         .ok_or_else(|| ApiError::bad_request("The server didn't return a token."))
 }
 
-async fn verify(url: &str, token: &str) -> Result<(), ApiError> {
-    let remote = Remote::new(url, Some(token));
+async fn verify(url: &str, pin: Option<&str>, token: &str) -> Result<(), ApiError> {
+    let remote = Remote::pinned(url, Some(token), pin);
     let response = remote
         .request(reqwest::Method::GET, "/api/sync/pull")
         .query(&[("since", VERIFY_SINCE), ("limit", 1)])
@@ -213,12 +220,23 @@ async fn connect(
     check_opt_len("username", body.username.as_deref(), 100)?;
     check_opt_len("password", body.password.as_deref(), 500)?;
     check_opt_len("token", body.token.as_deref(), 500)?;
+    check_opt_len("fingerprint", body.fingerprint.as_deref(), 200)?;
     if remote(&state).await?.is_some() {
         return Err(ApiError::conflict(
             "Disconnect from the current server first.",
         ));
     }
     let url = normalize_url(&body.url);
+    let pin = body
+        .fingerprint
+        .as_deref()
+        .map(crate::tls::normalize_fingerprint)
+        .filter(|p| !p.is_empty());
+    if pin.is_some() && !url.starts_with("https://") {
+        return Err(ApiError::bad_request(
+            "A pinned certificate needs an https:// address.",
+        ));
+    }
     let mut token = body.token.clone().unwrap_or_default().trim().to_string();
     let used_password = token.is_empty();
     if used_password {
@@ -230,22 +248,23 @@ async fn connect(
                 "Enter a username and password, or an app token.",
             ));
         };
-        token = exchange_password(&url, username.trim(), password).await?;
+        token = exchange_password(&url, pin.as_deref(), username.trim(), password).await?;
     }
-    verify(&url, &token).await?;
+    verify(&url, pin.as_deref(), &token).await?;
     let username = if used_password {
         body.username.as_deref().map(|u| u.trim().to_string())
     } else {
         None
     };
     sqlx::query(
-        "INSERT INTO sync_remote (id, url, token, username, pushed_version, pulled_version, created_at) \
-         VALUES (1, ?, ?, ?, 0, 0, ?)",
+        "INSERT INTO sync_remote (id, url, token, username, pushed_version, pulled_version, created_at, pinned_cert) \
+         VALUES (1, ?, ?, ?, 0, 0, ?, ?)",
     )
     .bind(&url)
     .bind(&token)
     .bind(username)
     .bind(Ts::now())
+    .bind(&pin)
     .execute(&state.db)
     .await?;
     sync_in_background(&state);
@@ -257,7 +276,7 @@ async fn disconnect(State(state): State<AppState>) -> ApiResult<StatusCode> {
         return Ok(StatusCode::NO_CONTENT);
     };
     if row.username.is_some() {
-        let client = Remote::new(&row.url, Some(&row.token));
+        let client = Remote::pinned(&row.url, Some(&row.token), row.pinned_cert.as_deref());
         if let Err(error) = client
             .request(reqwest::Method::DELETE, "/api/auth/token")
             .send()

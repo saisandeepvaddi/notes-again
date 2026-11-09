@@ -48,7 +48,7 @@ function useRefreshAfterSync() {
 }
 
 export type SyncTarget =
-  | { url: string; token: string }
+  | { url: string; token: string; fingerprint?: string }
   | { url: string; username: string; password: string };
 
 export function useConnectSync() {

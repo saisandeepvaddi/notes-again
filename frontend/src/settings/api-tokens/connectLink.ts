@@ -4,11 +4,14 @@ export interface ConnectLink {
   server: string;
   token: string;
   alt?: string;
+  fp?: string;
 }
 
-export function buildConnectLink({ server, token, alt }: ConnectLink): string {
-  const link = `${CONNECT_LINK_PREFIX}server=${encodeURIComponent(server)}&token=${encodeURIComponent(token)}`;
-  return alt ? `${link}&alt=${encodeURIComponent(alt)}` : link;
+export function buildConnectLink({ server, token, alt, fp }: ConnectLink): string {
+  let link = `${CONNECT_LINK_PREFIX}server=${encodeURIComponent(server)}&token=${encodeURIComponent(token)}`;
+  if (alt) link += `&alt=${encodeURIComponent(alt)}`;
+  if (fp) link += `&fp=${encodeURIComponent(fp)}`;
+  return link;
 }
 
 export function parseConnectLink(text: string): ConnectLink | null {
@@ -27,5 +30,6 @@ export function parseConnectLink(text: string): ConnectLink | null {
   const token = params.get("token")?.trim();
   if (!server || !token?.startsWith("nal_")) return null;
   const alt = params.get("alt")?.trim();
-  return alt ? { server, token, alt } : { server, token };
+  const fp = params.get("fp")?.trim();
+  return { server, token, ...(alt ? { alt } : {}), ...(fp ? { fp } : {}) };
 }

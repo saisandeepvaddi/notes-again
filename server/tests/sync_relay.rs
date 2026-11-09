@@ -39,12 +39,12 @@ async fn point_at(client: &TestApp, url: &str, token: &str) {
 async fn sync(client: &TestApp) -> SyncOutcome {
     let state = &client.state;
     let _guard = state.sync_lock.lock().await;
-    let (url, token): (String, String) =
-        sqlx::query_as("SELECT url, token FROM sync_remote WHERE id = 1")
+    let (url, token, pin): (String, String, Option<String>) =
+        sqlx::query_as("SELECT url, token, pinned_cert FROM sync_remote WHERE id = 1")
             .fetch_one(&state.db)
             .await
             .unwrap();
-    sync_once(state, &Remote::new(&url, Some(&token)))
+    sync_once(state, &Remote::pinned(&url, Some(&token), pin.as_deref()))
         .await
         .unwrap_or_else(|e| panic!("sync failed: {e:?}"))
 }
@@ -216,4 +216,50 @@ fn pending_count(note: &Value) -> usize {
         .iter()
         .filter(|r| r["reviewed_at"].is_null())
         .count()
+}
+
+#[tokio::test]
+async fn a_phone_pairs_with_the_desktop_over_pinned_https_and_syncs() {
+    let desktop = desktop_app().await;
+    desktop.named("On the desktop").await;
+    desktop
+        .put("/api/desktop/network")
+        .json(json!({ "enabled": true }))
+        .send()
+        .await
+        .ok();
+    let pairing = desktop.post("/api/desktop/network/pair").send().await.ok();
+    let port = desktop.get("/api/desktop/connections").send().await.ok()["network"]["port"]
+        .as_u64()
+        .unwrap();
+    let url = format!("https://127.0.0.1:{port}");
+
+    let phone = desktop_app().await;
+    let wrong = phone
+        .put("/api/sync/remote")
+        .json(json!({ "url": url, "token": pairing["token"], "fingerprint": "ab".repeat(32) }))
+        .send()
+        .await;
+    assert_eq!(wrong.code(), 400);
+    assert!(!wrong.detail().is_empty());
+    assert_eq!(sync_status(&phone).await["connected"], false);
+
+    let connected = phone
+        .put("/api/sync/remote")
+        .json(
+            json!({ "url": url, "token": pairing["token"], "fingerprint": pairing["fingerprint"] }),
+        )
+        .send()
+        .await;
+    assert_eq!(connected.code(), 200, "{}", connected.text());
+    sync(&phone).await;
+    assert_eq!(names_on(&phone).await, ["On the desktop"]);
+
+    phone.named("From the phone").await;
+    sync(&phone).await;
+    assert_eq!(
+        names_on(&desktop).await,
+        ["From the phone", "On the desktop"]
+    );
+    notes_again_server::lan::stop(&desktop.state).await;
 }

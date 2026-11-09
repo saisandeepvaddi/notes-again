@@ -32,7 +32,7 @@ These are recommendations; the phases assume them.
 - **macOS builds.** One universal binary (`universal-apple-darwin`) instead of separate Intel and Apple silicon downloads.
 - **Mobile architecture.** Local-first, by embedding the Rust server in the app (`mobile/modules/notes-core`), exactly as the desktop does, rather than porting it to TypeScript: one implementation of the schema, scheduling and sync. The cost is an Expo development build instead of Expo Go (Expo Go falls back to the old remote flow).
 - **Desktop as a hub.** With no server, the desktop is the phone's sync peer over the local network. With a server, both devices sync with the server and the desktop never acts as a hub.
-- **Local network security.** The desktop's network listener only accepts `app` tokens, is off by default, and is enabled through QR pairing. Traffic is plain HTTP inside the local network in the first version; pinned TLS (the certificate fingerprint carried in the QR link) follows in Phase 6.
+- **Local network security.** The desktop's network listener only accepts `app` tokens, is off by default, is enabled through QR pairing, and serves HTTPS with a certificate the phone pins from the QR link.
 - **Session-only features.** Token management and `/api/system` stay out of reach of `app` tokens by design. On mobile they appear read-only, with a pointer to the desktop or web app.
 
 ## Phase 0: CI as the safety net
@@ -106,7 +106,7 @@ Done when every row above is ✓ and the Maestro suite passes. Left: list sort a
 
 ## Phase 6: hardening
 
-- Pinned TLS for the desktop's local-network listener (self-signed certificate, fingerprint in the QR link, verified by the phone).
+- Pinned TLS for the desktop's local-network listener (done): self-signed certificate per desktop, fingerprint in the QR link, pinned by the phone's Rust sync client. Covered by `tests/lan.rs` and `tests/sync_relay.rs` (wrong fingerprint and plain HTTP are refused).
 - Performance budgets checked in CI: desktop cold start under 2 s, mobile list scroll at 60 fps with 10k notes, sync of 10k notes under 10 s.
 - Accessibility pass on mobile (screen reader labels, dynamic type).
 

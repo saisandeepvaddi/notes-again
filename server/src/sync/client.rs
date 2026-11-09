@@ -64,13 +64,18 @@ pub struct Remote {
 
 impl Remote {
     pub fn new(url: &str, token: Option<&str>) -> Remote {
+        Remote::pinned(url, token, None)
+    }
+
+    pub fn pinned(url: &str, token: Option<&str>, pin: Option<&str>) -> Remote {
+        let mut builder = reqwest::Client::builder().timeout(REQUEST_TIMEOUT);
+        if let Some(pin) = pin.filter(|p| !p.is_empty()) {
+            builder = builder.use_preconfigured_tls(crate::tls::pinned_client_config(pin));
+        }
         Remote {
             url: url.trim_end_matches('/').to_string(),
             token: token.map(str::to_string),
-            http: reqwest::Client::builder()
-                .timeout(REQUEST_TIMEOUT)
-                .build()
-                .expect("an HTTP client"),
+            http: builder.build().expect("an HTTP client"),
         }
     }
 
@@ -490,7 +495,7 @@ pub async fn run_sync(state: &AppState) {
     };
     let _guard = state.sync_lock.lock().await;
     state.sync_running.store(true, Ordering::SeqCst);
-    let remote = Remote::new(&row.url, Some(&row.token));
+    let remote = Remote::pinned(&row.url, Some(&row.token), row.pinned_cert.as_deref());
     let outcome = sync_once(state, &remote).await;
     state.sync_running.store(false, Ordering::SeqCst);
     if let Err(error) = outcome {

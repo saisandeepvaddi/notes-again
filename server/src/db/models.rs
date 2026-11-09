@@ -147,4 +147,5 @@ pub struct SyncRemoteRow {
     pub last_changed_at: Option<Ts>,
     pub last_error: Option<String>,
     pub created_at: Ts,
+    pub pinned_cert: Option<String>,
 }

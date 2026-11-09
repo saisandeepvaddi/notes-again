@@ -7,6 +7,7 @@ const ConnectionsSchema = z.object({
   network: z.object({
     enabled: z.boolean(),
     port: z.number().nullable(),
+    fingerprint: z.string().nullable().default(null),
     urls: z.array(z.string()),
     paired_devices: z.number(),
   }),
@@ -17,6 +18,7 @@ const PairingSchema = z.object({
   token: z.string(),
   server: z.string(),
   alt: z.string().nullable(),
+  fingerprint: z.string(),
 });
 export type Pairing = z.infer<typeof PairingSchema>;
 

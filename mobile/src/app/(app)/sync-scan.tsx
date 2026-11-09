@@ -9,7 +9,7 @@ export default function SyncScan() {
     <ScanScreen
       purpose="Notes Again uses the camera only to read the sync QR code shown on your computer or server."
       onLink={async (link) => {
-        await connect.mutateAsync({ url: link.server, token: link.token });
+        await connect.mutateAsync({ url: link.server, token: link.token, fingerprint: link.fp });
         router.back();
       }}
     />

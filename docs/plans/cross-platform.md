@@ -107,7 +107,7 @@ Done when every row above is ✓ and the Maestro suite passes. Left: list sort a
 ## Phase 6: hardening
 
 - Pinned TLS for the desktop's local-network listener (done): self-signed certificate per desktop, fingerprint in the QR link, pinned by the phone's Rust sync client. Covered by `tests/lan.rs` and `tests/sync_relay.rs` (wrong fingerprint and plain HTTP are refused).
-- Performance budgets checked in CI: desktop cold start under 2 s, mobile list scroll at 60 fps with 10k notes, sync of 10k notes under 10 s.
+- Performance budgets (server side done): `server/tests/perf.rs` with 10,000 notes measured list/sort/filter 5–13 ms, due 47 ms, search 11–27 ms, a first sync of all of it 4–7 s, and steady idle syncs about 11 ms (the first idle sync after a 10k-row pull pays a one-off ~0.6 s). Still to measure: desktop cold start, and mobile list scrolling with 10k notes on a device.
 - Accessibility pass on mobile (screen reader labels, dynamic type).
 
 ## Order and dependencies

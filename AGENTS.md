@@ -25,7 +25,7 @@ Personal, self-hosted spaced-repetition app: freeform markdown notes organized i
 ## Verifying changes
 
 - Frontend: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm test` (vitest unit tests in `frontend/tests/` for pure modules; keep UI flows in E2E).
-- Server: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test` (from `server/`), or `make check-server test-server`. API behaviour is tested in `server/tests/` through `tests/common` (`TestApp` drives the real router in-process on a temp DB, `TestApp::with` adjusts the `Config`, `serve()` puts it on a real port for sync tests); Firebase and Cloudflare Access tests sign real RS256 tokens with keys from `tests/common/jwt.rs`. Pure logic keeps unit tests next to the code.
+- Server: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test` (from `server/`), or `make check-server test-server`. API behaviour is tested in `server/tests/` through `tests/common` (`TestApp` drives the real router in-process on a temp DB, `TestApp::with` adjusts the `Config`, `serve()` puts it on a real port for sync tests); Firebase and Cloudflare Access tests sign real RS256 tokens with keys from `tests/common/jwt.rs`. Pure logic keeps unit tests next to the code. `tests/perf.rs` is an opt-in budget check with 10,000 notes (list, due, search, ids, a first sync and idle syncs): `cargo test --release --test perf -- --ignored --nocapture`.
 - Extension: `pnpm typecheck`, `pnpm test`.
 - Desktop: `cargo build` and `cargo fmt` in `desktop/src-tauri`; `pnpm dev` to run it against the repo's SPA build.
 - Mobile: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm doctor` after dependency changes.

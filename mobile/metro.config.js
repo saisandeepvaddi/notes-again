@@ -1,6 +1,8 @@
 const path = require("node:path");
 const { getDefaultConfig } = require("expo/metro-config");
 
+process.env.EXPO_NO_BUNDLE_SPLITTING ??= "1";
+
 const config = getDefaultConfig(__dirname);
 const webSource = path.resolve(__dirname, "../frontend/src");
 const appRoot = path.join(__dirname, "package.json");

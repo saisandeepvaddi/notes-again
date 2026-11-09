@@ -178,7 +178,8 @@ export function NewNoteScreen() {
                 multiline
                 submitBehavior="blurAndSubmit"
                 returnKeyType="next"
-                accessibilityLabel="Title"
+              accessibilityLabel="Title"
+              testID="note-title"
                 style={{
                   color: colors.foreground,
                   fontFamily: family.semibold,

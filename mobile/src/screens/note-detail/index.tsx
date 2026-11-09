@@ -317,6 +317,7 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
           submitBehavior="blurAndSubmit"
           returnKeyType="done"
           accessibilityLabel="Title"
+          testID="note-title"
           style={{
             color: colors.foreground,
             fontFamily: family.semibold,

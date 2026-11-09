@@ -15,6 +15,7 @@ Don't trust remembered Expo or React Native APIs. Check the `expo` major in `pac
 - `src/components/note-markdown.tsx` is an Expo DOM component (`"use dom"`): note bodies render in a webview with the same `markdown-exit` + Shiki setup and `.markdown-content` styles as the web app's `NoteContent`. It reports its height back through `onHeight`, because `matchContents` collapses inside a ScrollView.
 - `src/components/rich-editor/` is the note editor, the same MDXEditor setup as the web app's `MarkdownEditor`, running in an Expo DOM component. Note detail edits in place and autosaves (`use-note-autosave.ts`, 800 ms like the web app); new notes use it with an explicit Save. The native keyboard toolbar drives the editor through `useDOMImperativeHandle`, and the DOM side reports format state, focus, caret and height back. `EditorBridge` holds the native refs (React Compiler rejects refs passed around in plain objects). `lexical` and `@lexical/link` are pinned to the version MDXEditor resolves; a second copy breaks editor commands. Keyboard tracking comes from `react-native-keyboard-controller` (`KeyboardProvider` wraps the root layout).
 - `src/theme.ts`: the web app's tokens (DESIGN.md) as hex values for light and dark.
+- `src/hooks/use-new-note-draft.ts` stores one unfinished note in the device's documents directory, using a temporary file and replacement. It shares the pure draft schema with web; drafts stay on the device and out of sync. `src/utils/note-save-queue.ts` serializes autosaves; sharing, deletion and guarded navigation must await `flush()` and handle rejection.
 
 ## On-device server
 
@@ -38,5 +39,9 @@ Follow [DESIGN.md](../DESIGN.md), sized for touch: 44pt minimum targets, 15–17
 - `<Link asChild>` drops a `Pressable`'s function `style`, so rows navigate with `router.push`.
 
 ## Verify
+
+`pnpm check:ios-export` runs a production iOS export and checks that the note renderer and editor HTML reference existing bundled resources. Metro sets `EXPO_NO_BUNDLE_SPLITTING=1` by default because Expo CLI 57.0.33 renames DOM artifacts without updating their dependency references; re-evaluate this opt-out on an SDK/CLI upgrade.
+
+`pnpm check:ios-ui` builds an unsigned release app and runs `mobile/e2e/WritingSafetyTests.swift` through XCTest on a newly created, disposable simulator. It needs Xcode, an installed iPhone runtime, CocoaPods' Ruby `xcodeproj` gem, generated `ios/`, pods and the Rust XCFramework. The script deletes only the simulator it created and prints the retained build/test artifact directory. The tests refuse to run on a simulator not named for writing-safety auditing. Set `IOS_UI_BUILD_DIR` to reuse an existing DerivedData directory. The runner checks shared Markdown through the simulator clipboard, not the test runner's separate pasteboard access.
 
 `pnpm typecheck`, `pnpm lint`, and `npx expo-doctor` after dependency or `app.json` changes (pnpm 12's own `pnpm doctor` shadows the script). Run the app against a throwaway backend (`DB_PATH=/tmp/x.db ADMIN_PASSWORD=… cargo run --manifest-path server/Cargo.toml -- serve --host 0.0.0.0 --port 8300`) and check the screen you changed in a simulator.

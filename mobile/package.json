@@ -1,7 +1,21 @@
 {
   "name": "notes-again-mobile",
-  "main": "expo-router/entry",
   "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "start:tailscale": "REACT_NATIVE_PACKAGER_HOSTNAME=$(tailscale ip -4) expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "check:ios-export": "node scripts/check-ios-export.mjs",
+    "check:ios-ui": "sh scripts/check-ios-ui.sh",
+    "doctor": "expo-doctor",
+    "format": "oxfmt"
+  },
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",
     "@expo-google-fonts/geist-mono": "^0.4.3",
@@ -53,17 +67,5 @@
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
     "typescript": "~6.0.3"
-  },
-  "scripts": {
-    "start": "expo start",
-    "start:tailscale": "REACT_NATIVE_PACKAGER_HOSTNAME=$(tailscale ip -4) expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
-    "lint": "oxlint",
-    "doctor": "expo-doctor",
-    "format": "oxfmt"
-  },
-  "private": true
+  }
 }

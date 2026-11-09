@@ -1,6 +1,7 @@
 /// <reference types="chrome" />
 import { createServer } from "node:http";
 import path from "node:path";
+import type { Settings } from "../lib/settings";
 import {
   chromium,
   expect,
@@ -171,4 +172,60 @@ test("restricted-page popup explains fallback without losing selection", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath("restricted-popup.png") });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("desktop setup has a dedicated connection-link field and persists the decoded connection", async ({
+  capture,
+}, testInfo) => {
+  const { page, worker, baseUrl } = capture;
+  await page.goto(`chrome-extension://${new URL(worker.url()).host}/options.html`);
+  await page.getByRole("button", { name: "Use the desktop app", exact: true }).click();
+  const link = `notesagain://connect?server=${encodeURIComponent(baseUrl)}&token=nal_browser_test`;
+  const field = page.getByLabel("Desktop connection link");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveAttribute("type", "password");
+  await expect(page.getByLabel("Server URL", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("API token", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("App URL (optional)")).toHaveCount(0);
+  await field.fill(link);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Saved. Keep Notes Again running when capturing pages.",
+  );
+  const connection = await worker.evaluate(async () => {
+    const { settings } = await chrome.storage.local.get<{ settings: Settings }>("settings");
+    return {
+      server: settings.serverUrl,
+      mode: settings.connectionMode,
+      tokenMatches: settings.apiToken === "nal_browser_test",
+      appUrl: settings.appUrl,
+    };
+  });
+  expect(connection).toEqual({ server: baseUrl, mode: "desktop", tokenMatches: true, appUrl: "" });
+  await page.getByRole("button", { name: "Test connection", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText(/Connected: 0 project\(s\), 0 tag\(s\)/);
+  await page.reload();
+  await expect(field).toHaveValue(link);
+  await expect(page.getByLabel("Server URL", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("desktop-connection.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveCSS("background-color", "rgb(24, 24, 27)");
+  await page.screenshot({ path: testInfo.outputPath("desktop-connection-narrow-dark.png") });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("a connection link pasted in Server URL switches to the correct input", async ({
+  capture,
+}) => {
+  const { page, worker, baseUrl } = capture;
+  await page.goto(`chrome-extension://${new URL(worker.url()).host}/options.html`);
+  const link = `notesagain://connect?server=${encodeURIComponent(baseUrl)}&token=nal_browser_test`;
+  await page.getByLabel("Server URL", { exact: true }).fill(link);
+  await expect(page.getByLabel("Desktop connection link")).toHaveValue(link);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Saved. Keep Notes Again running when capturing pages.",
+  );
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

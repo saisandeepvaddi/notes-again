@@ -6,6 +6,7 @@ export interface Settings {
   apiToken: string;
   lastProject: string;
   lastNoteOnly: boolean;
+  connectionMode?: "desktop" | "server";
 }
 
 export const DESKTOP_APP_URL = "http://127.0.0.1:47821";

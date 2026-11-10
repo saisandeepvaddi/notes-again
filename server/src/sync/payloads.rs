@@ -19,10 +19,17 @@ pub enum Kind {
     Project,
     Tag,
     Note,
+    Attachment,
 }
 
 impl Kind {
-    pub const ALL: [Kind; 4] = [Kind::Settings, Kind::Project, Kind::Tag, Kind::Note];
+    pub const ALL: [Kind; 5] = [
+        Kind::Settings,
+        Kind::Project,
+        Kind::Tag,
+        Kind::Note,
+        Kind::Attachment,
+    ];
 
     pub fn index(&self) -> usize {
         Kind::ALL.iter().position(|k| k == self).unwrap_or(0)
@@ -34,6 +41,7 @@ impl Kind {
             Kind::Project => "project",
             Kind::Tag => "tag",
             Kind::Note => "note",
+            Kind::Attachment => "attachment",
         }
     }
 
@@ -47,6 +55,7 @@ impl Kind {
             Kind::Project => "projects",
             Kind::Tag => "tags",
             Kind::Note => "notes",
+            Kind::Attachment => "attachments",
         }
     }
 }
@@ -163,6 +172,19 @@ pub async fn find_row(
             name: Some(n.name),
             content: Some(n.content),
         }),
+        Kind::Attachment => sqlx::query_as::<_, (i64, i64, String)>(
+            "SELECT id, sync_version, name FROM attachments WHERE uid = ?",
+        )
+        .bind(uid)
+        .fetch_optional(conn)
+        .await?
+        .map(|(id, sync_version, name)| RowRef {
+            id,
+            uid: uid.to_string(),
+            sync_version,
+            name: Some(name),
+            content: None,
+        }),
     })
 }
 
@@ -217,6 +239,23 @@ pub async fn dump(conn: &mut Conn, kind: Kind, uid: &str) -> Result<Option<Paylo
             p.insert("created_at".into(), ts(Some(row.created_at)));
             p.insert("is_difficulty".into(), Value::Bool(row.is_difficulty));
             p.insert("default_ease_factor".into(), float(row.default_ease_factor));
+        }
+        Kind::Attachment => {
+            let row: Option<(String, String, String, i64, String, Ts)> = sqlx::query_as(
+                "SELECT note_uid, name, mime, size, hash, created_at FROM attachments WHERE uid = ?",
+            )
+            .bind(uid)
+            .fetch_optional(&mut *conn)
+            .await?;
+            let Some((note, name, mime, size, hash, created_at)) = row else {
+                return Ok(None);
+            };
+            p.insert("note".into(), Value::String(note));
+            p.insert("name".into(), Value::String(name));
+            p.insert("mime".into(), Value::String(mime));
+            p.insert("size".into(), Value::from(size));
+            p.insert("hash".into(), Value::String(hash));
+            p.insert("created_at".into(), ts(Some(created_at)));
         }
         Kind::Note => {
             let Some(note) = find_note(conn, uid).await? else {
@@ -684,6 +723,34 @@ pub async fn apply(
             }
         }
         Kind::Note => apply_note(conn, uid, data, keep_text).await?,
+        Kind::Attachment => {
+            if find_row(conn, Kind::Attachment, uid).await?.is_some() {
+                return Ok(());
+            }
+            let note = get_str(data, "note", None).unwrap_or_default();
+            let mime = get_str(data, "mime", None).unwrap_or_default();
+            let hash = get_str(data, "hash", None).unwrap_or_default();
+            let size = get_i64(data, "size", None).unwrap_or(-1);
+            if !crate::attachments::valid_metadata(uid, &note, &mime, &hash, size) {
+                return Ok(());
+            }
+            let name =
+                crate::attachments::clean_name(&get_str(data, "name", None).unwrap_or_default());
+            let created_at = get_ts(data, "created_at", None).unwrap_or(now);
+            sqlx::query(
+                "INSERT INTO attachments (uid, sync_version, note_uid, name, mime, size, hash, created_at) \
+                 VALUES (?, 0, ?, ?, ?, ?, ?, ?)",
+            )
+            .bind(uid)
+            .bind(note)
+            .bind(name)
+            .bind(mime)
+            .bind(size)
+            .bind(hash)
+            .bind(created_at)
+            .execute(conn)
+            .await?;
+        }
     }
     Ok(())
 }
@@ -716,6 +783,12 @@ pub async fn delete_row(conn: &mut Conn, kind: Kind, row: &RowRef) -> Result<(),
                 .await?;
         }
         Kind::Note => hard_delete_notes(conn, &[row.id]).await?,
+        Kind::Attachment => {
+            sqlx::query("DELETE FROM attachments WHERE id = ?")
+                .bind(row.id)
+                .execute(conn)
+                .await?;
+        }
     }
     Ok(())
 }

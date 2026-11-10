@@ -43,6 +43,23 @@ pub fn sniff(data: &[u8]) -> Option<(&'static str, usize)> {
     }
 }
 
+pub fn valid_metadata(uid: &str, note: &str, mime: &str, hash: &str, size: i64) -> bool {
+    let limit = match mime {
+        "image/png" | "image/jpeg" | "image/gif" | "image/webp" => MAX_IMAGE,
+        "application/pdf" => MAX_PDF,
+        _ => return false,
+    };
+    let hex = |value: &str, len: usize| {
+        value.len() == len && value.bytes().all(|b| b.is_ascii_hexdigit())
+    };
+    hex(uid, 32)
+        && hex(hash, 64)
+        && !note.is_empty()
+        && note.len() <= 64
+        && size >= 0
+        && size as usize <= limit
+}
+
 pub fn clean_name(raw: &str) -> String {
     let base = raw.rsplit(['/', '\\']).next().unwrap_or("");
     let cleaned: String = base
@@ -232,4 +249,52 @@ pub fn router() -> Router<AppState> {
         )
         .route("/attachments/{uid}/file", get(file))
         .route("/attachments/{uid}", delete(remove))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const UID: &str = "0123456789abcdef0123456789abcdef";
+
+    fn hash() -> String {
+        "a".repeat(64)
+    }
+
+    #[test]
+    fn synced_metadata_must_describe_an_allowed_file() {
+        assert!(valid_metadata(UID, "note", "image/png", &hash(), 10));
+        assert!(valid_metadata(
+            UID,
+            "note",
+            "application/pdf",
+            &hash(),
+            25 * 1024 * 1024
+        ));
+        for (uid, note, mime, hash_value, size) in [
+            ("short", "note", "image/png", hash(), 10),
+            (UID, "", "image/png", hash(), 10),
+            (UID, "note", "image/svg+xml", hash(), 10),
+            (UID, "note", "text/html", hash(), 10),
+            (UID, "note", "image/png", "zz".repeat(32), 10),
+            (UID, "note", "image/png", hash(), -1),
+            (UID, "note", "image/png", hash(), 10 * 1024 * 1024 + 1),
+            (UID, "note", "application/pdf", hash(), 25 * 1024 * 1024 + 1),
+        ] {
+            assert!(
+                !valid_metadata(uid, note, mime, &hash_value, size),
+                "{mime} {size}"
+            );
+        }
+    }
+
+    #[test]
+    fn names_lose_paths_and_control_characters() {
+        assert_eq!(clean_name("../../etc/passwd"), "passwd");
+        assert_eq!(clean_name("C:\\dir\\file.pdf"), "file.pdf");
+        assert_eq!(clean_name(".hidden"), "hidden");
+        assert_eq!(clean_name("a\u{0}b\"c.png"), "abc.png");
+        assert_eq!(clean_name(""), "attachment");
+        assert_eq!(clean_name(&"x".repeat(500)).len(), 120);
+    }
 }

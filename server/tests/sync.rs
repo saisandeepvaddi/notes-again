@@ -626,3 +626,169 @@ async fn a_conflict_is_listed_and_resolved_with_the_chosen_text() {
         .await;
     assert_eq!(again.code(), 404);
 }
+
+const FILE: &str = "%PDF-1.4 synced attachment";
+
+async fn attach(app: &TestApp, note_uid: &str, name: &str, body: &str) -> String {
+    let id = app
+        .scalar_i64(&format!("SELECT id FROM notes WHERE uid = '{note_uid}'"))
+        .await;
+    let created = app
+        .post(&format!("/api/notes/{id}/attachments"))
+        .header("x-file-name", name)
+        .raw("application/octet-stream", body)
+        .send()
+        .await;
+    assert_eq!(created.code(), 201);
+    created.json()["uid"].as_str().unwrap().to_string()
+}
+
+async fn file_of(app: &TestApp, uid: &str) -> (u16, String) {
+    let response = app
+        .get(&format!("/api/attachments/{uid}/file"))
+        .send()
+        .await;
+    (response.code(), response.text())
+}
+
+#[tokio::test]
+async fn an_attachment_and_its_bytes_reach_the_server_and_another_device() {
+    let pair = Pair::new().await;
+    let first = pair.desktop().await;
+    let second = pair.desktop().await;
+    let note = add_note(&first, "With file", "body", None, &[]).await;
+    let attachment = attach(&first, &note, "paper.pdf", FILE).await;
+    sync(&first).await;
+    assert_eq!(file_of(&pair.server, &attachment).await, (200, FILE.into()));
+
+    sync(&second).await;
+    assert_eq!(file_of(&second, &attachment).await, (200, FILE.into()));
+    let name = second
+        .scalar_opt_str(&format!(
+            "SELECT name FROM attachments WHERE uid = '{attachment}'"
+        ))
+        .await;
+    assert_eq!(name.as_deref(), Some("paper.pdf"));
+}
+
+#[tokio::test]
+async fn deleting_an_attachment_or_its_note_removes_it_everywhere() {
+    let pair = Pair::new().await;
+    let first = pair.desktop().await;
+    let second = pair.desktop().await;
+    let note = add_note(&first, "Keep", "body", None, &[]).await;
+    let gone = attach(&first, &note, "a.pdf", FILE).await;
+    let kept = attach(&first, &note, "b.pdf", "%PDF-1.4 other").await;
+    sync(&first).await;
+    sync(&second).await;
+
+    let response = first
+        .delete(&format!("/api/attachments/{gone}"))
+        .send()
+        .await;
+    assert_eq!(response.code(), 204);
+    sync(&first).await;
+    sync(&second).await;
+    assert_eq!(file_of(&pair.server, &gone).await.0, 404);
+    assert_eq!(file_of(&second, &gone).await.0, 404);
+    assert_eq!(file_of(&second, &kept).await.0, 200);
+    assert_eq!(
+        pair.server
+            .scalar_i64("SELECT COUNT(*) FROM attachment_blobs")
+            .await,
+        1
+    );
+
+    let id = first
+        .scalar_i64(&format!("SELECT id FROM notes WHERE uid = '{note}'"))
+        .await;
+    first.delete(&format!("/api/notes/{id}")).send().await;
+    first
+        .delete(&format!("/api/notes/{id}/permanent"))
+        .send()
+        .await;
+    sync(&first).await;
+    sync(&second).await;
+    for app in [&pair.server, &second] {
+        assert_eq!(app.scalar_i64("SELECT COUNT(*) FROM attachments").await, 0);
+        assert_eq!(
+            app.scalar_i64("SELECT COUNT(*) FROM attachment_blobs")
+                .await,
+            0
+        );
+    }
+}
+
+#[tokio::test]
+async fn bytes_that_are_missing_arrive_on_a_later_sync() {
+    let pair = Pair::new().await;
+    let first = pair.desktop().await;
+    let second = pair.desktop().await;
+    let note = add_note(&first, "Late bytes", "body", None, &[]).await;
+    let attachment = attach(&first, &note, "late.pdf", FILE).await;
+    sync(&first).await;
+    let saved: Vec<u8> = sqlx::query_scalar("SELECT data FROM attachment_blobs")
+        .fetch_one(&pair.server.state.db)
+        .await
+        .unwrap();
+    pair.server.exec("DELETE FROM attachment_blobs").await;
+
+    sync(&second).await;
+    assert_eq!(file_of(&second, &attachment).await.0, 404);
+    assert_eq!(
+        second.scalar_i64("SELECT COUNT(*) FROM attachments").await,
+        1
+    );
+
+    sqlx::query("INSERT INTO attachment_blobs (hash, mime, size, data) SELECT hash, mime, size, ? FROM attachments LIMIT 1")
+        .bind(saved)
+        .execute(&pair.server.state.db)
+        .await
+        .unwrap();
+    sync(&second).await;
+    assert_eq!(file_of(&second, &attachment).await, (200, FILE.into()));
+}
+
+#[tokio::test]
+async fn blob_uploads_are_verified_and_must_belong_to_an_attachment() {
+    let pair = Pair::new().await;
+    let first = pair.desktop().await;
+    let note = add_note(&first, "Guarded", "body", None, &[]).await;
+    attach(&first, &note, "a.pdf", FILE).await;
+    sync(&first).await;
+    let hash: String = sqlx::query_scalar("SELECT hash FROM attachments")
+        .fetch_one(&pair.server.state.db)
+        .await
+        .unwrap();
+    let wrong = pair
+        .server
+        .put(&format!("/api/sync/blobs/{hash}"))
+        .raw("application/octet-stream", "%PDF-1.4 tampered")
+        .send()
+        .await;
+    assert_eq!(wrong.code(), 400);
+    let orphan = "%PDF-1.4 nobody asked for this";
+    let digest = {
+        use sha2::{Digest, Sha256};
+        hex::encode(Sha256::digest(orphan.as_bytes()))
+    };
+    let refused = pair
+        .server
+        .put(&format!("/api/sync/blobs/{digest}"))
+        .raw("application/octet-stream", orphan)
+        .send()
+        .await;
+    assert_eq!(refused.code(), 404);
+    let html = "<html><script>1</script></html>";
+    let digest = {
+        use sha2::{Digest, Sha256};
+        hex::encode(Sha256::digest(html.as_bytes()))
+    };
+    let unsupported = pair
+        .server
+        .put(&format!("/api/sync/blobs/{digest}"))
+        .raw("application/octet-stream", html)
+        .send()
+        .await;
+    assert_eq!(unsupported.code(), 415);
+}

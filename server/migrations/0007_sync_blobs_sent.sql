@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS sync_blobs_sent (
+	hash VARCHAR NOT NULL PRIMARY KEY
+);

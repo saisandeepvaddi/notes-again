@@ -156,7 +156,7 @@ async fn pending_changes(
             deleted: false,
         });
     }
-    for kind in [Kind::Project, Kind::Tag, Kind::Note] {
+    for kind in [Kind::Project, Kind::Tag, Kind::Note, Kind::Attachment] {
         let rows: Vec<(String, i64)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
             "SELECT uid, sync_version FROM {} WHERE sync_version > ? AND sync_version <= ?",
             kind.table()
@@ -475,7 +475,9 @@ pub struct SyncOutcome {
 
 pub async fn sync_once(state: &AppState, remote: &Remote) -> Result<SyncOutcome, SyncError> {
     let pushed = push(state, remote).await?;
+    let _ = super::blobs::upload_missing(state, remote).await;
     let pulled = pull(state, remote).await?;
+    let _ = super::blobs::download_missing(state, remote).await;
     let now = Ts::now();
     sqlx::query(
         "UPDATE sync_remote SET last_synced_at = ?, last_changed_at = CASE WHEN ? THEN ? ELSE last_changed_at END, \

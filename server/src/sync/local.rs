@@ -292,6 +292,9 @@ async fn disconnect(State(state): State<AppState>) -> ApiResult<StatusCode> {
     sqlx::query("DELETE FROM sync_bases")
         .execute(&mut *tx)
         .await?;
+    sqlx::query("DELETE FROM sync_blobs_sent")
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM sync_conflicts")
         .execute(&mut *tx)
         .await?;

@@ -235,6 +235,22 @@ async fn push_note(
     result(conn, change, status, Some(&change.uid), None).await
 }
 
+async fn push_attachment(conn: &mut Conn, change: &Change) -> Result<ChangeResult, sqlx::Error> {
+    let data = change.data.clone().unwrap_or_default();
+    if find_row(conn, Kind::Attachment, &change.uid)
+        .await?
+        .is_none()
+    {
+        if change.base.as_ref() == Some(&data)
+            && tombstoned(conn, Kind::Attachment, &change.uid).await?
+        {
+            return result(conn, change, Status::Deleted, None, None).await;
+        }
+        apply(conn, Kind::Attachment, &change.uid, &data, false).await?;
+    }
+    result(conn, change, Status::Ok, Some(&change.uid), None).await
+}
+
 async fn push(
     State(state): State<AppState>,
     Body(body): Body<PushBody>,
@@ -251,6 +267,7 @@ async fn push(
             match change.kind {
                 Kind::Settings => push_settings(&mut tx, change).await?,
                 Kind::Note => push_note(&mut tx, change, &aliases).await?,
+                Kind::Attachment => push_attachment(&mut tx, change).await?,
                 _ => push_named(&mut tx, change, &mut aliases).await?,
             }
         };
@@ -307,7 +324,7 @@ async fn pull(
             data: dump(&mut tx, Kind::Settings, SETTINGS_UID).await?,
         });
     }
-    for kind in [Kind::Project, Kind::Tag] {
+    for kind in [Kind::Project, Kind::Tag, Kind::Attachment] {
         let uids: Vec<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             "SELECT uid FROM {} WHERE sync_version > ?",
             kind.table()

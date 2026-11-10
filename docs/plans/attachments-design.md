@@ -22,8 +22,9 @@ Images and PDFs attached to a note. Decisions, in build order. Update this file 
 
 ## Sync
 
-- Metadata syncs as a new `attachment` kind through the existing push/pull, with the same tombstones and echo handling.
-- Blob bytes move separately: `GET/PUT /api/sync/blobs/{hash}`. A client uploads blobs the remote lacks before pushing metadata and downloads missing blobs after pulling, so a metadata row never arrives ahead of its bytes. Transfers are resumable per blob and verified against the hash.
+- Metadata syncs as an immutable `attachment` kind through the existing push/pull (`sync/payloads.rs`), with tombstones and echo handling like notes. Received metadata is validated (uid and hash shape, allowed type, size limit) and ignored otherwise.
+- Bytes move separately (`sync/blobs.rs`): `POST /api/sync/blobs/missing`, `PUT/GET /api/sync/blobs/{hash}`. A sync pushes metadata, uploads blobs the remote lacks, pulls, then downloads blobs it lacks. A metadata row may arrive before its bytes; the file reports 404 until a later sync fetches it, so an interrupted transfer just resumes. Downloads and uploads are verified against the SHA-256, the sniffed type and the size limit, and the server only accepts bytes that an attachment row references.
+- `sync_blobs_sent` (device-local, cleared on disconnect) remembers which hashes the remote already has.
 
 ## Offline, export and backups
 
@@ -34,5 +35,5 @@ Images and PDFs attached to a note. Decisions, in build order. Update this file 
 
 1. (Done: server, web) Server API + limits + lifecycle + tests; web upload (paste/drop/button), rendering and PDF links.
 2. Backup/restore and export ZIP verification; orphan cleanup.
-3. Sync kind and blob endpoints; desktop and cross-device tests (deletion, conflicts, interrupted transfer).
+3. (Done) Sync kind and blob endpoints; cross-device tests (deletion, late bytes, tampering).
 4. Mobile: pick/paste, render in the DOM renderer, offline.

@@ -29,6 +29,7 @@ fn api_router(state: &AppState) -> Router<AppState> {
     Router::new()
         .merge(crate::notes::bulk_routes::router())
         .merge(crate::notes::revisions::router())
+        .merge(crate::attachments::router())
         .merge(crate::notes::routes::router())
         .merge(crate::groups::router())
         .merge(crate::imports::router())

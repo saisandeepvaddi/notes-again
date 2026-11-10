@@ -1,4 +1,5 @@
 pub mod app;
+pub mod attachments;
 pub mod auth;
 pub mod backups;
 pub mod config;

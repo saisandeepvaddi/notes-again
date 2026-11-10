@@ -37,3 +37,8 @@ CREATE TRIGGER IF NOT EXISTS sync_note_tags_after_delete AFTER DELETE ON note_ta
 CREATE INDEX IF NOT EXISTS ix_note_revisions_note ON note_revisions (note_id, id);
 CREATE TRIGGER IF NOT EXISTS note_revisions_before_update BEFORE UPDATE OF name, content ON notes WHEN (old.name IS NOT new.name OR old.content IS NOT new.content) AND COALESCE((SELECT MAX(created_at) FROM note_revisions WHERE note_id = old.id), '') < strftime('%Y-%m-%d %H:%M:%S', 'now', '-10 minutes') BEGIN INSERT INTO note_revisions (note_id, name, content, created_at) VALUES (old.id, old.name, old.content, strftime('%Y-%m-%d %H:%M:%f000', 'now')); DELETE FROM note_revisions WHERE note_id = old.id AND id NOT IN (SELECT id FROM note_revisions WHERE note_id = old.id ORDER BY id DESC LIMIT 50); END;
 CREATE TRIGGER IF NOT EXISTS note_revisions_after_delete AFTER DELETE ON notes BEGIN DELETE FROM note_revisions WHERE note_id = old.id; END;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_attachments_uid ON attachments (uid);
+CREATE INDEX IF NOT EXISTS ix_attachments_note ON attachments (note_uid);
+CREATE INDEX IF NOT EXISTS ix_attachments_hash ON attachments (hash);
+CREATE TRIGGER IF NOT EXISTS attachments_after_delete AFTER DELETE ON attachments BEGIN DELETE FROM attachment_blobs WHERE hash = old.hash AND NOT EXISTS (SELECT 1 FROM attachments WHERE hash = old.hash); END;
+CREATE TRIGGER IF NOT EXISTS notes_attachments_after_delete AFTER DELETE ON notes BEGIN DELETE FROM attachments WHERE note_uid = old.uid; END;

@@ -53,8 +53,14 @@ import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 import { SyncConflictBanner } from "@/sync/ConflictResolver";
-const RevisionsPanel = lazy(() => import("@/revisions/RevisionsPanel").then((module) => ({ default: module.RevisionsPanel })));
-const DiscussionPanel = lazy(() => import("@/discussion/DiscussionPanel").then((module) => ({ default: module.DiscussionPanel })));
+import { uploadAttachment } from "@/attachments/api";
+import { ATTACHMENT_ACCEPT, attachmentMarkdown } from "@/attachments/uri";
+const RevisionsPanel = lazy(() =>
+  import("@/revisions/RevisionsPanel").then((module) => ({ default: module.RevisionsPanel })),
+);
+const DiscussionPanel = lazy(() =>
+  import("@/discussion/DiscussionPanel").then((module) => ({ default: module.DiscussionPanel })),
+);
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -86,6 +92,24 @@ export function NoteDetail({ note }: NoteDetailProps) {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
   const [discussionMounted, setDiscussionMounted] = useState(false);
+  const contentRef = useRef(note.content);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [attaching, setAttaching] = useState(false);
+  const attachFile = async (file: File) => {
+    setAttaching(true);
+    try {
+      const info = await uploadAttachment(noteId, file);
+      changeContent(`${contentRef.current.trimEnd()}\n\n${attachmentMarkdown(info)}\n`);
+      setEditorKey((key) => key + 1);
+    } catch (failure) {
+      toast.add({
+        type: "error",
+        description: failure instanceof Error ? failure.message : "Could not attach the file.",
+      });
+    } finally {
+      setAttaching(false);
+    }
+  };
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyMounted, setHistoryMounted] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
@@ -97,6 +121,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
   useDocumentTitle(name.trim() || "Untitled note");
   const [editingTitle, setEditingTitle] = useState(false);
   const [content, setContent] = useState(note.content);
+  contentRef.current = content;
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInFlight = useRef<Promise<unknown> | null>(null);
@@ -397,12 +422,64 @@ export function NoteDetail({ note }: NoteDetailProps) {
           {noteTitleText(name).trim() || "Untitled"}
         </button>
         <div className="flex items-center justify-end gap-1">
-          <Button size="sm" variant="outline" onClick={() => {
-            void flushSave().then(() => { setHistoryMounted(true); setHistoryOpen(true); }, () => toast.add({ type: "error", description: "Save this note successfully before opening its history." }));
-          }}>History</Button>
-          <Button size="sm" variant="outline" onClick={() => {
-            void flushSave().then(() => { setDiscussionMounted(true); setDiscussionOpen(true); }, () => toast.add({ type: "error", description: "Save this note successfully before discussing it." }));
-          }}>Discuss</Button>
+          <input
+            ref={fileInput}
+            type="file"
+            hidden
+            accept={ATTACHMENT_ACCEPT}
+            aria-label="Attach a file"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void attachFile(file);
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={attaching}
+            onClick={() => fileInput.current?.click()}
+          >
+            {attaching ? "Attaching…" : "Attach"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void flushSave().then(
+                () => {
+                  setHistoryMounted(true);
+                  setHistoryOpen(true);
+                },
+                () =>
+                  toast.add({
+                    type: "error",
+                    description: "Save this note successfully before opening its history.",
+                  }),
+              );
+            }}
+          >
+            History
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void flushSave().then(
+                () => {
+                  setDiscussionMounted(true);
+                  setDiscussionOpen(true);
+                },
+                () =>
+                  toast.add({
+                    type: "error",
+                    description: "Save this note successfully before discussing it.",
+                  }),
+              );
+            }}
+          >
+            Discuss
+          </Button>
           <span
             role="status"
             aria-live="polite"
@@ -528,8 +605,36 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </header>
 
-      {historyMounted && <Suspense fallback={null}><RevisionsPanel noteId={noteId} name={name} content={content} open={historyOpen} onOpenChange={setHistoryOpen} onRestored={replaceText} /></Suspense>}
-      {discussionMounted && <Suspense fallback={<p role="status" className="px-4 text-xs text-muted-foreground">Opening Discuss…</p>}><DiscussionPanel key={noteId} noteId={noteId} title={noteTitleText(name)} open={discussionOpen} onOpenChange={setDiscussionOpen} beforeSend={flushSave} /></Suspense>}
+      {historyMounted && (
+        <Suspense fallback={null}>
+          <RevisionsPanel
+            noteId={noteId}
+            name={name}
+            content={content}
+            open={historyOpen}
+            onOpenChange={setHistoryOpen}
+            onRestored={replaceText}
+          />
+        </Suspense>
+      )}
+      {discussionMounted && (
+        <Suspense
+          fallback={
+            <p role="status" className="px-4 text-xs text-muted-foreground">
+              Opening Discuss…
+            </p>
+          }
+        >
+          <DiscussionPanel
+            key={noteId}
+            noteId={noteId}
+            title={noteTitleText(name)}
+            open={discussionOpen}
+            onOpenChange={setDiscussionOpen}
+            beforeSend={flushSave}
+          />
+        </Suspense>
+      )}
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent size="sm">
@@ -557,6 +662,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
           <MarkdownEditor
             key={editorKey}
             markdown={content}
+            noteId={noteId}
             onChange={changeContent}
             className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"
             contentClassName="markdown-paper"

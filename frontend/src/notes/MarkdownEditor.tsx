@@ -6,6 +6,7 @@ import {
   directivesPlugin,
   frontmatterPlugin,
   headingsPlugin,
+  imagePlugin,
   linkDialogPlugin,
   linkPlugin,
   listsPlugin,
@@ -16,6 +17,9 @@ import {
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
+import { useMemo } from "react";
+import { attachmentObjectUrl, uploadAttachment } from "@/attachments/api";
+import { attachmentUid } from "@/attachments/uri";
 import { codeMirrorTheme } from "./codeMirrorTheme";
 import { LinkPopover } from "./LinkPopover";
 
@@ -25,6 +29,7 @@ interface MarkdownEditorProps {
   placeholder?: string;
   className?: string;
   contentClassName?: string;
+  noteId?: number;
 }
 
 export function MarkdownEditor({
@@ -33,7 +38,22 @@ export function MarkdownEditor({
   placeholder = "Notes here",
   className,
   contentClassName,
+  noteId,
 }: MarkdownEditorProps) {
+  const images = useMemo(
+    () =>
+      imagePlugin({
+        imageUploadHandler:
+          noteId === undefined
+            ? undefined
+            : async (file) => `attachment:${(await uploadAttachment(noteId, file)).uid}`,
+        imagePreviewHandler: async (src) => {
+          const uid = attachmentUid(src);
+          return uid ? attachmentObjectUrl(uid) : src;
+        },
+      }),
+    [noteId],
+  );
   return (
     <div
       className={cn(
@@ -49,6 +69,7 @@ export function MarkdownEditor({
           listsPlugin(),
           quotePlugin(),
           headingsPlugin(),
+          images,
           linkPlugin(),
           linkDialogPlugin({ LinkDialog: LinkPopover }),
           tablePlugin(),

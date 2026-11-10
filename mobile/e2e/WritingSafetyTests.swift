@@ -115,4 +115,46 @@ final class WritingSafetyTests: XCTestCase {
     expectEmptyTitle(app.textViews["note-title"])
     app.buttons["Close"].tap()
   }
+  func testDiscussScreenDisclosesContextAndNeverSendsWithoutAKey() {
+    openNewNote()
+    discardIfNeeded()
+    let name = "Native discuss \(UUID().uuidString.prefix(8))"
+    let title = app.textViews["note-title"]
+    title.tap()
+    title.typeText(name)
+    let body = bodyEditor()
+    body.tap()
+    body.typeText("Discussion source body.")
+    app.buttons["Save"].tap()
+    XCTAssertTrue(app.buttons["Save"].waitForNonExistence(timeout: 20))
+    app.tabBars.buttons["Notes"].tap()
+    let row = app.links.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
+    XCTAssertTrue(row.waitForExistence(timeout: 20), app.debugDescription)
+    row.tap()
+    let discuss = app.buttons["Discuss this note"]
+    for _ in 0..<6 where !discuss.isHittable { app.swipeUp() }
+    discuss.tap()
+
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Your library is not sent")).firstMatch.waitForExistence(timeout: 20), app.debugDescription)
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Set your provider, model and key")).firstMatch.exists)
+    let send = app.buttons["Send to provider"]
+    for _ in 0..<6 where !send.exists { app.swipeUp() }
+    XCTAssertTrue(send.exists)
+    XCTAssertFalse(send.isEnabled)
+
+    for _ in 0..<6 where !app.buttons["Explain"].isHittable { app.swipeDown() }
+    app.buttons["Explain"].tap()
+    for _ in 0..<6 where !send.exists { app.swipeUp() }
+    XCTAssertFalse(send.isEnabled, "A suggestion alone must not send without a key")
+
+    for _ in 0..<6 where !app.buttons["Discuss settings"].isHittable { app.swipeDown() }
+    app.buttons["Discuss settings"].tap()
+    let key = app.secureTextFields["AI provider API key"]
+    XCTAssertTrue(key.waitForExistence(timeout: 20), app.debugDescription)
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "no automatic retries")).firstMatch.exists)
+    app.terminate()
+    app.launch()
+    openNewNote()
+    app.buttons["Close"].tap()
+  }
 }

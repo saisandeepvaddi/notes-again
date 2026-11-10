@@ -9,6 +9,7 @@ import {
   PlugsConnectedIcon,
   RepeatIcon,
   SignInIcon,
+  ChatCircleTextIcon,
 } from "@phosphor-icons/react";
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense, type ReactNode } from "react";
@@ -21,6 +22,7 @@ import { SignInSettings } from "./sign-in/SignInSettings";
 import { SyncSettings } from "./sync/SyncSettings";
 import { SystemSettings } from "./system/SystemSettings";
 import { useIsDesktop } from "@/sync/syncApi";
+import { DiscussionSettings } from "@/discussion/DiscussionSettings";
 
 const SECTIONS: Record<
   SettingsSection,
@@ -28,6 +30,7 @@ const SECTIONS: Record<
 > = {
   appearance: { label: "Appearance", icon: PaintBrushIcon, content: <AppearanceSettings /> },
   review: { label: "Review", icon: RepeatIcon, content: <SettingsForm /> },
+  discuss: { label: "Discuss", icon: ChatCircleTextIcon, content: <DiscussionSettings /> },
   "sign-in": { label: "Sign-in", icon: SignInIcon, content: <SignInSettings /> },
   sync: { label: "Sync", icon: CloudCheckIcon, content: <SyncSettings /> },
   devices: {

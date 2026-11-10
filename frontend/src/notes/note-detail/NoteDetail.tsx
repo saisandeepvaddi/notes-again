@@ -32,7 +32,7 @@ import {
   TrashIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DifficultySelector } from "../DifficultySelector";
 import { getDifficulty } from "../difficulty";
 import { useAttachTag } from "../hooks/useAttachTag";
@@ -53,6 +53,7 @@ import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 import { SyncConflictBanner } from "@/sync/ConflictResolver";
+const DiscussionPanel = lazy(() => import("@/discussion/DiscussionPanel").then((module) => ({ default: module.DiscussionPanel })));
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -82,6 +83,8 @@ export function NoteDetail({ note }: NoteDetailProps) {
   const { mutateAsync: restoreNote } = useRestoreNote({ noteId });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [discussionMounted, setDiscussionMounted] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
@@ -391,6 +394,9 @@ export function NoteDetail({ note }: NoteDetailProps) {
           {noteTitleText(name).trim() || "Untitled"}
         </button>
         <div className="flex items-center justify-end gap-1">
+          <Button size="sm" variant="outline" onClick={() => {
+            void flushSave().then(() => { setDiscussionMounted(true); setDiscussionOpen(true); }, () => toast.add({ type: "error", description: "Save this note successfully before discussing it." }));
+          }}>Discuss</Button>
           <span
             role="status"
             aria-live="polite"
@@ -515,6 +521,8 @@ export function NoteDetail({ note }: NoteDetailProps) {
           <SyncConflictBanner noteId={note.id} mine={{ name, content }} onResolved={replaceText} />
         </div>
       </header>
+
+      {discussionMounted && <Suspense fallback={<p role="status" className="px-4 text-xs text-muted-foreground">Opening Discuss…</p>}><DiscussionPanel key={noteId} noteId={noteId} title={noteTitleText(name)} open={discussionOpen} onOpenChange={setDiscussionOpen} beforeSend={flushSave} /></Suspense>}
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent size="sm">

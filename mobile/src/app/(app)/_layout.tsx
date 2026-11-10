@@ -7,6 +7,8 @@ export default function AppLayout() {
     <Stack screenOptions={options}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="note/[id]" options={{ title: "" }} />
+      <Stack.Screen name="discuss/[id]" options={{ title: "Discuss this note" }} />
+      <Stack.Screen name="discuss-settings" options={{ title: "Discuss settings" }} />
       <Stack.Screen
         name="review"
         options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}

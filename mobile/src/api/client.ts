@@ -104,6 +104,16 @@ export async function request(path: string, options: RequestOptions = {}): Promi
   }
 }
 
+export async function streamRequest(path: string, body: unknown, signal: AbortSignal): Promise<Response> {
+  const connection = currentConnection();
+  if (!connection) throw new ApiError("Not connected to a server", 0);
+  const headers: Record<string, string> = { Accept: "text/event-stream", "Content-Type": "application/json" };
+  if (connection.token) headers.Authorization = `Bearer ${connection.token}`;
+  const response = await send(connection.serverUrl, path, { method: "POST", body, signal }, headers);
+  if (response.status === 401) onUnauthorized?.();
+  return response;
+}
+
 export async function api<T extends z.ZodType>(
   schema: T,
   path: string,

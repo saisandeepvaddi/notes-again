@@ -143,6 +143,8 @@ export function SettingsScreen() {
 
       <SchedulingCard />
 
+      <Card><NavRow label="Discuss" description="AI provider, model and your own API key" ios="text.bubble" android="chat" onPress={() => router.push("/discuss-settings")} /></Card>
+
       <Card>
         <AppText variant="heading">Library</AppText>
         <NavRow

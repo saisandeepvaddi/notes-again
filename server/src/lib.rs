@@ -4,6 +4,7 @@ pub mod backups;
 pub mod config;
 pub mod db;
 pub mod difficulty;
+pub mod discussion;
 pub mod error;
 pub mod files;
 pub mod groups;

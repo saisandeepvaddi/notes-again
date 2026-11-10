@@ -254,6 +254,7 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
   const { family } = useReadingFont();
   const autosave = useNoteAutosave(note);
   const navigation = useNavigation();
+  const router = useRouter();
   const [sharing, setSharing] = useState(false);
   usePreventRemove(
     autosave.status === "pending" || autosave.status === "saving" || autosave.status === "error",
@@ -338,6 +339,9 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
         onChange={autosave.setContent}
       />
       <NoteSettings note={note} beforeDelete={autosave.flush} />
+      <Button variant="outline" onPress={() => {
+        void autosave.flush().then(() => router.push({ pathname: "/discuss/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before discussing this note."));
+      }}>Discuss this note</Button>
     </>
   );
 }

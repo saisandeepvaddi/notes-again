@@ -3,6 +3,7 @@ import { z } from "zod";
 export const SETTINGS_SECTIONS = [
   "appearance",
   "review",
+  "discuss",
   "sign-in",
   "sync",
   "devices",

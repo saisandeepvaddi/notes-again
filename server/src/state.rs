@@ -22,6 +22,7 @@ pub struct Inner {
     pub restart: Arc<tokio::sync::Notify>,
     pub desktop_port: OnceLock<u16>,
     pub lan: tokio::sync::Mutex<Option<crate::lan::LanListener>>,
+    pub discussion_slots: Arc<tokio::sync::Semaphore>,
 }
 
 #[derive(Clone)]
@@ -52,6 +53,7 @@ impl AppState {
             restart: Arc::new(tokio::sync::Notify::new()),
             desktop_port: OnceLock::new(),
             lan: tokio::sync::Mutex::new(None),
+            discussion_slots: Arc::new(tokio::sync::Semaphore::new(2)),
         }))
     }
 

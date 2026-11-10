@@ -240,6 +240,8 @@ async fn capture_token_cannot_go_beyond_capturing() {
         (Method::GET, "/api/notes/1/markdown"),
         (Method::GET, "/api/sync/pull"),
         (Method::POST, "/api/notes/1/discuss"),
+        (Method::GET, "/api/notes/1/revisions"),
+        (Method::POST, "/api/notes/1/revisions/1/restore"),
     ] {
         let response = fb.app.req(method.clone(), path).bearer(&token).send().await;
         assert_eq!(response.code(), 403, "{method} {path}");

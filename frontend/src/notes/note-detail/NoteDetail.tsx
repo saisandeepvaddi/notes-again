@@ -53,6 +53,7 @@ import { REVIEW_STATUS_ICONS } from "../ReviewStatusPicker";
 import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 import { SyncConflictBanner } from "@/sync/ConflictResolver";
+const RevisionsPanel = lazy(() => import("@/revisions/RevisionsPanel").then((module) => ({ default: module.RevisionsPanel })));
 const DiscussionPanel = lazy(() => import("@/discussion/DiscussionPanel").then((module) => ({ default: module.DiscussionPanel })));
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -85,6 +86,8 @@ export function NoteDetail({ note }: NoteDetailProps) {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
   const [discussionMounted, setDiscussionMounted] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyMounted, setHistoryMounted] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
   const { mutateAsync: detachTag } = useDetachTag({ noteId });
   const { mutateAsync: setProject } = useSetProject({ noteId });
@@ -395,6 +398,9 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </button>
         <div className="flex items-center justify-end gap-1">
           <Button size="sm" variant="outline" onClick={() => {
+            void flushSave().then(() => { setHistoryMounted(true); setHistoryOpen(true); }, () => toast.add({ type: "error", description: "Save this note successfully before opening its history." }));
+          }}>History</Button>
+          <Button size="sm" variant="outline" onClick={() => {
             void flushSave().then(() => { setDiscussionMounted(true); setDiscussionOpen(true); }, () => toast.add({ type: "error", description: "Save this note successfully before discussing it." }));
           }}>Discuss</Button>
           <span
@@ -522,6 +528,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </header>
 
+      {historyMounted && <Suspense fallback={null}><RevisionsPanel noteId={noteId} name={name} content={content} open={historyOpen} onOpenChange={setHistoryOpen} onRestored={replaceText} /></Suspense>}
       {discussionMounted && <Suspense fallback={<p role="status" className="px-4 text-xs text-muted-foreground">Opening Discuss…</p>}><DiscussionPanel key={noteId} noteId={noteId} title={noteTitleText(name)} open={discussionOpen} onOpenChange={setDiscussionOpen} beforeSend={flushSave} /></Suspense>}
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -28,6 +28,7 @@ const SYNC_ONLY_PAGE: &str = "<!doctype html><html lang=\"en\"><meta charset=\"u
 fn api_router(state: &AppState) -> Router<AppState> {
     Router::new()
         .merge(crate::notes::bulk_routes::router())
+        .merge(crate::notes::revisions::router())
         .merge(crate::notes::routes::router())
         .merge(crate::groups::router())
         .merge(crate::imports::router())

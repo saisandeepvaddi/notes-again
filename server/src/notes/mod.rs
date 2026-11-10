@@ -2,6 +2,7 @@ pub mod bulk;
 pub mod bulk_routes;
 pub mod markdown;
 pub mod pacing;
+pub mod revisions;
 pub mod routes;
 
 use std::collections::HashMap;

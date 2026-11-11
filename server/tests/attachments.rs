@@ -1,6 +1,7 @@
 mod common;
 
 use common::*;
+use notes_again_server::attachments;
 
 const PDF: &str = "%PDF-1.4 test document";
 const GIF: &str = "GIF89a-pixels";
@@ -181,4 +182,133 @@ async fn trash_hides_files_and_permanent_delete_removes_them() {
     );
     assert_eq!(count(&app, "attachments").await, 0);
     assert_eq!(count(&app, "attachment_blobs").await, 0);
+}
+
+async fn old(app: &TestApp) {
+    app.exec("UPDATE attachments SET created_at = '2000-01-01 00:00:00.000000'")
+        .await;
+}
+
+#[tokio::test]
+async fn unreferenced_attachments_are_removed_after_a_grace_period() {
+    let app = TestApp::new().await;
+    let note = id(&app.named("n").await);
+    let kept = upload(&app, note, "kept.gif", GIF).await.json()["uid"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let unused = upload(&app, note, "unused.pdf", PDF).await.json()["uid"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let past = upload(&app, note, "past.gif", "GIF89a-past").await.json()["uid"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    app.patch(&format!("/api/notes/{note}"))
+        .json(json!({ "name": "n", "content": format!("![x](attachment:{past})") }))
+        .send()
+        .await;
+    app.exec("UPDATE note_revisions SET created_at = '2000-01-01 00:00:00.000000'")
+        .await;
+    app.patch(&format!("/api/notes/{note}"))
+        .json(json!({ "name": "n", "content": format!("![x](attachment:{kept})") }))
+        .send()
+        .await;
+
+    assert_eq!(attachments::cleanup(&app.state.db).await.unwrap(), 0);
+    old(&app).await;
+    assert_eq!(attachments::cleanup(&app.state.db).await.unwrap(), 1);
+    assert_eq!(
+        app.get(&format!("/api/attachments/{unused}/file"))
+            .send()
+            .await
+            .code(),
+        404
+    );
+    assert_eq!(
+        app.get(&format!("/api/attachments/{kept}/file"))
+            .send()
+            .await
+            .code(),
+        200
+    );
+    assert_eq!(
+        app.get(&format!("/api/attachments/{past}/file"))
+            .send()
+            .await
+            .code(),
+        200,
+        "still referenced by an earlier revision"
+    );
+}
+
+#[tokio::test]
+async fn archive_bundles_the_note_with_relative_attachment_links() {
+    let app = TestApp::new().await;
+    assert_eq!(app.get("/api/notes/9999/archive").send().await.code(), 404);
+    let note = id(&app.named("Plain").await);
+    assert_eq!(
+        app.get(&format!("/api/notes/{note}/archive"))
+            .send()
+            .await
+            .code(),
+        404
+    );
+    let uid = upload(&app, note, "my paper.pdf", PDF).await.json()["uid"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    app.patch(&format!("/api/notes/{note}"))
+        .json(json!({ "name": "Plain", "content": format!("[my paper.pdf](attachment:{uid})") }))
+        .send()
+        .await;
+    let response = app.get(&format!("/api/notes/{note}/archive")).send().await;
+    assert_eq!(response.code(), 200);
+    assert_eq!(
+        response.header("content-type").as_deref(),
+        Some("application/zip")
+    );
+    assert!(
+        response
+            .header("content-disposition")
+            .unwrap()
+            .contains(".zip")
+    );
+    let body = response.text();
+    assert!(body.starts_with("PK"));
+    assert!(body.contains(&format!("](attachments/{}-my%20paper.pdf)", &uid[..8])));
+    assert!(!body.contains("attachment:"));
+    assert!(body.contains(PDF));
+    assert!(body.contains(&format!("attachments/{}-my paper.pdf", &uid[..8])));
+}
+
+#[tokio::test]
+async fn backups_carry_attachments_and_restore_serves_them() {
+    let app = TestApp::new().await;
+    let note = id(&app.named("n").await);
+    let uid = upload(&app, note, "a.pdf", PDF).await.json()["uid"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let target = app.path("snapshot.db");
+    notes_again_server::backups::copy_database(&app.state.db, &target)
+        .await
+        .unwrap();
+    let restored = app.path("restored.db");
+    notes_again_server::backups::restore_database(&target, &restored)
+        .await
+        .unwrap();
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect_with(sqlx::sqlite::SqliteConnectOptions::new().filename(&restored))
+        .await
+        .unwrap();
+    let data: Vec<u8> = sqlx::query_scalar(
+        "SELECT b.data FROM attachments a JOIN attachment_blobs b ON b.hash = a.hash WHERE a.uid = ?",
+    )
+    .bind(&uid)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(data, PDF.as_bytes());
 }

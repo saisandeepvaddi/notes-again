@@ -242,6 +242,8 @@ async fn capture_token_cannot_go_beyond_capturing() {
         (Method::POST, "/api/notes/1/discuss"),
         (Method::GET, "/api/notes/1/revisions"),
         (Method::POST, "/api/notes/1/attachments"),
+        (Method::GET, "/api/notes/1/archive"),
+        (Method::PUT, "/api/sync/blobs/abc"),
         (Method::GET, "/api/attachments/x/file"),
         (Method::DELETE, "/api/attachments/x"),
         (Method::POST, "/api/notes/1/revisions/1/restore"),

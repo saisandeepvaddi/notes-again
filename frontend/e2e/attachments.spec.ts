@@ -55,3 +55,19 @@ test.describe("attachments", () => {
     expect(listed).toEqual([]);
   });
 });
+
+test("download as Markdown becomes a zip when the note has attachments", async ({
+  page,
+  request,
+}) => {
+  const note = await createNote(request, { name: uniqueName("Zip"), content: "Body" });
+  await request.post(`${API_URL}/notes/${note.id}/attachments`, {
+    headers: { "Content-Type": "application/octet-stream", "X-File-Name": "paper.pdf" },
+    data: Buffer.from("%PDF-1.4 zip"),
+  });
+  await page.goto(`/notes/${note.id}`);
+  await page.getByRole("button", { name: "More note actions" }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download as Markdown" }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.zip$/);
+});

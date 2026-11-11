@@ -34,6 +34,6 @@ Images and PDFs attached to a note. Decisions, in build order. Update this file 
 ## Phases
 
 1. (Done: server, web) Server API + limits + lifecycle + tests; web upload (paste/drop/button), rendering and PDF links.
-2. Backup/restore and export ZIP verification; orphan cleanup.
+2. (Done) Backup/restore verification, export ZIP (`GET /api/notes/{id}/archive`, hand-written stored ZIP in `zip.rs`), hourly orphan cleanup.
 3. (Done) Sync kind and blob endpoints; cross-device tests (deletion, late bytes, tampering).
 4. Mobile: pick/paste, render in the DOM renderer, offline.

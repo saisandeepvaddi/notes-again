@@ -22,6 +22,7 @@ pub mod system;
 pub mod text;
 pub mod time;
 pub mod tls;
+pub mod zip;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -61,6 +62,7 @@ pub async fn prepare(config: Config) -> Result<AppState, String> {
             .map_err(|e| e.to_string())?;
     }
     tokio::spawn(backups::run_schedule(state.clone()));
+    tokio::spawn(attachments::run_cleanup(state.clone()));
     if state.config.auth_mode == AuthMode::Desktop {
         tokio::spawn(sync::local::run_schedule(state.clone()));
         lan::restore(&state).await;

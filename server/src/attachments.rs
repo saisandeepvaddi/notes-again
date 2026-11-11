@@ -239,6 +239,114 @@ async fn remove(State(state): State<AppState>, P(uid): P<String>) -> ApiResult<S
     Ok(StatusCode::NO_CONTENT)
 }
 
+const ORPHAN_AFTER_DAYS: i64 = 30;
+const MAX_ARCHIVE: i64 = 128 * 1024 * 1024;
+
+pub async fn cleanup(pool: &crate::db::Pool) -> Result<u64, sqlx::Error> {
+    let cutoff = Ts::now().minus(chrono::Duration::days(ORPHAN_AFTER_DAYS));
+    let result = sqlx::query(
+        "DELETE FROM attachments WHERE created_at < ? AND uid IN (\
+           SELECT a.uid FROM attachments a JOIN notes n ON n.uid = a.note_uid \
+           WHERE instr(n.content, a.uid) = 0 AND NOT EXISTS (\
+             SELECT 1 FROM note_revisions r WHERE r.note_id = n.id AND instr(r.content, a.uid) > 0))",
+    )
+    .bind(cutoff)
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected())
+}
+
+pub async fn run_cleanup(state: AppState) {
+    loop {
+        tokio::time::sleep(std::time::Duration::from_secs(300)).await;
+        match cleanup(&state.db).await {
+            Ok(0) => {}
+            Ok(count) => tracing::info!("Removed {count} unused attachments."),
+            Err(error) => tracing::warn!("Attachment cleanup failed: {error}"),
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+    }
+}
+
+pub fn archive_path(uid: &str, name: &str) -> String {
+    format!("attachments/{}-{}", &uid[..8.min(uid.len())], name)
+}
+
+pub fn rewrite_links(markdown: &str, files: &[(String, String)]) -> String {
+    let mut out = markdown.to_string();
+    for (uid, path) in files {
+        let encoded = percent_encoding::utf8_percent_encode(path, crate::files::QUOTE_SET)
+            .to_string()
+            .replace("%2F", "/");
+        out = out.replace(&format!("](attachment:{uid})"), &format!("]({encoded})"));
+    }
+    out
+}
+
+async fn archive(State(state): State<AppState>, P(note_id): P<i64>) -> ApiResult<Response> {
+    let mut conn = state.db.acquire().await?;
+    let note = live_note(&mut conn, note_id).await?;
+    let full = crate::notes::load_full(&mut conn, &[note_id])
+        .await?
+        .pop()
+        .ok_or_else(|| ApiError::not_found("Note not found"))?;
+    let total: i64 =
+        sqlx::query_scalar("SELECT COALESCE(SUM(size), 0) FROM attachments WHERE note_uid = ?")
+            .bind(&note.uid)
+            .fetch_one(&mut *conn)
+            .await?;
+    if total > MAX_ARCHIVE {
+        return Err(ApiError::new(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "These attachments are too large to export as one file.",
+        ));
+    }
+    let rows: Vec<(String, String, Vec<u8>)> = sqlx::query_as(
+        "SELECT a.uid, a.name, b.data FROM attachments a JOIN attachment_blobs b ON b.hash = a.hash WHERE a.note_uid = ? ORDER BY a.id",
+    )
+    .bind(&note.uid)
+    .fetch_all(&mut *conn)
+    .await?;
+    if rows.is_empty() {
+        return Err(ApiError::not_found(
+            "This note has no attachments to export.",
+        ));
+    }
+    let files: Vec<(String, String)> = rows
+        .iter()
+        .map(|(uid, name, _)| (uid.clone(), archive_path(uid, name)))
+        .collect();
+    let markdown = rewrite_links(&crate::notes::markdown::note_markdown(&full), &files);
+    let mut zip = crate::zip::ZipWriter::new();
+    let note_file = crate::notes::markdown::note_filename(&note);
+    zip.add(&note_file, markdown.as_bytes());
+    for ((_, path), (_, _, data)) in files.iter().zip(&rows) {
+        zip.add(path, data);
+    }
+    let base = note_file.trim_end_matches(".md");
+    let ascii: String = base.chars().filter(char::is_ascii).collect();
+    let fallback = if ascii.is_empty() {
+        format!("note-{note_id}")
+    } else {
+        ascii
+    };
+    let encoded =
+        percent_encoding::utf8_percent_encode(&format!("{base}.zip"), crate::files::QUOTE_SET)
+            .to_string();
+    let mut response = zip.finish().into_response();
+    let headers = response.headers_mut();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/zip"),
+    );
+    if let Ok(value) =
+        format!("attachment; filename=\"{fallback}.zip\"; filename*=UTF-8''{encoded}").parse()
+    {
+        headers.insert(header::CONTENT_DISPOSITION, value);
+    }
+    Ok(response)
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         .route(
@@ -247,6 +355,7 @@ pub fn router() -> Router<AppState> {
                 .layer(DefaultBodyLimit::max(MAX_PDF + 1024))
                 .get(list),
         )
+        .route("/notes/{note_id}/archive", get(archive))
         .route("/attachments/{uid}/file", get(file))
         .route("/attachments/{uid}", delete(remove))
 }

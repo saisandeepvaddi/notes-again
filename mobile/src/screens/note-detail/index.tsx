@@ -342,6 +342,9 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
       <Button variant="outline" onPress={() => {
         void autosave.flush().then(() => router.push({ pathname: "/discuss/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before discussing this note."));
       }}>Discuss this note</Button>
+      <Button variant="outline" onPress={() => {
+        void autosave.flush().then(() => router.push({ pathname: "/history/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before opening History."));
+      }}>History</Button>
     </>
   );
 }

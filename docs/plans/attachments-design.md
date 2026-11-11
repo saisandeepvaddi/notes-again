@@ -36,4 +36,4 @@ Images and PDFs attached to a note. Decisions, in build order. Update this file 
 1. (Done: server, web) Server API + limits + lifecycle + tests; web upload (paste/drop/button), rendering and PDF links.
 2. (Done) Backup/restore verification, export ZIP (`GET /api/notes/{id}/archive`, hand-written stored ZIP in `zip.rs`), hourly orphan cleanup.
 3. (Done) Sync kind and blob endpoints; cross-device tests (deletion, late bytes, tampering).
-4. Mobile: pick/paste, render in the DOM renderer, offline.
+4. (Done, untested on a device) Mobile: pick a photo or PDF/image file from the note page (`src/attachments/native.ts`), render `attachment:` images in the DOM renderer and editor through authenticated fetches to data URLs from the on-device server (so they work offline once synced), PDFs open through the share sheet. Pasting images into the mobile editor is not supported.

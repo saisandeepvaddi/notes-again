@@ -184,6 +184,11 @@
   }
 }
 
+.markdown-content a.note-link-missing {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+
 .markdown-content {
   @apply font-reading text-sm leading-relaxed text-foreground;
 

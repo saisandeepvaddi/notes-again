@@ -56,6 +56,7 @@ pub struct ReminderResponse {
 #[derive(Serialize)]
 pub struct NoteResponse {
     pub id: i64,
+    pub uid: String,
     pub name: String,
     pub content: String,
     pub created_at: Ts,
@@ -83,6 +84,7 @@ impl FullNote {
         let n = &self.note;
         NoteResponse {
             id: n.id,
+            uid: n.uid.clone(),
             name: n.name.clone(),
             content: n.content.clone(),
             created_at: n.created_at,

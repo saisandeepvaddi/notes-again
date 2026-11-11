@@ -11,6 +11,7 @@ pub mod files;
 pub mod groups;
 pub mod imports;
 pub mod lan;
+pub mod links;
 pub mod notes;
 pub mod params;
 pub mod scheduling;

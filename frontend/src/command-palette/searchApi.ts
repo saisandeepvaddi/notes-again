@@ -8,6 +8,7 @@ const SEARCH_DEBOUNCE_MS = 120;
 
 const NoteHitSchema = z.object({
   id: z.number(),
+  uid: z.string(),
   title: z.string(),
   title_marked: z.string(),
   snippet: z.string(),

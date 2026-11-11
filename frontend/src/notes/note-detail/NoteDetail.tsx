@@ -54,6 +54,9 @@ import { reviewStatusOf, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
 import { SyncConflictBanner } from "@/sync/ConflictResolver";
 import { uploadAttachment } from "@/attachments/api";
+import { Backlinks } from "@/links/Backlinks";
+import { LinkNotePanel } from "@/links/LinkNotePanel";
+import { noteLinkMarkdown } from "@/links/uri";
 import { ATTACHMENT_ACCEPT, attachmentMarkdown } from "@/attachments/uri";
 const RevisionsPanel = lazy(() =>
   import("@/revisions/RevisionsPanel").then((module) => ({ default: module.RevisionsPanel })),
@@ -110,6 +113,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
       setAttaching(false);
     }
   };
+  const [linkOpen, setLinkOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyMounted, setHistoryMounted] = useState(false);
   const { mutateAsync: attachTag } = useAttachTag({ noteId });
@@ -442,6 +446,9 @@ export function NoteDetail({ note }: NoteDetailProps) {
           >
             {attaching ? "Attaching…" : "Attach"}
           </Button>
+          <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>
+            Link note
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -605,6 +612,18 @@ export function NoteDetail({ note }: NoteDetailProps) {
         </div>
       </header>
 
+      <LinkNotePanel
+        open={linkOpen}
+        excludeUid={note.uid}
+        onOpenChange={setLinkOpen}
+        onPick={(target) => {
+          changeContent(
+            `${contentRef.current.trimEnd()}\n\n${noteLinkMarkdown(target.title, target.uid)}\n`,
+          );
+          setEditorKey((key) => key + 1);
+          setLinkOpen(false);
+        }}
+      />
       {historyMounted && (
         <Suspense fallback={null}>
           <RevisionsPanel
@@ -668,6 +687,7 @@ export function NoteDetail({ note }: NoteDetailProps) {
             contentClassName="markdown-paper"
           />
         </div>
+        <Backlinks noteId={noteId} />
       </div>
 
       <NoteFooter

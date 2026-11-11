@@ -188,6 +188,7 @@ pub fn snippet(content: &str, terms: &[String]) -> String {
 #[derive(Serialize)]
 struct NoteHit {
     id: i64,
+    uid: String,
     title: String,
     title_marked: String,
     snippet: String,
@@ -358,6 +359,7 @@ async fn search(
             let title = markdown_title_text(&full.note.name);
             NoteHit {
                 id: full.note.id,
+                uid: full.note.uid.clone(),
                 title_marked: mark(&title, &all),
                 title,
                 snippet: snippet(&full.note.content, &all),

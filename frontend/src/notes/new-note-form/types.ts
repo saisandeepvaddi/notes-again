@@ -60,6 +60,7 @@ export type NoteReminder = z.infer<typeof NoteReminderSchema>;
 
 export const NoteItemSchema = NoteBaseSchema.extend({
   id: z.number(),
+  uid: z.string().optional(),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),
   ease_factor: z.number(),

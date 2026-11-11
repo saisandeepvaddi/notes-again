@@ -19,13 +19,17 @@ import {
   LinkBreakIcon,
   PencilSimpleIcon,
 } from "@phosphor-icons/react";
+import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { fetchLinkTargets } from "@/links/api";
+import { noteLinkUid } from "@/links/uri";
 
 export function LinkPopover() {
   const [state, editor] = useCellValues(linkDialogState$, activeEditor$);
   const switchToEdit = usePublisher(switchFromPreviewToLinkEdit$);
   const cancelEdit = usePublisher(cancelLinkEdit$);
   const removeLink = usePublisher(removeLink$);
+  const navigate = useNavigate();
 
   if (state.type === "inactive") {
     return <></>;
@@ -64,16 +68,35 @@ export function LinkPopover() {
           <LinkEditForm key={state.linkNodeKey} state={state} onDone={() => editor?.focus()} />
         ) : (
           <>
-            <a
-              href={state.href ?? "about:blank"}
-              target="_blank"
-              rel="noreferrer"
-              title={state.url}
-              className="flex min-w-0 items-center gap-1.5 px-2 text-primary underline-offset-4 hover:underline"
-            >
-              <span className="truncate">{state.url}</span>
-              <ArrowSquareOutIcon className="size-3.5 shrink-0" />
-            </a>
+            {noteLinkUid(state.url) ? (
+              <button
+                type="button"
+                className="flex min-w-0 items-center gap-1.5 px-2 text-primary underline-offset-4 hover:underline"
+                onClick={() =>
+                  void fetchLinkTargets([noteLinkUid(state.url) ?? ""]).then(([target]) => {
+                    if (target && !target.trashed)
+                      void navigate({
+                        to: "/notes/$noteId",
+                        params: { noteId: String(target.id) },
+                      });
+                  })
+                }
+              >
+                <span className="truncate">Open linked note</span>
+                <ArrowSquareOutIcon className="size-3.5 shrink-0" />
+              </button>
+            ) : (
+              <a
+                href={state.href ?? "about:blank"}
+                target="_blank"
+                rel="noreferrer"
+                title={state.url}
+                className="flex min-w-0 items-center gap-1.5 px-2 text-primary underline-offset-4 hover:underline"
+              >
+                <span className="truncate">{state.url}</span>
+                <ArrowSquareOutIcon className="size-3.5 shrink-0" />
+              </a>
+            )}
             <Button
               size="icon-sm"
               variant="ghost"

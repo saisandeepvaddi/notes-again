@@ -52,8 +52,8 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 
 ### 5. Connected notes and library chat
 
-- [ ] Search and insert stable internal note links; preserve links across renames and devices.
-- [ ] Show backlinks and make linked notes easy to navigate.
+- [x] Search and insert stable internal note links; preserve links across renames and devices. (Web and server; mobile still to do.)
+- [x] Show backlinks and make linked notes easy to navigate. (Web and server; mobile still to do.)
 - [ ] Extend chat scope to selected notes, a project/tag and the library.
 - [ ] Retrieve relevant passages instead of sending the entire library; show which passages were actually used and validate citations.
 - [ ] Keep retrieval indexes current after edits, trash and deletion; exclude trashed notes by default.
@@ -90,3 +90,4 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - 2026-11-11: Stage 4 attachments phase 2: hourly orphan cleanup (30-day grace, revisions count as references), per-note ZIP export with relative links (validated with `unzip -t`), backup/restore carries attachments; server tests and a Playwright download test pass. Remaining for Stage 4: mobile History and attachments UI, a manual multi-device check, and ticking the checklist items.
 - 2026-11-11: Stage 4 mobile History: History screen from the note page lists this device's revisions, compares with the current note (shared `lineDiff`) and restores with confirmation, remounting the editor. Typecheck, lint and iOS export check pass; not yet run on a simulator. Remaining: mobile attachments.
 - 2026-11-11: Stage 4 mobile attachments: Attach a file (photo library or PDF/image file) on the note page, images render in the reader and editor, PDFs open via the share sheet; bytes come from the on-device server, so they work offline after sync. Typecheck, lint, expo-doctor and the iOS export check pass; needs a native rebuild (new picker modules) and a device check, including a phone-to-desktop sync of a file. Image paste on mobile is not supported. Stage 4 checklist stays open until that device check.
+- 2026-11-11: Stage 5 connected notes (server, web): links are `[Title](note:<uid>)`, so they survive renames and sync as plain text. `GET /api/notes/{id}/backlinks` (FTS match verified against the real link) and `GET /api/notes/link-targets` (resolve uids, flag trashed); notes and search hits now expose `uid`. Web: Link note dialog, backlinks section, clickable links in the reader and an Open linked note action in the editor popover; trashed or missing targets render struck through. Server, unit and Playwright tests pass. Remaining: mobile links/backlinks, then library chat scope and retrieval.

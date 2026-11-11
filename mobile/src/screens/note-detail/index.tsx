@@ -5,7 +5,7 @@ import { reviewStatusOf, type ReviewStatus } from "@web/notes/reviewStatus";
 import { format } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useNavigation, usePreventRemove } from "expo-router/react-navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type ReactNode } from "react";
 import { Alert, Share, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -23,6 +23,8 @@ import {
   useSetReviewStatus,
   useSetProject,
 } from "@/api/notes";
+import { attachmentMarkdown, pickFile, pickPhoto, uploadPicked } from "@/attachments/native";
+import { ActionMenu } from "@/components/action-menu";
 import { AppText } from "@/components/app-text";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -256,6 +258,30 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
   const navigation = useNavigation();
   const router = useRouter();
   const [sharing, setSharing] = useState(false);
+  const [attaching, setAttaching] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
+  const contentRef = useRef(note.content);
+  const [editorMarkdown, setEditorMarkdown] = useState(note.content);
+  const attach = async (kind: string) => {
+    if (attaching) return;
+    setAttaching(true);
+    try {
+      const picked = await (kind === "photo" ? pickPhoto() : pickFile());
+      if (!picked) return;
+      await autosave.flush();
+      const info = await uploadPicked(note.id, picked);
+      const next = `${contentRef.current.trimEnd()}\n\n${attachmentMarkdown(info)}\n`;
+      contentRef.current = next;
+      autosave.setContent(next);
+      await autosave.flush();
+      setEditorMarkdown(next);
+      setEditorKey((value) => value + 1);
+    } catch (error) {
+      Alert.alert("Couldn’t attach the file", error instanceof Error ? error.message : "Try again.");
+    } finally {
+      setAttaching(false);
+    }
+  };
   usePreventRemove(
     autosave.status === "pending" || autosave.status === "saving" || autosave.status === "error",
     ({ data }) => {
@@ -332,12 +358,27 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
         <InlineError message="Couldn’t save your last changes. They’re still here; tap Retry save." />
       ) : null}
       <RichEditorBody
+        key={editorKey}
         controller={editor}
-        markdown={note.content}
+        markdown={editorMarkdown}
         placeholder="Tap to start writing"
         minHeight={120}
-        onChange={autosave.setContent}
+        onChange={(value) => {
+          contentRef.current = value;
+          autosave.setContent(value);
+        }}
       />
+      <ActionMenu
+        items={[
+          { id: "photo", title: "Photo library" },
+          { id: "file", title: "PDF or image file" },
+        ]}
+        onSelect={(id) => void attach(id)}
+      >
+        <Button variant="outline" disabled={attaching}>
+          {attaching ? "Attaching…" : "Attach a file"}
+        </Button>
+      </ActionMenu>
       <NoteSettings note={note} beforeDelete={autosave.flush} />
       <Button variant="outline" onPress={() => {
         void autosave.flush().then(() => router.push({ pathname: "/discuss/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before discussing this note."));

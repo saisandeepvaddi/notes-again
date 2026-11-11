@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { attachmentDataUrl } from "@/attachments/native";
 import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
 import { EditorBridge } from "./bridge";
@@ -99,6 +100,7 @@ export function RichEditorBody({
         onCaret={onCaret}
         onHeight={async (next) => setHeight(next)}
         onOpenLink={openLink}
+        loadAttachment={attachmentDataUrl}
         onEditLink={async () => openLinkEditor()}
         dom={{
           scrollEnabled: false,

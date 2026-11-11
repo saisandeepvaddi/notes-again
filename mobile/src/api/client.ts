@@ -126,3 +126,55 @@ export async function api<T extends z.ZodType>(
   }
   return parsed.data;
 }
+
+function authHeaders(extra: Record<string, string> = {}) {
+  const connection = currentConnection();
+  if (!connection) throw new ApiError("Not connected to a server", 0);
+  const headers = { ...extra };
+  if (connection.token) headers.Authorization = `Bearer ${connection.token}`;
+  return { connection, headers };
+}
+
+export async function fetchFile(path: string): Promise<Response> {
+  const { connection, headers } = authHeaders();
+  let response: Response;
+  try {
+    response = (await fetch(`${connection.serverUrl}/api${path}`, {
+      headers,
+      credentials: "omit",
+    })) as unknown as Response;
+  } catch {
+    throw new ApiError("Couldn't reach the server. Check your connection.", 0);
+  }
+  if (response.status === 401) onUnauthorized?.();
+  if (!response.ok) throw new ApiError("Attachment unavailable.", response.status);
+  return response;
+}
+
+export async function uploadFile(path: string, body: Blob, name: string): Promise<unknown> {
+  const { connection, headers } = authHeaders({
+    Accept: "application/json",
+    "Content-Type": "application/octet-stream",
+    "X-File-Name": encodeURIComponent(name),
+  });
+  let response: Response;
+  try {
+    response = (await fetch(`${connection.serverUrl}/api${path}`, {
+      method: "POST",
+      headers,
+      body,
+      credentials: "omit",
+      signal: AbortSignal.timeout(120_000),
+    })) as unknown as Response;
+  } catch {
+    throw new ApiError("Couldn't reach the server. Check your connection.", 0);
+  }
+  if (response.status === 401) onUnauthorized?.();
+  if (!response.ok) {
+    throw new ApiError(
+      (await errorDetail(response)) ?? `Request failed (${response.status})`,
+      response.status,
+    );
+  }
+  return response.json();
+}

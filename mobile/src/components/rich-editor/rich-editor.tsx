@@ -17,6 +17,7 @@ import {
   directivesPlugin,
   frontmatterPlugin,
   headingsPlugin,
+  imagePlugin,
   insertCodeBlock$,
   IS_BOLD,
   IS_CODE,
@@ -115,6 +116,7 @@ interface RichEditorProps {
   onCaret: (caret: CaretRect) => Promise<void>;
   onHeight: (height: number) => Promise<void>;
   onOpenLink: (href: string) => Promise<void>;
+  loadAttachment: (uid: string) => Promise<string>;
   onEditLink: () => Promise<void>;
   dom?: import("expo/dom").DOMProps;
 }
@@ -314,6 +316,7 @@ export default function RichEditor({
   onCaret,
   onHeight,
   onOpenLink,
+  loadAttachment,
   onEditLink,
 }: RichEditorProps) {
   const editor = useRef<MDXEditorMethods>(null);
@@ -327,6 +330,12 @@ export default function RichEditor({
     listsPlugin(),
     quotePlugin(),
     headingsPlugin(),
+    imagePlugin({
+      imagePreviewHandler: async (src) => {
+        const uid = /^attachment:([a-f0-9]{32})$/.exec(src.trim())?.[1];
+        return uid ? loadAttachment(uid) : src;
+      },
+    }),
     linkPlugin(),
     linkDialogPlugin({ LinkDialog: () => <></> }),
     tablePlugin(),

@@ -23,18 +23,15 @@ Devices sync through `/api/sync/push` and `/api/sync/pull` with a three-way merg
 
 Follow these exactly. They come from the owner's own instructions.
 
-1. **No GitHub.** Don't open PRs, run Actions, call `gh` or push unless the owner asks. Every workflow in `.github/workflows/` is `workflow_dispatch` only, because Actions credits ran out.
-   - Work on a branch, run the local checks listed in AGENTS.md, squash-merge into local `main`, delete the branch, and keep going without asking.
-   - Pushing `main` is fine when the owner asks, since it triggers nothing.
-2. **macOS and iOS only, for now.** Build and test only on this Mac and the iOS simulator. Android, Windows and Linux are deferred: don't install the Android NDK, `cargo-ndk` or cross toolchains.
-3. **No code signing.** Desktop builds stay unsigned; forks can sign their own. Don't plan for Apple or Windows certificates. The Tauri updater key is separate: it lives at `~/.tauri/notes-again.key`, and the `TAURI_SIGNING_PRIVATE_KEY` secret is already set.
-4. **No public release yet.** The repo is private until the owner is confident the app works end to end. Don't push `desktop-v*` tags and don't nudge about releasing. The updater reads public GitHub Releases, so it can't work while the repo is private.
+1. **Commit and push each finished phase to `origin/main`** (plain `git push`). Work on a branch, run the local checks listed in AGENTS.md, squash-merge into `main`, delete the branch and keep going without asking. The repo is public: Actions are free, but don't open PRs or run workflows unless the owner asks.
+2. **macOS and iOS only for local work.** Build and test only on this Mac and the iOS simulator. Android is deferred: don't install the Android NDK, `cargo-ndk` or cross toolchains. CI builds the Windows and Linux desktop installers.
+3. **No code signing.** Desktop builds stay unsigned; forks can sign their own. The Tauri updater key is separate: it lives at `~/.tauri/notes-again.key`, and the `TAURI_SIGNING_PRIVATE_KEY` secret is set.
+4. **Releases come from `desktop-v*` tags** (`.github/workflows/desktop.yml` publishes installers and the updater JSON). Tag only when the owner asks.
 5. **Named apps are shorthand.** "Like Obsidian" means a feel, not a spec. Design from [DESIGN.md](../DESIGN.md) and justify choices on their own merits.
 6. **Don't work around the permission classifier.** It has blocked these before; if one is refused, stop and tell the owner:
    - downloading or running third-party binaries (for example Litestream)
    - writing GitHub secrets
    - force-pushing
-   - pushing release tags
 
 ## Reference docs
 

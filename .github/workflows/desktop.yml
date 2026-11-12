@@ -2,6 +2,9 @@ name: Desktop app
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - desktop-v*
 
 concurrency:
   group: desktop-${{ github.ref }}
@@ -77,7 +80,7 @@ jobs:
         run: pnpm tauri build --config src-tauri/tauri.bundle.conf.json ${{ matrix.args }}
 
       - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch'
+        if: env.RELEASE != 'true'
         with:
           name: notes-again-desktop-${{ runner.os }}
           if-no-files-found: error

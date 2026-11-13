@@ -8,3 +8,4 @@ firebase-service-account.json
 .cursor
 .gemini
 .grok
+.claude/worktrees

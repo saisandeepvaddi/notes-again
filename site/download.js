@@ -1,0 +1,20 @@
+(function () {
+  var agent = navigator.userAgent || "";
+  var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+  var text = platform + " " + agent;
+  var key = null;
+  if (/android|iphone|ipad|ipod/i.test(agent)) key = null;
+  else if (/mac/i.test(text)) key = "macos";
+  else if (/win/i.test(text)) key = "windows";
+  else if (/linux|x11|cros/i.test(text)) key = "linux";
+  if (!key) return;
+  var card = document.querySelector('[data-os="' + key + '"]');
+  if (!card) return;
+  card.classList.add("recommended");
+  var badge = card.querySelector(".badge");
+  if (badge) badge.hidden = false;
+  var button = card.querySelector(".btn");
+  if (button) button.classList.add("primary");
+  var list = card.parentNode;
+  list.insertBefore(card, list.firstChild);
+})();

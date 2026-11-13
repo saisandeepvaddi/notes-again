@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download Notes Again</title>
+<meta name="description" content="Download the Notes Again desktop app for macOS, Windows and Linux.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="/"><img src="/app-icon.svg" alt="" width="28" height="28">Notes Again</a>
+<nav aria-label="Main">
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/download.html" aria-current="page">Download</a></li>
+<li><a href="/docs.html">Docs</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again">GitHub</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="main">
+<div class="wrap">
+<h1>Download</h1>
+<p class="lead">The desktop app runs everything on your computer, needs no server, and checks for updates itself. Connect it to a server later (Settings, then Sync) to use the same notes on other devices.</p>
+
+<ul class="grid" id="platforms">
+<li class="card" data-os="macos"><h3>macOS<span class="badge" hidden>Your system</span></h3><p>Universal <code>.dmg</code> for Apple silicon and Intel.</p><p><a class="btn" href="https://github.com/saisandeepvaddi/notes-again/releases/latest">Get the .dmg</a></p></li>
+<li class="card" data-os="windows"><h3>Windows<span class="badge" hidden>Your system</span></h3><p>The <code>.exe</code> installer, or the <code>.msi</code>.</p><p><a class="btn" href="https://github.com/saisandeepvaddi/notes-again/releases/latest">Get the .exe or .msi</a></p></li>
+<li class="card" data-os="linux"><h3>Linux<span class="badge" hidden>Your system</span></h3><p>The <code>.AppImage</code> (updates itself), or the <code>.deb</code> / <code>.rpm</code> for your package manager.</p><p><a class="btn" href="https://github.com/saisandeepvaddi/notes-again/releases/latest">Get the AppImage, .deb or .rpm</a></p></li>
+</ul>
+<p class="muted">Every button opens the <a href="https://github.com/saisandeepvaddi/notes-again/releases/latest">latest release</a> on GitHub, where all installers are listed.</p>
+
+<aside class="notice" aria-label="Unsigned apps">
+<p><strong>The builds are not code-signed.</strong> macOS and Windows ask you to confirm the first launch. This is a personal, open-source project, so the installers are unsigned.</p>
+</aside>
+
+<h2>First launch</h2>
+<h3>macOS</h3>
+<p>The app isn't notarized, so the first time, right-click it in Applications and choose Open. On macOS 15 and later: System Settings, then Privacy &amp; Security, then Open Anyway.</p>
+<h3>Windows</h3>
+<p>SmartScreen may warn about an unrecognized app: choose More info, then Run anyway.</p>
+<h3>Linux</h3>
+<p>Use the <code>.AppImage</code> (it updates itself), or the <code>.deb</code> / <code>.rpm</code> for your package manager.</p>
+
+<h2>Browser extension</h2>
+<p>Notes Again Capture saves the current page, a readable article or a text selection as a note, in Chrome, Edge, Brave and Firefox. Build and load it from the <a href="https://github.com/saisandeepvaddi/notes-again/tree/main/extension">extension folder</a>; see the <a href="/docs.html#extension">extension docs</a>.</p>
+
+<h2>Mobile</h2>
+<p>The mobile app is not distributed yet. The code is in the <a href="https://github.com/saisandeepvaddi/notes-again/tree/main/mobile">repository</a> if you want to build it yourself.</p>
+
+<h2>Prefer a server?</h2>
+<p>To use the web app or sync several devices, <a href="/docs.html#self-hosting">run your own server</a>. Everything builds from source you clone.</p>
+</div>
+</main>
+<footer class="site">
+<div class="wrap">
+<ul>
+<li><a href="https://github.com/saisandeepvaddi/notes-again">Source on GitHub</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again/releases/latest">Latest release</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again/blob/main/LICENSE">MIT license</a></li>
+</ul>
+<p>Notes Again is vibe-coded for personal use, with no support promises.</p>
+</div>
+</footer>
+<script src="/download.js"></script>
+</body>
+</html>

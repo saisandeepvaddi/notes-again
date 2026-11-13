@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes Again docs</title>
+<meta name="description" content="How to run, back up and extend Notes Again: self-hosting, the desktop app, the browser extension, importing and backups.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="/"><img src="/app-icon.svg" alt="" width="28" height="28">Notes Again</a>
+<nav aria-label="Main">
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/download.html">Download</a></li>
+<li><a href="/docs.html" aria-current="page">Docs</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again">GitHub</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="main">
+<div class="wrap">
+<h1>Docs</h1>
+<p class="lead">Short summaries of the project docs. The full versions live in the <a href="https://github.com/saisandeepvaddi/notes-again">repository</a>.</p>
+<ul class="toc">
+<li><a href="#self-hosting">Self-hosting</a></li>
+<li><a href="#desktop">Desktop app</a></li>
+<li><a href="#extension">Browser extension</a></li>
+<li><a href="#importing">Importing</a></li>
+<li><a href="#backups">Backups</a></li>
+</ul>
+
+<h2 id="self-hosting">Self-hosting</h2>
+<p>Notes Again is one server process that serves both the app and its API and keeps everything in a single SQLite file. There are no other services to run. Every setup signs in with a username and password by default and keeps a daily snapshot of the database. Every option builds from the source you clone; there is no prebuilt image.</p>
+<h3>On your computer</h3>
+<p>Needs git, <a href="https://rustup.rs">Rust</a>, Node 22+ and pnpm.</p>
+<pre><code>git clone https://github.com/saisandeepvaddi/notes-again &amp;&amp; cd notes-again
+make run</code></pre>
+<p>This builds the frontend and serves Notes Again on <code>http://127.0.0.1:8000</code>.</p>
+<h3>On a server, guided</h3>
+<p>Needs git, plus Docker or Rust, Node and pnpm; the script asks which.</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/saisandeepvaddi/notes-again/main/install.sh | sh</code></pre>
+<h3>Docker Compose, by hand</h3>
+<pre><code>git clone https://github.com/saisandeepvaddi/notes-again &amp;&amp; cd notes-again
+docker compose up -d --build</code></pre>
+<p>On first launch, sign in as <code>admin</code> with the temporary password printed in the server output, then choose your own username and password, turn login off, or switch to Firebase sign-in.</p>
+<p>Sign-in modes, reverse proxies and tunnels, API tokens and settings are covered in the full guide: <a href="https://github.com/saisandeepvaddi/notes-again/blob/main/docs/self-hosting.md">docs/self-hosting.md</a>.</p>
+
+<h2 id="desktop">Desktop app</h2>
+<p>A Tauri shell around the regular app. It runs its own copy of the server on <code>127.0.0.1</code> with a database in your OS app-data folder, so it works with no server at all, and every request needs a per-launch secret so other programs on the machine can't read your notes.</p>
+<ul>
+<li>Closing the window keeps it in the tray (menu bar on macOS) so sync and reminders continue.</li>
+<li>A notification says when notes become due.</li>
+<li><code>Cmd/Ctrl+Alt+Shift+N</code> opens a new note from anywhere.</li>
+<li>Settings, then Sync, connects it to a server you run. It syncs in the background and keeps working offline; a note edited in two places gets a side-by-side compare.</li>
+</ul>
+<p>Details: <a href="https://github.com/saisandeepvaddi/notes-again/blob/main/desktop/README.md">desktop/README.md</a>. Installers are on the <a href="/download.html">download page</a>.</p>
+
+<h2 id="extension">Browser extension</h2>
+<p>Notes Again Capture (Chrome, Edge, Brave and Firefox) saves the current page or a text selection as a note.</p>
+<ul>
+<li><strong>Save page:</strong> toolbar button, <code>Alt+Shift+N</code>, or right-click. Choose Link only or Readable article (the main article as editable Markdown).</li>
+<li><strong>Save selection:</strong> right-click a selection, or <code>Alt+Shift+S</code>.</li>
+<li>A dialog lets you edit the name, Markdown, project and tags before saving. Readable articles default to Note only, without a review schedule.</li>
+<li>Article extraction runs in your browser, with no remote service.</li>
+</ul>
+<p>To set it up, create a token under Settings, then API tokens in the web app and paste it into the extension's options with your server URL. With the desktop app, use Settings, then Phone &amp; extension to create a connection link. The token can only create notes, projects and tags; it can't read, edit or delete anything. Build instructions and details: <a href="https://github.com/saisandeepvaddi/notes-again/blob/main/extension/README.md">extension/README.md</a>.</p>
+
+<h2 id="importing">Importing</h2>
+<p>Bulk import accepts an Anki-like JSON structure (decks, per-day limits, notes with tags and difficulty) with a dry-run summary step before anything is committed.</p>
+
+<h2 id="backups">Backups</h2>
+<p>Settings, then Data &amp; backups, shows where the database file is and every local snapshot. You can download the database, take a snapshot now, or download any snapshot.</p>
+<ul>
+<li>Snapshots run every 24 hours by default and keep the last 7. They sit on the same disk as the database, so they don't protect against losing the disk.</li>
+<li>Off-site backup to S3-compatible storage is available through Litestream.</li>
+<li>The desktop app can also choose the snapshot folder (for example one synced by iCloud Drive or Dropbox) and restore a snapshot.</li>
+<li>The binary has a <code>restore</code> command for replacing the database with a snapshot or downloaded file.</li>
+</ul>
+<p>Full instructions: <a href="https://github.com/saisandeepvaddi/notes-again/blob/main/docs/self-hosting.md#backups">backups in docs/self-hosting.md</a>.</p>
+</div>
+</main>
+<footer class="site">
+<div class="wrap">
+<ul>
+<li><a href="https://github.com/saisandeepvaddi/notes-again">Source on GitHub</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again/releases/latest">Latest release</a></li>
+<li><a href="https://github.com/saisandeepvaddi/notes-again/blob/main/LICENSE">MIT license</a></li>
+</ul>
+<p>Notes Again is vibe-coded for personal use, with no support promises.</p>
+</div>
+</footer>
+</body>
+</html>

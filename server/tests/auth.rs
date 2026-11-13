@@ -241,7 +241,6 @@ async fn capture_token_cannot_go_beyond_capturing() {
         (Method::GET, "/api/sync/pull"),
         (Method::POST, "/api/notes/1/discuss"),
         (Method::GET, "/api/notes/1/revisions"),
-        (Method::POST, "/api/notes/1/attachments"),
         (Method::GET, "/api/notes/1/archive"),
         (Method::PUT, "/api/sync/blobs/abc"),
         (Method::GET, "/api/attachments/x/file"),
@@ -251,6 +250,46 @@ async fn capture_token_cannot_go_beyond_capturing() {
         let response = fb.app.req(method.clone(), path).bearer(&token).send().await;
         assert_eq!(response.code(), 403, "{method} {path}");
     }
+}
+
+#[tokio::test]
+async fn capture_token_can_attach_files_only_to_a_note_it_just_created() {
+    let fb = Firebase::start(&[]).await;
+    let token = fb.mint(json!({ "name": "Extension" })).await["token"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let note = fb
+        .app
+        .post("/api/notes/create")
+        .bearer(&token)
+        .json(json!({ "name": "Clip", "content": "body" }))
+        .send()
+        .await
+        .ok();
+    let path = format!("/api/notes/{}/attachments", id(&note));
+    let uid = "c".repeat(32);
+    let upload = |uid: String| {
+        let (app, token, path) = (&fb.app, token.clone(), path.clone());
+        async move {
+            app.post(&path)
+                .bearer(&token)
+                .header("x-file-name", "dot.gif")
+                .header("x-attachment-uid", &uid)
+                .raw("application/octet-stream", "GIF89a-pixels")
+                .send()
+                .await
+        }
+    };
+    let first = upload(uid.clone()).await;
+    assert_eq!(first.code(), 201);
+    assert_eq!(first.ok()["uid"], uid);
+    assert_eq!(upload(uid.clone()).await.code(), 409);
+    assert_eq!(upload("nope".into()).await.code(), 400);
+    fb.app
+        .exec("UPDATE notes SET created_at = '2000-01-01 00:00:00.000000'")
+        .await;
+    assert_eq!(upload("d".repeat(32)).await.code(), 403);
 }
 
 #[tokio::test]

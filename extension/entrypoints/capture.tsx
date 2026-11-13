@@ -4,6 +4,7 @@ import { defineUnlistedScript } from "wxt/utils/define-unlisted-script";
 import { normalizeSelection } from "../lib/capture/draft";
 import { extractPageInfo } from "../lib/capture/extract";
 import { extractArticle } from "../lib/capture/article";
+import { rasterizeSvgs } from "../lib/capture/media";
 import {
   isOpenDialogMessage,
   type CaptureContext,
@@ -33,7 +34,7 @@ function applyStyles(shadow: ShadowRoot) {
   }
 }
 
-function buildContext(message: OpenDialogMessage): CaptureContext {
+async function buildContext(message: OpenDialogMessage): Promise<CaptureContext> {
   const info = extractPageInfo(document);
   const selection = normalizeSelection(
     window.getSelection()?.toString() || message.selectionText || "",
@@ -45,13 +46,14 @@ function buildContext(message: OpenDialogMessage): CaptureContext {
     excerpt: info.excerpt,
     selection,
     capturedAt: new Date().toISOString(),
-    article: extractArticle(document, location.href),
+    article: extractArticle(document, location.href, await rasterizeSvgs(document)),
   };
 }
 
-function openDialog(message: OpenDialogMessage) {
+async function openDialog(message: OpenDialogMessage) {
   closeDialog();
-  const ctx = buildContext(message);
+  const ctx = await buildContext(message);
+  closeDialog();
 
   const host = document.createElement("notes-again-capture");
   host.style.cssText =
@@ -82,7 +84,7 @@ export default defineUnlistedScript(() => {
     if (!isOpenDialogMessage(message)) {
       return false;
     }
-    openDialog(message);
+    void openDialog(message);
     sendResponse({ ok: true });
     return false;
   });

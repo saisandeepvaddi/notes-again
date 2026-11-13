@@ -23,6 +23,55 @@ function isLocalHost(input: string): boolean {
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
+const IMAGE_ORIGINS = ["https://*/*", "http://*/*"];
+
+function ImageDownloads() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  useEffect(() => {
+    void browser.permissions
+      .contains({ origins: IMAGE_ORIGINS })
+      .then(setAllowed, () => setAllowed(false));
+  }, []);
+  return (
+    <section>
+      <h2>Images in clipped articles</h2>
+      <p className="nl-help">
+        To save an article’s images and diagrams with the note, the extension downloads them from
+        the site that hosts them. Many sites only allow that when you grant access to all sites.
+        Downloads happen only when you save a clipped article with images.
+      </p>
+      <div className="nl-actions" style={{ justifyContent: "flex-start" }}>
+        {allowed ? (
+          <>
+            <span className="nl-help">Image downloads are allowed.</span>
+            <button
+              type="button"
+              className="nl-button"
+              onClick={() =>
+                void browser.permissions
+                  .remove({ origins: IMAGE_ORIGINS })
+                  .then(() => setAllowed(false))
+              }
+            >
+              Turn off
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="nl-button"
+            onClick={() =>
+              void browser.permissions.request({ origins: IMAGE_ORIGINS }).then(setAllowed)
+            }
+          >
+            Allow image downloads
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function OptionsApp() {
   const [serverUrl, setServerUrl] = useState(DEFAULT_SETTINGS.serverUrl);
   const [appUrl, setAppUrl] = useState("");
@@ -311,6 +360,8 @@ export function OptionsApp() {
           )}
         </form>
       </section>
+
+      <ImageDownloads />
 
       <section>
         <h2>Shortcuts</h2>

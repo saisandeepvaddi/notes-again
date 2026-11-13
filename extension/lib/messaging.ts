@@ -16,6 +16,8 @@ export interface SaveResult {
   id: number;
   name: string;
   openUrl: string;
+  mediaSaved: number;
+  mediaFailed: number;
 }
 
 export type BackgroundResponse<T> = { ok: true; data: T } | { ok: false; error: SerializedError };

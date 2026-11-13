@@ -2,6 +2,7 @@ import { browser, type Browser } from "wxt/browser";
 import { defineBackground } from "wxt/utils/define-background";
 import { createCaptureApi } from "../lib/api";
 import { CaptureError, serializeError } from "../lib/api/types";
+import { fetchAllMedia, usedMedia, withoutMedia } from "../lib/capture/media";
 import type { OpenDialogMessage, PendingWindowContext } from "../lib/capture/types";
 import { captureKey, previousCapture, rememberCapture } from "../lib/capture/history";
 import {
@@ -56,7 +57,21 @@ async function handle(request: BackgroundRequest): Promise<unknown> {
     }
     case "save": {
       const { api, settings, baseUrl } = await getApi();
-      const saved = await api.saveNote(request.draft);
+      const used = usedMedia(request.draft.content, request.draft.media ?? []);
+      const fetched = used.length ? await fetchAllMedia(used) : new Map();
+      const content = used.length
+        ? withoutMedia(request.draft.content, used, new Set(fetched.keys()))
+        : request.draft.content;
+      const saved = await api.saveNote({ ...request.draft, content, media: undefined });
+      let mediaSaved = 0;
+      for (const entry of fetched.values()) {
+        const ok = await api.attach(saved.id, {
+          uid: entry.item.uid,
+          name: entry.name,
+          blob: entry.blob,
+        });
+        if (ok) mediaSaved += 1;
+      }
       await Promise.allSettled([
         saveSettings({
           lastProject: request.draft.project ?? "",
@@ -69,6 +84,8 @@ async function handle(request: BackgroundRequest): Promise<unknown> {
       return {
         ...saved,
         openUrl: noteUrl(settings.appUrl, baseUrl, saved.id),
+        mediaSaved,
+        mediaFailed: used.length - mediaSaved,
       } satisfies SaveResult;
     }
     case "open-options":

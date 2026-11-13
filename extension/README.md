@@ -14,7 +14,7 @@ Mozilla Readability extracts from a copy of the current page's DOM. DOMPurify re
 
 Captures include JSON-quoted YAML frontmatter: `source_url`, `captured_at`, and, when extraction provides them, `source_author`, `source_published_at` and `source_site`. These are part of the note's editable content, not new server columns, so they travel with normal note sync, backups and Markdown exports.
 
-Empty, failed, restricted or oversized pages explain why Readable article is unavailable; Link only and any available selection remain usable. Extraction is bounded to 30,000 elements and 2 million markup characters. It captures available page text, not an exact site reproduction, and does not bypass sign-in or paywalls. Images and embedded media are not saved; image alternative text is retained where available. Durable offline images await attachment support.
+Empty, failed, restricted or oversized pages explain why Readable article is unavailable; Link only and any available selection remain usable. Extraction is bounded to 30,000 elements and 2 million markup characters. It captures available page text, not an exact site reproduction, and does not bypass sign-in or paywalls. Images (up to 20 per note, 10 MB each) and inline SVG diagrams (rasterized to PNG) are downloaded and saved with the note as attachments; a checkbox turns that off. Videos and embeds become links. Many sites only allow the download when you grant "Allow image downloads" in the extension options; images that can't be downloaded stay as remote links or alt text.
 
 ### Duplicate warnings
 

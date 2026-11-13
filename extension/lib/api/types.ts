@@ -1,5 +1,11 @@
 export type Difficulty = "easy" | "medium" | "hard";
 
+export interface UploadedMedia {
+  uid: string;
+  name: string;
+  blob: Blob;
+}
+
 export interface NoteDraft {
   name: string;
   content: string;
@@ -8,6 +14,7 @@ export interface NoteDraft {
   difficulty?: Difficulty;
   noteOnly?: boolean;
   sourceUrl: string;
+  media?: import("../capture/media").MediaItem[];
 }
 
 export interface Lookups {
@@ -23,6 +30,7 @@ export interface SavedNote {
 export interface CaptureApi {
   lookups(): Promise<Lookups>;
   saveNote(draft: NoteDraft): Promise<SavedNote>;
+  attach(noteId: number, media: UploadedMedia): Promise<boolean>;
 }
 
 export type ErrorKind = "auth" | "config" | "network" | "http";

@@ -61,7 +61,7 @@ describe("buildDraft", () => {
           ok: true,
           article: {
             title: "Article",
-            markdown: "## Heading\n\nBody",
+            media: [], markdown: "## Heading\n\nBody",
             author: 'A: "writer"\n---',
             siteName: "Site",
             publishedAt: "2026-10-01T00:00:00.000Z",

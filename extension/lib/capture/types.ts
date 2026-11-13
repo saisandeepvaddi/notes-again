@@ -1,3 +1,5 @@
+import type { MediaItem } from "./media";
+
 export type CaptureMode = "link" | "article" | "selection";
 
 export interface Article {
@@ -6,6 +8,7 @@ export interface Article {
   author?: string;
   publishedAt?: string;
   siteName?: string;
+  media: MediaItem[];
 }
 
 export type ArticleResult = { ok: true; article: Article } | { ok: false; reason: string };

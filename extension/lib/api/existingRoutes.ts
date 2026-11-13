@@ -1,4 +1,11 @@
-import { CaptureError, type CaptureApi, type Lookups, type NoteDraft, type SavedNote } from "./types";
+import {
+  CaptureError,
+  type CaptureApi,
+  type Lookups,
+  type NoteDraft,
+  type SavedNote,
+  type UploadedMedia,
+} from "./types";
 
 export interface ExistingRoutesOptions {
   baseUrl: string;
@@ -125,6 +132,24 @@ export function createExistingRoutesApi(options: ExistingRoutesOptions): Capture
         ...(draft.noteOnly && { in_review: false }),
       });
       return { id: note.id, name: note.name };
+    },
+
+    async attach(noteId: number, media: UploadedMedia): Promise<boolean> {
+      try {
+        const response = await doFetch(`${baseUrl}/api/notes/${noteId}/attachments`, {
+          method: "POST",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "Content-Type": "application/octet-stream",
+            "X-File-Name": encodeURIComponent(media.name),
+            "X-Attachment-Uid": media.uid,
+          },
+          body: media.blob,
+        });
+        return response.ok;
+      } catch {
+        return false;
+      }
     },
   };
 }

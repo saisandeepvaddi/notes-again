@@ -9,6 +9,7 @@ import {
 } from "react";
 import { CaptureError } from "../api/types";
 import { buildDraft } from "../capture/draft";
+import { usedMedia, withoutMedia } from "../capture/media";
 import type { CaptureContext, CaptureMode } from "../capture/types";
 import { callBackground, type LookupsResult, type SaveResult } from "../messaging";
 import { Combobox } from "./Combobox";
@@ -47,12 +48,16 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
   const [project, setProject] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [noteOnly, setNoteOnly] = useState(false);
+  const [saveImages, setSaveImages] = useState(true);
   const [lookups, setLookups] = useState<LookupState>({ state: "loading" });
   const [save, setSave] = useState<SaveState>({ state: "idle" });
   const savePending = useRef(false);
   const projectTouched = useRef(false);
   const noteOnlyTouched = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null);
+
+  const articleMedia = ctx.article?.ok ? ctx.article.article.media : [];
+  const mediaCount = mode === "article" ? usedMedia(content, articleMedia).length : 0;
 
   const dirty =
     name !== initial.name || content !== initial.content || project.length > 0 || tags.length > 0;
@@ -115,11 +120,13 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
     setSave({ state: "saving" });
     savePending.current = true;
     try {
+      const keepMedia = mode === "article" && saveImages;
       const saved = await callBackground<SaveResult>({
         type: "save",
         draft: {
           name: name.trim(),
-          content,
+          content: keepMedia ? content : withoutMedia(content, articleMedia, new Set()),
+          media: keepMedia ? articleMedia : undefined,
           project: project[0] ?? null,
           tags,
           noteOnly,
@@ -191,6 +198,19 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
         {save.state === "saved" ? (
           <div className="nl-saved">
             <p className="nl-saved-title">Saved “{save.saved.name}”</p>
+            {save.saved.mediaSaved > 0 && (
+              <p className="nl-mode-hint">
+                {save.saved.mediaSaved} image{save.saved.mediaSaved === 1 ? "" : "s"} saved with the
+                note.
+              </p>
+            )}
+            {save.saved.mediaFailed > 0 && (
+              <p className="nl-mode-hint" role="status">
+                {save.saved.mediaFailed} image{save.saved.mediaFailed === 1 ? "" : "s"} couldn’t be
+                downloaded or attached; they stay as links or text. Allow image downloads in the
+                extension options if the site blocks them.
+              </p>
+            )}
             <div className="nl-actions">
               <a
                 className="nl-button nl-primary"
@@ -229,7 +249,7 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
               </select>
               <p id="nl-mode-hint" className="nl-mode-hint">
                 {mode === "article"
-                  ? "Review the editable Markdown below. Article text stays offline; images and embedded media are not saved."
+                  ? "Review the editable Markdown below. Images and diagrams can be saved with the note; video and other embeds become links."
                   : ctx.article?.ok
                     ? "Keep just the link, or choose Readable article to save the page text."
                     : (ctx.article?.reason ??
@@ -285,6 +305,21 @@ export function CaptureDialog({ ctx, variant, onClose }: CaptureDialogProps) {
                 disabled={saving}
               />
             </div>
+
+            {mode === "article" && articleMedia.length > 0 && (
+              <label className="nl-check">
+                <input
+                  type="checkbox"
+                  checked={saveImages}
+                  onChange={(e) => setSaveImages(e.target.checked)}
+                  disabled={saving}
+                />
+                <span>
+                  Save {mediaCount} image{mediaCount === 1 ? "" : "s"} and diagram
+                  {mediaCount === 1 ? "" : "s"} with the note (shown as attachment links below)
+                </span>
+              </label>
+            )}
 
             <div className="nl-field">
               <label className="nl-label" htmlFor="nl-content">

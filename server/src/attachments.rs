@@ -3,10 +3,12 @@ use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post};
-use axum::{Json, Router};
+use axum::{Extension, Json, Router};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
+use crate::auth::Identity;
+use crate::auth::tokens::CAPTURE_SCOPE;
 use crate::db::BEGIN_WRITE;
 use crate::error::{ApiError, ApiResult, P};
 use crate::notes::live_note;
@@ -17,6 +19,7 @@ const MAX_IMAGE: usize = 10 * 1024 * 1024;
 const MAX_PDF: usize = 25 * 1024 * 1024;
 const MAX_PER_NOTE: i64 = 20;
 const MAX_NAME: usize = 120;
+const CAPTURE_WINDOW_MINUTES: i64 = 15;
 
 #[derive(Serialize, sqlx::FromRow)]
 struct AttachmentResponse {
@@ -103,8 +106,21 @@ fn percent_decode(raw: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+fn requested_uid(headers: &HeaderMap) -> Result<Option<String>, ApiError> {
+    let Some(raw) = headers.get("x-attachment-uid") else {
+        return Ok(None);
+    };
+    let uid = raw.to_str().unwrap_or("");
+    if uid.len() == 32 && uid.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')) {
+        Ok(Some(uid.to_string()))
+    } else {
+        Err(ApiError::bad_request("Invalid attachment id"))
+    }
+}
+
 async fn upload(
     State(state): State<AppState>,
+    Extension(identity): Extension<Identity>,
     P(note_id): P<i64>,
     headers: HeaderMap,
     body: Bytes,
@@ -126,9 +142,29 @@ async fn upload(
         ));
     }
     let name = file_name(&headers);
+    let requested = requested_uid(&headers)?;
     let hash = hex::encode(Sha256::digest(&body));
     let mut tx = state.db.begin_with(BEGIN_WRITE).await?;
     let note = live_note(&mut tx, note_id).await?;
+    if identity.scope.as_deref() == Some(CAPTURE_SCOPE)
+        && Ts::now().since(note.created_at) > chrono::Duration::minutes(CAPTURE_WINDOW_MINUTES)
+    {
+        return Err(ApiError::forbidden(
+            "Capture tokens can only add files to a note they just created.",
+        ));
+    }
+    if let Some(uid) = &requested {
+        let taken: Option<i64> = sqlx::query_scalar("SELECT 1 FROM attachments WHERE uid = ?")
+            .bind(uid)
+            .fetch_optional(&mut *tx)
+            .await?;
+        if taken.is_some() {
+            return Err(ApiError::new(
+                StatusCode::CONFLICT,
+                "That attachment id is already in use.",
+            ));
+        }
+    }
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM attachments WHERE note_uid = ?")
         .bind(&note.uid)
         .fetch_one(&mut *tx)
@@ -148,7 +184,7 @@ async fn upload(
     .bind(body.as_ref())
     .execute(&mut *tx)
     .await?;
-    let uid = crate::db::models::new_uid();
+    let uid = requested.unwrap_or_else(crate::db::models::new_uid);
     let created = Ts::now();
     sqlx::query(
         "INSERT INTO attachments (uid, note_uid, name, mime, size, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",

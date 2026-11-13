@@ -16,11 +16,18 @@ interface Saved {
   content: string;
   in_review?: boolean;
 }
+interface Upload {
+  path: string;
+  uid: string | undefined;
+  name: string | undefined;
+  size: number;
+}
 interface CaptureHarness {
   page: Page;
   worker: Worker;
   baseUrl: string;
   saved: Saved[];
+  uploads: Upload[];
   open: (mode?: "page" | "selection") => Promise<void>;
 }
 
@@ -28,15 +35,38 @@ const prose =
   "Writing a note should preserve useful ideas without demanding perfect organization. A readable article gives those ideas a stable home, and keeps the important details available when the original page changes. ".repeat(
     5,
   );
-const article = `<html><head><title>Keeping useful ideas</title><meta name="author" content="Jane Writer"></head><body><nav>Example Journal</nav><article><h1>Keeping useful ideas</h1><p>${prose}</p><h2>A practical example</h2><p><a href="/reference">Read the reference</a> before trying the example.</p><pre><code class="language-js">const idea = "Keep this";\n  remember(idea);</code></pre><table><tr><th>Mode</th><th>Result</th></tr><tr><td>Article</td><td>Offline text</td></tr></table></article></body></html>`;
+const article = `<html><head><title>Keeping useful ideas</title><meta name="author" content="Jane Writer"></head><body><nav>Example Journal</nav><article><h1>Keeping useful ideas</h1><p>${prose}</p><h2>A practical example</h2><p><a href="/reference">Read the reference</a> before trying the example.</p><pre><code class="language-js">const idea = "Keep this";\n  remember(idea);</code></pre><p><img src="/hero.png" alt="Hero photo"></p><svg width="300" height="160" viewBox="0 0 300 160" aria-label="Capture flow"><rect width="300" height="160" fill="#cde"/><text x="20" y="80">Diagram</text></svg><table><tr><th>Mode</th><th>Result</th></tr><tr><td>Article</td><td>Offline text</td></tr></table></article></body></html>`;
+
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
 
 const test = base.extend<{ capture: CaptureHarness }>({
   capture: async ({ browserName }, use) => {
     if (browserName !== "chromium") throw new Error("Extension checks require Chromium");
     const saved: Saved[] = [];
+    const uploads: Upload[] = [];
     const server = createServer(async (request, response) => {
+      if (request.url === "/hero.png") {
+        response.setHeader("Content-Type", "image/png");
+        return response.end(PNG);
+      }
       response.setHeader("Content-Type", "application/json");
       if (request.url?.endsWith("/list")) return response.end("[]");
+      if (request.method === "POST" && request.url?.match(/^\/api\/notes\/\d+\/attachments$/)) {
+        const parts: Buffer[] = [];
+        for await (const chunk of request) parts.push(Buffer.from(chunk));
+        const name = request.headers["x-file-name"];
+        uploads.push({
+          path: request.url,
+          uid: request.headers["x-attachment-uid"] as string | undefined,
+          name: typeof name === "string" ? decodeURIComponent(name) : undefined,
+          size: Buffer.concat(parts).length,
+        });
+        response.statusCode = 201;
+        return response.end("{}");
+      }
       if (request.url === "/api/notes/create") {
         const parts: Buffer[] = [];
         for await (const chunk of request) parts.push(Buffer.from(chunk));
@@ -87,7 +117,7 @@ const test = base.extend<{ capture: CaptureHarness }>({
         );
         await expect(page.getByRole("dialog")).toBeVisible();
       };
-      await use({ page, worker, baseUrl, saved, open });
+      await use({ page, worker, baseUrl, saved, uploads, open });
     } finally {
       try {
         await context?.close();
@@ -228,4 +258,39 @@ test("a connection link pasted in Server URL switches to the correct input", asy
     "Saved. Keep Notes Again running when capturing pages.",
   );
   await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+test("clipping an article saves its images and rasterized diagrams as attachments", async ({
+  capture,
+}) => {
+  const { page, saved, uploads, open } = capture;
+  await open();
+  await page.getByLabel("Capture", { exact: true }).selectOption("article");
+  const preview = page.getByLabel("Markdown preview · editable");
+  await expect(preview).toHaveValue(/!\[Hero photo\]\(attachment:[a-f0-9]{32}\)/);
+  await expect(preview).toHaveValue(/!\[Capture flow\]\(attachment:[a-f0-9]{32}\)/);
+  await page.getByRole("button", { name: "Save note", exact: true }).click();
+  await expect(page.getByText("2 images saved with the note.")).toBeVisible();
+  const links = [...(saved[0]?.content.matchAll(/\(attachment:([a-f0-9]{32})\)/g) ?? [])].map(
+    (match) => match[1],
+  );
+  expect(links).toHaveLength(2);
+  expect(uploads.map((upload) => upload.uid).sort()).toEqual([...links].sort());
+  expect(uploads.map((upload) => upload.path)).toEqual([
+    "/api/notes/1/attachments",
+    "/api/notes/1/attachments",
+  ]);
+  expect(uploads.every((upload) => upload.size > 0)).toBe(true);
+});
+
+test("turning images off keeps only text and uploads nothing", async ({ capture }) => {
+  const { page, saved, uploads, open } = capture;
+  await open();
+  await page.getByLabel("Capture", { exact: true }).selectOption("article");
+  await page.getByLabel(/Save 2 images and diagrams/).uncheck();
+  await page.getByRole("button", { name: "Save note", exact: true }).click();
+  await expect(page.getByText("Saved “Keeping useful ideas”")).toBeVisible();
+  expect(saved[0]?.content).not.toContain("attachment:");
+  expect(saved[0]?.content).toContain("Hero photo");
+  expect(uploads).toHaveLength(0);
 });

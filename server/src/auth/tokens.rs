@@ -49,6 +49,13 @@ pub fn scope_allows(scope: &str, method: &str, path: &str) -> bool {
     CAPTURE_ROUTES
         .iter()
         .any(|(m, p)| *m == method && *p == path)
+        || (method == "POST" && is_note_attachment_path(path))
+}
+
+fn is_note_attachment_path(path: &str) -> bool {
+    path.strip_prefix("/api/notes/")
+        .and_then(|rest| rest.strip_suffix("/attachments"))
+        .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 pub async fn find_active(conn: &mut Conn, token: &str) -> Result<Option<ApiTokenRow>, sqlx::Error> {
@@ -256,6 +263,10 @@ mod tests {
     fn capture_scope_is_narrow() {
         assert!(scope_allows("capture", "post", "/api/notes/create/"));
         assert!(!scope_allows("capture", "GET", "/api/notes/list"));
+        assert!(scope_allows("capture", "POST", "/api/notes/12/attachments"));
+        assert!(!scope_allows("capture", "GET", "/api/notes/12/attachments"));
+        assert!(!scope_allows("capture", "POST", "/api/notes/x/attachments"));
+        assert!(!scope_allows("capture", "DELETE", "/api/notes/12"));
         assert!(scope_allows("app", "DELETE", "/api/notes/1"));
         assert!(!scope_allows("other", "GET", "/api/tags/list"));
     }

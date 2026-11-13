@@ -17,7 +17,7 @@ const ctx: CaptureContext = {
   selection: "Selected passage",
   article: {
     ok: true,
-    article: { title: "Article title", markdown: "## A heading\n\nReadable article body." },
+    article: { title: "Article title", media: [], markdown: "## A heading\n\nReadable article body." },
   },
 };
 const defaults = { projects: [], tags: [], lastProject: "", lastNoteOnly: false };

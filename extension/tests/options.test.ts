@@ -6,7 +6,13 @@ import { parseConnectLink } from "../lib/connectLink";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ load: vi.fn(), save: vi.fn(), request: vi.fn() }));
-vi.mock("wxt/browser", () => ({ browser: { permissions: { request: mocks.request } } }));
+vi.mock("wxt/browser", () => ({ browser: {
+    permissions: {
+      request: mocks.request,
+      contains: async () => false,
+      remove: async () => true,
+    },
+  } }));
 vi.mock("../lib/settings", () => ({
   DEFAULT_SETTINGS: { serverUrl: "http://localhost:8000" },
   DESKTOP_APP_URL: "http://127.0.0.1:47821",

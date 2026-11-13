@@ -68,7 +68,7 @@ describe("readable article extraction", () => {
 
   it("strips active content, unsafe URLs and tracking images", () => {
     const doc = page(
-      '<script>evil()</script><iframe src="https://tracker.test"></iframe><form>Secret form data</form><p hidden>Hidden secret</p><p><a href="javascript:alert(1)">Bad link</a><a href="data:text/html,evil">Data link</a><a href="file:///etc/passwd">File link</a><a href="/safe" onclick="evil()">Safe</a><img src="https://tracker.test/pixel" onerror="evil()" alt="An illustration"></p>',
+      '<script>evil()</script><form>Secret form data</form><p hidden>Hidden secret</p><p><a href="javascript:alert(1)">Bad link</a><a href="data:text/html,evil">Data link</a><a href="file:///etc/passwd">File link</a><a href="/safe" onclick="evil()">Safe</a><img src="https://tracker.test/pixel" width="1" height="1" onerror="evil()" alt="An illustration"></p>',
     );
     const result = markdown(doc);
     for (const forbidden of [
@@ -84,8 +84,39 @@ describe("readable article extraction", () => {
     ]) {
       expect(result).not.toContain(forbidden);
     }
-    expect(result).toContain("An illustration");
+    expect(result).not.toContain("An illustration");
     expect(result).toContain("[Safe](https://example.com/safe)");
+  });
+
+  it("keeps images as attachment links with their sources, resolving lazy and responsive images", () => {
+    const doc = page(
+      '<p><img src="/a.png" alt="Plain"></p><p><img data-src="lazy.jpg" alt="Lazy"></p><p><img srcset="small.png 480w, big.png 1200w" alt="Responsive"></p><p><img src="/dot.png" width="1" height="1" alt="Pixel"></p>',
+    );
+    const result = extractArticle(doc, "https://example.com/posts/article");
+    if (!result.ok) throw new Error(result.reason);
+    const { media, markdown: text } = result.article;
+    expect(media.map((item) => [item.alt, item.src])).toEqual([
+      ["Plain", "https://example.com/a.png"],
+      ["Lazy", "https://example.com/posts/lazy.jpg"],
+      ["Responsive", "https://example.com/posts/big.png"],
+    ]);
+    for (const item of media) expect(text).toContain(`![${item.alt}](attachment:${item.uid})`);
+    expect(text).not.toContain("Pixel");
+    expect(media.every((item) => /^[a-f0-9]{32}$/.test(item.uid))).toBe(true);
+  });
+
+  it("turns rasterized diagrams into images and embeds into links", () => {
+    const doc = page(
+      '<p><svg aria-label="Flow chart" width="300" height="200"><rect width="10" height="10"/></svg></p><p><svg width="16" height="16"><path d="M0 0"/></svg></p><iframe src="https://www.youtube.com/embed/abc"></iframe><video src="/clip.mp4"></video>',
+    );
+    const png = "data:image/png;base64,iVBORw0KGgo=";
+    const result = extractArticle(doc, "https://example.com/posts/article", new Map([[0, png]]));
+    if (!result.ok) throw new Error(result.reason);
+    const { media, markdown: text } = result.article;
+    expect(media).toHaveLength(1);
+    expect(media[0]).toMatchObject({ alt: "Flow chart", src: png });
+    expect(text).toContain("[Embedded content: www.youtube.com/embed/abc](https://www.youtube.com/embed/abc)");
+    expect(text).toContain("[Video: example.com/clip.mp4](https://example.com/clip.mp4)");
   });
 
   it("collects author, publication time and site name", () => {

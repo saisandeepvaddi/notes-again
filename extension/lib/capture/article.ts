@@ -1,12 +1,13 @@
 import { Readability } from "@mozilla/readability";
 import DOMPurify from "dompurify";
 import TurndownService from "turndown";
+import { bestImageUrl, isTinyImage, MAX_MEDIA, newMediaUid, type MediaItem } from "./media";
 import type { ArticleResult } from "./types";
 
 const MAX_ELEMENTS = 30_000;
 const MAX_MARKUP = 2_000_000;
 const OMIT =
-  "script, style, noscript, iframe, object, embed, form, input, button, textarea, select, svg, canvas, video, audio, [hidden], [aria-hidden='true'], notes-again-capture";
+  "script, style, noscript, object, embed, form, input, button, textarea, select, svg, canvas, [hidden], [aria-hidden='true'], notes-again-capture";
 const TAGS = [
   "article",
   "main",
@@ -53,7 +54,61 @@ const TAGS = [
 const text = (value: string | null | undefined) =>
   value?.replace(/\s+/g, " ").trim().slice(0, 500) || undefined;
 
-export function extractArticle(doc: Document, sourceUrl: string): ArticleResult {
+function mediaNoun(node: Element) {
+  return node.tagName === "IFRAME" ? "Embedded content" : node.tagName === "AUDIO" ? "Audio" : "Video";
+}
+
+function prepareMedia(live: Document, copy: Document, sourceUrl: string, svgImages: Map<number, string>) {
+  const liveSvgs = Array.from(live.querySelectorAll("svg"));
+  Array.from(copy.querySelectorAll("svg")).forEach((svg, index) => {
+    const url = svgImages.get(index);
+    if (!url) return;
+    const image = copy.createElement("img");
+    image.setAttribute("src", url);
+    const label =
+      liveSvgs[index]?.getAttribute("aria-label") ||
+      liveSvgs[index]?.querySelector("title")?.textContent ||
+      "Diagram";
+    image.setAttribute("alt", label.replace(/\s+/g, " ").trim().slice(0, 120));
+    svg.replaceWith(image);
+  });
+  copy.querySelectorAll("iframe, video, audio").forEach((node) => {
+    const raw =
+      node.getAttribute("src") ??
+      node.querySelector("source[src]")?.getAttribute("src") ??
+      null;
+    try {
+      const url = raw ? new URL(raw, sourceUrl) : null;
+      if (url && /^https?:$/.test(url.protocol)) {
+        const paragraph = copy.createElement("p");
+        const link = copy.createElement("a");
+        link.setAttribute("href", url.href);
+        link.textContent = `${mediaNoun(node)}: ${url.hostname}${url.pathname === "/" ? "" : url.pathname}`;
+        paragraph.append(link);
+        node.replaceWith(paragraph);
+        return;
+      }
+    } catch {}
+    node.remove();
+  });
+  copy.querySelectorAll("img").forEach((image) => {
+    const current = image.getAttribute("src") ?? "";
+    if (current.startsWith("data:image/png;base64,") && image.hasAttribute("alt")) return;
+    const url = isTinyImage(image) ? null : bestImageUrl(image, sourceUrl);
+    if (!url) {
+      image.removeAttribute("src");
+      return;
+    }
+    image.setAttribute("src", url);
+    image.removeAttribute("srcset");
+  });
+}
+
+export function extractArticle(
+  doc: Document,
+  sourceUrl: string,
+  svgImages: Map<number, string> = new Map(),
+): ArticleResult {
   const unavailable = (reason: string): ArticleResult => ({ ok: false, reason });
   try {
     if (!/^https?:$/.test(new URL(sourceUrl).protocol)) {
@@ -77,6 +132,7 @@ export function extractArticle(doc: Document, sourceUrl: string): ArticleResult 
     ).href;
     copy.querySelectorAll("base").forEach((node) => node.remove());
     copy.head.prepend(base);
+    prepareMedia(doc, copy, sourceUrl, svgImages);
     copy.querySelectorAll(OMIT).forEach((node) => node.remove());
     const parsed = new Readability(copy, {
       maxElemsToParse: MAX_ELEMENTS,
@@ -90,7 +146,8 @@ export function extractArticle(doc: Document, sourceUrl: string): ArticleResult 
     }
     const clean = DOMPurify.sanitize(parsed.content, {
       ALLOWED_TAGS: TAGS,
-      ALLOWED_ATTR: ["href", "title", "alt", "class", "start", "colspan", "rowspan"],
+      ALLOWED_ATTR: ["href", "src", "title", "alt", "class", "start", "colspan", "rowspan"],
+      ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|data:image\/png;base64,)/i,
       ALLOW_DATA_ATTR: false,
       RETURN_DOM_FRAGMENT: true,
     });
@@ -134,10 +191,18 @@ export function extractArticle(doc: Document, sourceUrl: string): ArticleResult 
         return `\n\n${[line(heading), line(Array<string>(width).fill("---")), ...rows.map(line)].join("\n")}\n\n`;
       },
     });
-    converter.addRule("imageText", {
+    const media: MediaItem[] = [];
+    converter.addRule("image", {
       filter: "img",
-      replacement: (_content, node) =>
-        converter.escape((node as HTMLElement).getAttribute("alt") ?? ""),
+      replacement: (_content, node) => {
+        const element = node as HTMLElement;
+        const alt = (element.getAttribute("alt") ?? "").replace(/\s+/g, " ").trim();
+        const src = element.getAttribute("src") ?? "";
+        if (!src || media.length >= MAX_MEDIA) return converter.escape(alt);
+        const item = { uid: newMediaUid(), alt: alt.replace(/[[\]\\]/g, " "), src };
+        media.push(item);
+        return `![${item.alt}](attachment:${item.uid})`;
+      },
     });
     converter.addRule("codeFence", {
       filter: "pre",
@@ -162,6 +227,7 @@ export function extractArticle(doc: Document, sourceUrl: string): ArticleResult 
         markdown,
         author: text(parsed.byline),
         siteName: text(parsed.siteName),
+        media,
         publishedAt:
           published && Number.isFinite(Date.parse(published))
             ? new Date(published).toISOString()

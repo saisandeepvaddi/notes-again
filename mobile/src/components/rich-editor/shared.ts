@@ -1,11 +1,20 @@
+import { router } from "expo-router";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";
+import { fetchLinkTarget } from "@/api/links";
 import { openAttachment } from "@/attachments/native";
 
 export const TOOLBAR_HEIGHT = 48;
 
 export async function openLink(href: string) {
+  const noteUid = /^note:([a-f0-9]{32})$/.exec(href.trim())?.[1];
+  if (noteUid) {
+    const target = await fetchLinkTarget(noteUid).catch(() => undefined);
+    if (target && !target.trashed) router.push({ pathname: "/note/[id]", params: { id: target.id } });
+    else Alert.alert("Note unavailable", "The linked note is in the trash or has not reached this device yet.");
+    return;
+  }
   const attachment = /^attachment:([a-f0-9]{32})$/.exec(href.trim())?.[1];
   if (attachment) {
     await openAttachment(attachment).catch(() =>

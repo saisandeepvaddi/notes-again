@@ -52,8 +52,8 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 
 ### 5. Connected notes and library chat
 
-- [x] Search and insert stable internal note links; preserve links across renames and devices. (Web and server; mobile still to do.)
-- [x] Show backlinks and make linked notes easy to navigate. (Web and server; mobile still to do.)
+- [x] Search and insert stable internal note links; preserve links across renames and devices. (Web, server and mobile.)
+- [x] Show backlinks and make linked notes easy to navigate. (Web, server and mobile.)
 - [ ] Extend chat scope to selected notes, a project/tag and the library.
 - [ ] Retrieve relevant passages instead of sending the entire library; show which passages were actually used and validate citations.
 - [ ] Keep retrieval indexes current after edits, trash and deletion; exclude trashed notes by default.
@@ -91,3 +91,4 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - 2026-11-11: Stage 4 mobile History: History screen from the note page lists this device's revisions, compares with the current note (shared `lineDiff`) and restores with confirmation, remounting the editor. Typecheck, lint and iOS export check pass; not yet run on a simulator. Remaining: mobile attachments.
 - 2026-11-11: Stage 4 mobile attachments: Attach a file (photo library or PDF/image file) on the note page, images render in the reader and editor, PDFs open via the share sheet; bytes come from the on-device server, so they work offline after sync. Typecheck, lint, expo-doctor and the iOS export check pass; needs a native rebuild (new picker modules) and a device check, including a phone-to-desktop sync of a file. Image paste on mobile is not supported. Stage 4 checklist stays open until that device check.
 - 2026-11-11: Stage 5 connected notes (server, web): links are `[Title](note:<uid>)`, so they survive renames and sync as plain text. `GET /api/notes/{id}/backlinks` (FTS match verified against the real link) and `GET /api/notes/link-targets` (resolve uids, flag trashed); notes and search hits now expose `uid`. Web: Link note dialog, backlinks section, clickable links in the reader and an Open linked note action in the editor popover; trashed or missing targets render struck through. Server, unit and Playwright tests pass. Remaining: mobile links/backlinks, then library chat scope and retrieval.
+- 2026-11-12: Stage 5 mobile links: a Link a note screen (search, then append `[Title](note:<uid>)`), `note:` links in the reader and editor open the target note through `/api/notes/link-targets` (trashed or unsynced targets show an alert), and a Linked from list on the note page. Typecheck, lint and the iOS export check pass; not run on a simulator. Remaining in Stage 5: library chat scope and retrieval.

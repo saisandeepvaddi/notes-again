@@ -3,11 +3,11 @@ import type { NoteItem, Rating } from "@web/notes/new-note-form/types";
 import { RATING_OPTIONS } from "@web/notes/rating";
 import { reviewStatusOf, type ReviewStatus } from "@web/notes/reviewStatus";
 import { format } from "date-fns";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { useNavigation, usePreventRemove } from "expo-router/react-navigation";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { type ReactNode } from "react";
-import { Alert, Share, TextInput, View } from "react-native";
+import { Alert, Pressable, Share, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -23,6 +23,9 @@ import {
   useSetReviewStatus,
   useSetProject,
 } from "@/api/notes";
+import { useBacklinks } from "@/api/links";
+import { noteLinkMarkdown } from "@web/links/uri";
+import { takePendingLink } from "@/links/pending";
 import { attachmentMarkdown, pickFile, pickPhoto, uploadPicked } from "@/attachments/native";
 import { ActionMenu } from "@/components/action-menu";
 import { AppText } from "@/components/app-text";
@@ -64,6 +67,39 @@ const STATUS_HINTS: Record<ReviewStatus, string> = {
 
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
+
+function Backlinks({ noteId }: { noteId: number }) {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const { data } = useBacklinks(noteId);
+  if (!data?.length) return null;
+  return (
+    <View style={{ gap: 8 }}>
+      <AppText variant="label" tone="muted">
+        Linked from {data.length} {data.length === 1 ? "note" : "notes"}
+      </AppText>
+      {data.map((link) => (
+        <Pressable
+          key={link.id}
+          accessibilityRole="link"
+          onPress={() => router.push({ pathname: "/note/[id]", params: { id: link.id } })}
+          style={({ pressed }) => ({
+            minHeight: 44,
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.hairline,
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <AppText numberOfLines={1}>{link.title || "Untitled"}</AppText>
+          <AppText variant="caption" tone="muted" numberOfLines={1}>
+            {link.snippet}
+          </AppText>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 
 function ReviewHistory({ note }: { note: NoteItem }) {
   const { scheme } = useTheme();
@@ -262,6 +298,23 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
   const [editorKey, setEditorKey] = useState(0);
   const contentRef = useRef(note.content);
   const [editorMarkdown, setEditorMarkdown] = useState(note.content);
+  const appendMarkdown = useCallback(
+    async (markdown: string) => {
+      const next = `${contentRef.current.trimEnd()}\n\n${markdown}\n`;
+      contentRef.current = next;
+      autosave.setContent(next);
+      await autosave.flush();
+      setEditorMarkdown(next);
+      setEditorKey((value) => value + 1);
+    },
+    [autosave],
+  );
+  useFocusEffect(
+    useCallback(() => {
+      const link = takePendingLink();
+      if (link) void appendMarkdown(noteLinkMarkdown(link.title, link.uid)).catch(() => undefined);
+    }, [appendMarkdown]),
+  );
   const attach = async (kind: string) => {
     if (attaching) return;
     setAttaching(true);
@@ -270,12 +323,7 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
       if (!picked) return;
       await autosave.flush();
       const info = await uploadPicked(note.id, picked);
-      const next = `${contentRef.current.trimEnd()}\n\n${attachmentMarkdown(info)}\n`;
-      contentRef.current = next;
-      autosave.setContent(next);
-      await autosave.flush();
-      setEditorMarkdown(next);
-      setEditorKey((value) => value + 1);
+      await appendMarkdown(attachmentMarkdown(info));
     } catch (error) {
       Alert.alert("Couldn’t attach the file", error instanceof Error ? error.message : "Try again.");
     } finally {
@@ -384,6 +432,9 @@ function EditableNote({ note, editor }: { note: NoteItem; editor: RichEditorCont
         void autosave.flush().then(() => router.push({ pathname: "/discuss/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before discussing this note."));
       }}>Discuss this note</Button>
       <Button variant="outline" onPress={() => {
+        void autosave.flush().then(() => router.push({ pathname: "/link-note/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before linking a note."));
+      }}>Link a note</Button>
+      <Button variant="outline" onPress={() => {
         void autosave.flush().then(() => router.push({ pathname: "/history/[id]", params: { id: note.id } }), () => Alert.alert("Couldn’t save this note", "Save your changes successfully before opening History."));
       }}>History</Button>
     </>
@@ -429,6 +480,7 @@ function NoteView({ note, live }: { note: NoteItem; live: boolean }) {
           </>
         )}
         {!live ? <NoteSettings note={note} /> : null}
+        <Backlinks noteId={note.id} />
         <ReviewHistory note={note} />
       </KeyboardAwareScrollView>
       {showPanel ? (

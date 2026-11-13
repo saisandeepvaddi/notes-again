@@ -8,7 +8,7 @@ import { useReadingFont } from "@/hooks/use-reading-font";
 import { useTheme } from "@/hooks/use-theme";
 
 async function openLink(href: string) {
-  if (href.startsWith("attachment:")) return openEditorLink(href);
+  if (/^(attachment|note):/.test(href)) return openEditorLink(href);
   if (/^https?:\/\//i.test(href)) {
     await WebBrowser.openBrowserAsync(href);
   } else if (/^[a-z][a-z\d+.-]*:/i.test(href)) {

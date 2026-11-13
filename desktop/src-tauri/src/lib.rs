@@ -1,7 +1,7 @@
 mod backend;
+mod credentials;
 mod tray;
 mod updates;
-mod credentials;
 
 use std::thread;
 
@@ -119,9 +119,21 @@ fn create_main_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
 }
 
 pub fn run() {
+    if let Ok(runtime) = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .max_blocking_threads(4)
+        .enable_all()
+        .build()
+    {
+        tauri::async_runtime::set(Box::leak(Box::new(runtime)).handle().clone());
+    }
     let quick_capture: Shortcut = QUICK_CAPTURE.parse().expect("a valid shortcut");
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![credentials::read_ai_key, credentials::write_ai_key, credentials::forget_ai_key])
+        .invoke_handler(tauri::generate_handler![
+            credentials::read_ai_key,
+            credentials::write_ai_key,
+            credentials::forget_ai_key
+        ])
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_main(app)
         }))

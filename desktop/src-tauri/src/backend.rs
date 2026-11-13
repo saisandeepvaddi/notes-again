@@ -79,6 +79,7 @@ pub fn start(app: &AppHandle) -> Result<Connection, String> {
         .spawn(move || {
             let runtime = match tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
+                .max_blocking_threads(8)
                 .enable_all()
                 .build()
             {

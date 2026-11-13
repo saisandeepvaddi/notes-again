@@ -27,6 +27,17 @@ schedule, so it sticks instead of being written once and forgotten.
   articles, notes link to each other with backlinks, and every note keeps a
   history you can compare and restore.
 
+<table>
+  <tr>
+    <td><img src="docs/screenshots/notes-list.png" alt="Notes list as a grid of cards with projects, tags and due dates" width="480"></td>
+    <td><img src="docs/screenshots/note.png" alt="A note open with rendered Markdown, a Python code block and a table" width="480"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/review.png" alt="A review session showing a Rust note and Again, Hard, Good, Easy buttons" width="480"></td>
+    <td><img src="docs/screenshots/note-dark.png" alt="The same note in dark mode" width="480"></td>
+  </tr>
+</table>
+
 ## Status
 
 Working today: notes, projects, tags, review sessions, trash, attachments, note

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { DEFAULT_NEW_NOTE_DEFAULTS, readNewNoteDefaults } from "../newNoteDefaults";
 import {
   emptyNewNoteDraft,
   readNewNoteDraft,
@@ -8,10 +9,21 @@ import {
 
 function initialDraft() {
   try {
+    const defaults = readNewNoteDefaults(window.localStorage);
     const draft = readNewNoteDraft(window.localStorage);
-    return { draft: draft ?? emptyNewNoteDraft(), restored: draft !== null, saved: true };
+    return {
+      defaults,
+      draft: draft ?? emptyNewNoteDraft(defaults),
+      restored: draft !== null,
+      saved: true,
+    };
   } catch {
-    return { draft: emptyNewNoteDraft(), restored: false, saved: false };
+    return {
+      defaults: DEFAULT_NEW_NOTE_DEFAULTS,
+      draft: emptyNewNoteDraft(),
+      restored: false,
+      saved: false,
+    };
   }
 }
 
@@ -24,7 +36,7 @@ export function useNewNoteDraft() {
 
   const persist = (next = latest.current) => {
     try {
-      writeNewNoteDraft(window.localStorage, next);
+      writeNewNoteDraft(window.localStorage, next, initial.defaults);
       setSaved(true);
       return true;
     } catch {
@@ -41,7 +53,7 @@ export function useNewNoteDraft() {
   };
 
   const discard = () => {
-    const next = emptyNewNoteDraft();
+    const next = emptyNewNoteDraft(initial.defaults);
     if (!persist(next)) return false;
     latest.current = next;
     setDraft(next);
@@ -49,5 +61,5 @@ export function useNewNoteDraft() {
     return true;
   };
 
-  return { draft, saved, restored, update, persist, discard };
+  return { draft, defaults: initial.defaults, saved, restored, update, persist, discard };
 }

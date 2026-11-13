@@ -46,7 +46,7 @@ function NewNoteForm() {
   const [editorKey, setEditorKey] = useState(0);
   const created = useRef(false);
   const request = useRef<Promise<unknown> | null>(null);
-  const hasDraft = hasNewNoteDraft(recovery.draft);
+  const hasDraft = hasNewNoteDraft(recovery.draft, recovery.defaults);
   const status = statusChoice ?? (project?.paused ? "paused" : "active");
   const toggleTag = (tag: Tag) => {
     recovery.update({
@@ -145,6 +145,7 @@ function NewNoteForm() {
                 </label>
                 <Input
                   id="new-note-name"
+                  autoFocus
                   autoComplete="new-password"
                   placeholder="What is this note about?"
                   aria-invalid={Boolean(error)}

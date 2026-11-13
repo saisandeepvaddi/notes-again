@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { NewNoteDefaults } from "../newNoteDefaults";
 import { DifficultySchema, ProjectSchema, TagSchema } from "./types";
 
 export const NEW_NOTE_DRAFT_KEY = "notes-again.new-note-draft.v1";
@@ -21,26 +22,28 @@ export interface DraftStorage {
   removeItem: (key: string) => void;
 }
 
-export function emptyNewNoteDraft(): NewNoteDraft {
+export function emptyNewNoteDraft(defaults?: NewNoteDefaults): NewNoteDraft {
+  const active = defaults?.enabled ? defaults : null;
   return {
     version: 1,
     name: "",
     content: "",
-    difficulty: "medium",
+    difficulty: active?.difficulty ?? "medium",
     project: null,
     tags: [],
-    statusChoice: null,
+    statusChoice: active && active.status !== "active" ? active.status : null,
   };
 }
 
-export function hasNewNoteDraft(draft: NewNoteDraft) {
+export function hasNewNoteDraft(draft: NewNoteDraft, defaults?: NewNoteDefaults) {
+  const baseline = emptyNewNoteDraft(defaults);
   return (
     draft.name !== "" ||
     draft.content !== "" ||
-    draft.difficulty !== "medium" ||
+    draft.difficulty !== baseline.difficulty ||
     draft.project !== null ||
     draft.tags.length > 0 ||
-    draft.statusChoice !== null
+    draft.statusChoice !== baseline.statusChoice
   );
 }
 
@@ -55,8 +58,12 @@ export function readNewNoteDraft(storage: DraftStorage): NewNoteDraft | null {
   }
 }
 
-export function writeNewNoteDraft(storage: DraftStorage, draft: NewNoteDraft) {
-  if (hasNewNoteDraft(draft)) {
+export function writeNewNoteDraft(
+  storage: DraftStorage,
+  draft: NewNoteDraft,
+  defaults?: NewNoteDefaults,
+) {
+  if (hasNewNoteDraft(draft, defaults)) {
     storage.setItem(NEW_NOTE_DRAFT_KEY, JSON.stringify(draft));
   } else {
     storage.removeItem(NEW_NOTE_DRAFT_KEY);

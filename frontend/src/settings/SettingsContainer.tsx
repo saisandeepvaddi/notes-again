@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CloudCheckIcon,
+  NotePencilIcon,
   DeviceMobileIcon,
   HardDrivesIcon,
   PaintBrushIcon,
@@ -15,6 +16,7 @@ import { ClientOnly } from "@tanstack/react-router";
 import { Suspense, type ReactNode } from "react";
 import { ApiTokens } from "./api-tokens/ApiTokens";
 import { AppearanceSettings } from "./appearance/AppearanceSettings";
+import { NotesSettings } from "./notes/NotesSettings";
 import { SettingsForm } from "./SettingsForm";
 import { SETTINGS_SECTIONS, type SettingsSection } from "./settingsSearch";
 import { DevicesSettings } from "./devices/DevicesSettings";
@@ -29,6 +31,7 @@ const SECTIONS: Record<
   { label: string; icon: typeof RepeatIcon; content: ReactNode }
 > = {
   appearance: { label: "Appearance", icon: PaintBrushIcon, content: <AppearanceSettings /> },
+  notes: { label: "Notes", icon: NotePencilIcon, content: <NotesSettings /> },
   review: { label: "Review", icon: RepeatIcon, content: <SettingsForm /> },
   discuss: { label: "Discuss", icon: ChatCircleTextIcon, content: <DiscussionSettings /> },
   "sign-in": { label: "Sign-in", icon: SignInIcon, content: <SignInSettings /> },

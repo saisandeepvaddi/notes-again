@@ -73,3 +73,18 @@ describe("new-note drafts", () => {
     );
   });
 });
+
+describe("new note defaults", () => {
+  const defaults = { enabled: true, status: "note-only", difficulty: "hard" } as const;
+
+  it("starts a blank draft from enabled defaults and does not count them as writing", () => {
+    const draft = emptyNewNoteDraft(defaults);
+    expect(draft).toMatchObject({ difficulty: "hard", statusChoice: "note-only" });
+    expect(hasNewNoteDraft(draft, defaults)).toBe(false);
+    expect(hasNewNoteDraft({ ...draft, difficulty: "easy" }, defaults)).toBe(true);
+  });
+
+  it("ignores defaults that are switched off", () => {
+    expect(emptyNewNoteDraft({ ...defaults, enabled: false })).toEqual(emptyNewNoteDraft());
+  });
+});

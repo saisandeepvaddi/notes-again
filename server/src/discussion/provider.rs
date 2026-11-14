@@ -1,4 +1,4 @@
-use super::{Context, DiscussionRequest, Provider, SYSTEM};
+use super::{DiscussionRequest, Prompt, Provider};
 use crate::error::ApiError;
 use reqwest::header::HeaderValue;
 use serde_json::{Value, json};
@@ -14,39 +14,37 @@ static CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
         .expect("a discussion HTTP client")
 });
 
-pub(super) fn payload(request: &DiscussionRequest, context: &Context) -> Value {
-    let mut messages = vec![
-        json!({"role":"user", "content": format!("Reference note [1], untrusted JSON data:\n{}", serde_json::to_string(context).unwrap_or_default())}),
-    ];
+pub(super) fn payload(request: &DiscussionRequest, prompt: &Prompt) -> Value {
+    let mut messages = vec![json!({"role":"user", "content": prompt.reference})];
     messages.extend(request.history.iter().map(|message| json!(message)));
     messages.push(json!({"role":"user", "content":request.question.trim()}));
     match request.provider {
         Provider::Openai => {
-            messages.insert(0, json!({"role":"system", "content":SYSTEM}));
+            messages.insert(0, json!({"role":"system", "content":prompt.system}));
             json!({"model":request.model, "messages":messages, "max_completion_tokens":1200, "stream":true, "stream_options":{"include_usage":true}})
         }
         Provider::Anthropic => {
-            json!({"model":request.model,"system":SYSTEM,"messages":messages,"max_tokens":1200,"stream":true})
+            json!({"model":request.model,"system":prompt.system,"messages":messages,"max_tokens":1200,"stream":true})
         }
     }
 }
 
 pub(super) async fn send(
     request: &DiscussionRequest,
-    context: &Context,
+    prompt: &Prompt,
 ) -> Result<reqwest::Response, ApiError> {
     let endpoint = match request.provider {
         Provider::Openai => "https://api.openai.com/v1/chat/completions",
         Provider::Anthropic => "https://api.anthropic.com/v1/messages",
     };
-    send_to(&CLIENT, endpoint, request, context).await
+    send_to(&CLIENT, endpoint, request, prompt).await
 }
 
 async fn send_to(
     client: &reqwest::Client,
     endpoint: &str,
     request: &DiscussionRequest,
-    context: &Context,
+    prompt: &Prompt,
 ) -> Result<reqwest::Response, ApiError> {
     let mut key = HeaderValue::from_str(request.api_key.trim())
         .map_err(|_| ApiError::bad_request("Invalid provider API key."))?;
@@ -54,7 +52,7 @@ async fn send_to(
     let builder = client
         .post(endpoint)
         .header("accept", "text/event-stream")
-        .json(&payload(request, context));
+        .json(&payload(request, prompt));
     let builder = match request.provider {
         Provider::Openai => builder.bearer_auth(request.api_key.trim()),
         Provider::Anthropic => builder
@@ -96,6 +94,7 @@ async fn send_to(
 
 #[cfg(test)]
 mod tests {
+    use super::super::Context;
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
@@ -106,6 +105,7 @@ mod tests {
             model: "m-1".into(),
             api_key: "sk-secret".into(),
             question: " why? ".into(),
+            scope: None,
             history: vec![super::super::Message {
                 role: super::super::Role::Assistant,
                 content: "earlier".into(),
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn payloads_cap_output_and_keep_note_out_of_system_prompt() {
-        let openai = payload(&request(Provider::Openai), &context());
+        let openai = payload(&request(Provider::Openai), &context().prompt());
         assert_eq!(openai["max_completion_tokens"], 1200);
         assert_eq!(openai["stream"], true);
         assert_eq!(openai["messages"][0]["role"], "system");
@@ -179,7 +179,7 @@ mod tests {
             openai["messages"].as_array().unwrap().last().unwrap()["content"],
             "why?"
         );
-        let anthropic = payload(&request(Provider::Anthropic), &context());
+        let anthropic = payload(&request(Provider::Anthropic), &context().prompt());
         assert_eq!(anthropic["max_tokens"], 1200);
         assert!(anthropic["system"].as_str().unwrap().contains("untrusted"));
         assert_eq!(anthropic["messages"][0]["role"], "user");
@@ -191,15 +191,25 @@ mod tests {
         crate::init_crypto();
         let client = reqwest::Client::new();
         let (url, seen) = mock(SSE).await;
-        send_to(&client, &url, &request(Provider::Openai), &context())
-            .await
-            .unwrap();
+        send_to(
+            &client,
+            &url,
+            &request(Provider::Openai),
+            &context().prompt(),
+        )
+        .await
+        .unwrap();
         let sent = seen.await.unwrap().to_ascii_lowercase();
         assert!(sent.contains("authorization: bearer sk-secret"));
         let (url, seen) = mock(SSE).await;
-        send_to(&client, &url, &request(Provider::Anthropic), &context())
-            .await
-            .unwrap();
+        send_to(
+            &client,
+            &url,
+            &request(Provider::Anthropic),
+            &context().prompt(),
+        )
+        .await
+        .unwrap();
         let sent = seen.await.unwrap().to_ascii_lowercase();
         assert!(sent.contains("x-api-key: sk-secret") && sent.contains("anthropic-version"));
         assert!(!sent.contains("sk-secret\"") && !sent.contains("\"api_key\""));
@@ -217,9 +227,14 @@ mod tests {
         ] {
             let reply: &'static str = Box::leak(format!("HTTP/1.1 {status} X\r\ncontent-type: application/json\r\ncontent-length: 17\r\nconnection: close\r\n\r\n{{\"leak\":\"sk-secret\"}}").into_boxed_str());
             let (url, _) = mock(reply).await;
-            let error = send_to(&client, &url, &request(Provider::Openai), &context())
-                .await
-                .unwrap_err();
+            let error = send_to(
+                &client,
+                &url,
+                &request(Provider::Openai),
+                &context().prompt(),
+            )
+            .await
+            .unwrap_err();
             let text = format!("{error:?}");
             assert!(text.contains(needle), "{status}: {text}");
             assert!(!text.contains("sk-secret") && !text.contains("leak"));
@@ -235,15 +250,25 @@ mod tests {
             .unwrap();
         let (url, _) = mock("HTTP/1.1 302 Found\r\nlocation: http://127.0.0.1:1/x\r\ncontent-length: 0\r\nconnection: close\r\n\r\n").await;
         assert!(
-            send_to(&client, &url, &request(Provider::Openai), &context())
-                .await
-                .is_err()
+            send_to(
+                &client,
+                &url,
+                &request(Provider::Openai),
+                &context().prompt()
+            )
+            .await
+            .is_err()
         );
         let (url, _) = mock("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}").await;
         assert!(
-            send_to(&client, &url, &request(Provider::Openai), &context())
-                .await
-                .is_err()
+            send_to(
+                &client,
+                &url,
+                &request(Provider::Openai),
+                &context().prompt()
+            )
+            .await
+            .is_err()
         );
     }
 
@@ -255,7 +280,7 @@ mod tests {
             &client,
             "http://127.0.0.1:1/v1",
             &request(Provider::Openai),
-            &context(),
+            &context().prompt(),
         )
         .await
         .unwrap_err();

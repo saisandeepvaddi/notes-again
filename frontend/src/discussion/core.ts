@@ -53,11 +53,30 @@ export const ContextSchema = z.object({
   limit: z.number().int(),
 });
 export type DiscussionContext = z.infer<typeof ContextSchema>;
+export const PassageSchema = z.object({
+  n: z.number().int(),
+  note_id: z.number().int(),
+  note_uid: z.string(),
+  title: z.string(),
+  text: z.string(),
+});
+export type Passage = z.infer<typeof PassageSchema>;
+export type ChatScope =
+  | { kind: "library" }
+  | { kind: "project"; id: number }
+  | { kind: "tag"; id: number }
+  | { kind: "notes"; ids: number[] };
 const count = z.number().int().nonnegative().nullable();
 export const EventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("context"),
     context: ContextSchema,
+    provider: z.string(),
+    model: z.string(),
+  }),
+  z.object({
+    type: z.literal("sources"),
+    passages: z.array(PassageSchema),
     provider: z.string(),
     model: z.string(),
   }),
@@ -74,6 +93,7 @@ export interface Turn {
   answer: string;
   status: "streaming" | "done" | "stopped" | "error";
   context?: DiscussionContext;
+  sources?: Passage[];
   usage?: { input: number | null; output: number | null };
   notice?: string;
   provider: string;
@@ -180,4 +200,5 @@ export interface DiscussionBody {
   api_key: string;
   question: string;
   history: ReturnType<typeof historyFor>;
+  scope?: ChatScope;
 }

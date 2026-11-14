@@ -3,6 +3,7 @@ import {
   consumeDiscussion,
   CredentialsSchema,
   historyFor,
+  type ChatScope,
   type DiscussionBody,
   type Turn,
 } from "./core";
@@ -10,7 +11,11 @@ import { credentialSnapshot } from "./credentials";
 
 export type DiscussionTransport = (body: DiscussionBody, signal: AbortSignal) => Promise<Response>;
 
-export function useDiscussion(transport: DiscussionTransport, beforeSend?: () => Promise<unknown>) {
+export function useDiscussion(
+  transport: DiscussionTransport,
+  beforeSend?: () => Promise<unknown>,
+  scope?: ChatScope,
+) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
   const [running, setRunning] = useState(false);
@@ -76,6 +81,7 @@ export function useDiscussion(transport: DiscussionTransport, beforeSend?: () =>
           api_key: config.apiKey,
           question: text.trim(),
           history,
+          ...(scope ? { scope } : {}),
         },
         controller.signal,
       );
@@ -85,7 +91,9 @@ export function useDiscussion(transport: DiscussionTransport, beforeSend?: () =>
           answer += event.text;
           if (answer.length > 40_000) throw new Error("The response exceeded its size limit.");
           update({ answer });
-        } else if (event.type === "context")
+        } else if (event.type === "sources")
+          update({ sources: event.passages, provider: event.provider, model: event.model });
+        else if (event.type === "context")
           update({ context: event.context, provider: event.provider, model: event.model });
         else if (event.type === "usage")
           update({ usage: { input: event.input_tokens, output: event.output_tokens } });

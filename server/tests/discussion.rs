@@ -103,3 +103,45 @@ async fn requires_authentication() {
         .await;
     assert!(matches!(response.code(), 401 | 403));
 }
+
+async fn chat(app: &TestApp, payload: Value) -> Res {
+    app.post("/api/chat").json(payload).send().await
+}
+
+#[tokio::test]
+async fn library_chat_needs_a_scope_and_matching_passages_before_any_provider_call() {
+    let app = TestApp::new().await;
+    let trashed = app
+        .note(json!({ "name": "Gone", "content": "zebra stripes explained at length" }))
+        .await;
+    app.delete(&format!("/api/notes/{}", id(&trashed)))
+        .send()
+        .await;
+    app.note(json!({ "name": "Other", "content": "completely unrelated text" }))
+        .await;
+
+    assert_eq!(chat(&app, body(json!({}))).await.code(), 400);
+    for scope in [
+        json!({ "kind": "notes", "ids": [] }),
+        json!({ "kind": "notes", "ids": (1..=11).collect::<Vec<_>>() }),
+        json!({ "kind": "unknown" }),
+    ] {
+        let code = chat(&app, body(json!({ "scope": scope }))).await.code();
+        assert!(code == 400 || code == 422, "{code}");
+    }
+    assert_eq!(
+        chat(
+            &app,
+            body(json!({ "scope": { "kind": "library" }, "api_key": " " }))
+        )
+        .await
+        .code(),
+        400
+    );
+    let none = chat(
+        &app,
+        body(json!({ "scope": { "kind": "library" }, "question": "Tell me about zebra stripes" })),
+    )
+    .await;
+    assert_eq!(none.code(), 422);
+}

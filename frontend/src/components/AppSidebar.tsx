@@ -10,6 +10,7 @@ import {
   NotebookIcon,
   RepeatIcon,
   SignOutIcon,
+  ChatsIcon,
   TrashIcon,
   TreeStructureIcon,
   UploadSimpleIcon,
@@ -34,6 +35,7 @@ const DESKTOP_DOWNLOAD_URL = "https://github.com/saisandeepvaddi/notes-again/rel
 const NAV_ITEMS = [
   { to: "/notes", label: "All Notes", icon: NotebookIcon },
   { to: "/review", label: "Review", icon: RepeatIcon },
+  { to: "/chat", label: "Chat", icon: ChatsIcon },
   { to: "/import", label: "Import", icon: UploadSimpleIcon },
   { to: "/organize", label: "Organize", icon: TreeStructureIcon },
   { to: "/trash", label: "Trash", icon: TrashIcon },

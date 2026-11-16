@@ -336,7 +336,16 @@ export function SyncSettings() {
       <>
         <Description>
           Your notes live on this computer and work offline. Connect your self-hosted Notes Again
-          server to keep this computer, the web app and your phone in sync.
+          server to keep this computer, the web app and your phone in sync.{" "}
+          <a
+            href="https://github.com/saisandeepvaddi/notes-again/blob/main/docs/self-hosting.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4"
+          >
+            How to host a server
+          </a>
+          . Syncing through your own cloud storage instead is planned.
         </Description>
         <ConnectForm />
       </>

@@ -8,7 +8,13 @@ export const NewNoteContent = withForm({
       <form.AppField
         name="content"
         children={(field) => (
-          <MarkdownEditor markdown={field.state.value} onChange={field.handleChange} />
+          <MarkdownEditor
+            markdown={field.state.value}
+            onChange={field.handleChange}
+            className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"
+            contentClassName="markdown-paper"
+            placeholder="Start writing"
+          />
         )}
       />
     );

@@ -12,10 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useBlocker, useNavigate } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { DIFFICULTY_BADGE_CLASSES, DIFFICULTY_OPTIONS } from "../difficulty";
 import { ProjectPicker } from "../ProjectPicker";
+import { lastNotesSearch } from "../notes-list/notesSearch";
 import { ReviewStatusPicker } from "../ReviewStatusPicker";
 import { newNoteReviewFields, type ReviewStatus } from "../reviewStatus";
 import { TagPicker } from "../TagPicker";
@@ -111,111 +113,135 @@ function NewNoteForm() {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="flex flex-col gap-4"
+      className="note-page -m-4 flex min-h-[calc(100dvh-3rem)] flex-col md:min-h-dvh"
     >
-      {hasDraft ? (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p role="status" className="text-xs text-muted-foreground">
-            {recovery.saved
-              ? recovery.restored
-                ? "Draft restored. Saved in this browser only."
-                : "Draft saved in this browser only."
-              : "Draft couldn’t be saved in this browser. Keep this page open until you create the note."}
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={isPending}
-            onClick={() => setDiscardOpen(true)}
-          >
-            Discard draft
-          </Button>
-        </div>
-      ) : null}
-      <fieldset disabled={isPending} className="contents">
-        <form.AppField
-          name="name"
-          children={(field) => {
-            const error = field.state.meta.isTouched ? field.state.meta.errors[0] : undefined;
-            return (
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="new-note-name" className="text-xs font-medium">
-                  Name
-                </label>
-                <Input
-                  id="new-note-name"
-                  autoFocus
-                  autoComplete="new-password"
-                  placeholder="What is this note about?"
-                  aria-invalid={Boolean(error)}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {error && <p className="text-xs text-destructive">{error.message}</p>}
-              </div>
-            );
-          }}
-        />
-        <div inert={isPending} className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium">Note</span>
-          <NewNoteContent key={editorKey} form={form} />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <div role="group" aria-label="Difficulty" className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Difficulty</span>
-            {DIFFICULTY_OPTIONS.map((option) => (
+      <div className="sticky top-12 z-20 flex h-11 items-center justify-between gap-3 border-b bg-background px-4 md:top-0 md:px-8">
+        <Link
+          to="/notes"
+          search={lastNotesSearch()}
+          aria-label="Back to the notes list"
+          className="flex h-7 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          All Notes
+        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          {hasDraft ? (
+            <>
+              <p role="status" className="hidden truncate text-xs text-muted-foreground sm:block">
+                {recovery.saved
+                  ? recovery.restored
+                    ? "Draft restored. Saved in this browser only."
+                    : "Draft saved in this browser only."
+                  : "Draft couldn’t be saved in this browser. Keep this page open until you create the note."}
+              </p>
               <Button
-                key={option.value}
                 type="button"
                 size="sm"
-                variant="outline"
-                aria-pressed={difficulty === option.value}
-                onClick={() => recovery.update({ difficulty: option.value })}
-                className={cn(
-                  difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
-                )}
+                variant="ghost"
+                disabled={isPending}
+                onClick={() => setDiscardOpen(true)}
               >
-                {option.label}
+                Discard draft
               </Button>
-            ))}
-          </div>
-          <Separator orientation="vertical" className="h-4" />
-          <ProjectPicker
-            value={project}
-            onChange={(next) => {
-              recovery.update({ project: next, statusChoice: null });
-            }}
-          />
-          <Separator orientation="vertical" className="h-4" />
-          <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
+            </>
+          ) : null}
+          <form.AppForm>
+            <span>
+              <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />
+            </span>
+          </form.AppForm>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <ReviewStatusPicker
-            value={status}
-            onChange={(next) => recovery.update({ statusChoice: next })}
-          />
-          <p className="text-xs text-muted-foreground">
-            {project?.paused && statusChoice === null
-              ? `Paused because “${project.name}” is paused, so new notes in it start paused. Pick In review to review this one anyway.`
-              : NEW_NOTE_STATUS_HINTS[status]}
-          </p>
+      </div>
+      <fieldset disabled={isPending} className="contents">
+        <header className="px-4 pt-3 md:px-8 md:pt-5">
+          <div className="note-column flex flex-col gap-3">
+            <form.AppField
+              name="name"
+              children={(field) => {
+                const error = field.state.meta.isTouched ? field.state.meta.errors[0] : undefined;
+                return (
+                  <div className="-mx-2 flex flex-col gap-1">
+                    <label htmlFor="new-note-name" className="sr-only">
+                      Name
+                    </label>
+                    <Input
+                      id="new-note-name"
+                      autoFocus
+                      autoComplete="new-password"
+                      placeholder="Untitled"
+                      aria-invalid={Boolean(error)}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="h-auto rounded-md border-0 bg-transparent px-2 py-0.5 font-reading text-[1.75rem] leading-tight font-semibold tracking-tight shadow-none placeholder:text-muted-foreground/60 focus-visible:bg-muted/40 focus-visible:ring-0 md:text-[2.125rem] dark:bg-transparent"
+                    />
+                    {error && <p className="px-2 text-xs text-destructive">{error.message}</p>}
+                  </div>
+                );
+              }}
+            />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+              <div role="group" aria-label="Difficulty" className="flex items-center gap-1">
+                {DIFFICULTY_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    aria-pressed={difficulty === option.value}
+                    onClick={() => recovery.update({ difficulty: option.value })}
+                    className={cn(
+                      difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
+                    )}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+              <Separator
+                orientation="vertical"
+                className="mx-0.5 h-3.5 data-vertical:self-center"
+              />
+              <ProjectPicker
+                value={project}
+                onChange={(next) => {
+                  recovery.update({ project: next, statusChoice: null });
+                }}
+              />
+              <Separator
+                orientation="vertical"
+                className="mx-0.5 h-3.5 data-vertical:self-center"
+              />
+              <TagPicker selectedTags={selectedTags} onToggle={toggleTag} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <ReviewStatusPicker
+                value={status}
+                onChange={(next) => recovery.update({ statusChoice: next })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {project?.paused && statusChoice === null
+                  ? `Paused because “${project.name}” is paused, so new notes in it start paused. Pick In review to review this one anyway.`
+                  : NEW_NOTE_STATUS_HINTS[status]}
+              </p>
+            </div>
+            {error ? (
+              <div role="alert" className="flex flex-col gap-1 text-xs">
+                <p className="font-medium text-destructive">Couldn’t create the note</p>
+                <p className="text-muted-foreground">
+                  {error} Your writing is still here. Try creating the note again.
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </header>
+        <div inert={isPending} className="flex-1 px-4 pt-6 pb-20 md:px-8">
+          <div className="note-column note-sheet">
+            <NewNoteContent key={editorKey} form={form} />
+          </div>
         </div>
       </fieldset>
-      {error ? (
-        <div role="alert" className="flex flex-col gap-1 text-xs">
-          <p className="font-medium text-destructive">Couldn’t create the note</p>
-          <p className="text-muted-foreground">
-            {error} Your writing is still here. Try creating the note again.
-          </p>
-        </div>
-      ) : null}
-      <form.AppForm>
-        <span>
-          <form.SubmitButton disabled={isPending} label={isPending ? "Creating" : "Create"} />
-        </span>
-      </form.AppForm>
       <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

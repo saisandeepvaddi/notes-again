@@ -20,6 +20,8 @@ export const SyncStatusSchema = z.object({
   last_synced_at: z.string().nullable().optional(),
   last_changed_at: z.string().nullable().optional(),
   last_error: z.string().nullable().optional(),
+  kind: z.enum(["server", "folder"]).nullable().optional(),
+  folder: z.string().nullable().optional(),
 });
 export type SyncStatus = z.infer<typeof SyncStatusSchema>;
 
@@ -94,6 +96,22 @@ export function useConnectSync() {
     mutationKey: ["connect-sync"],
     mutationFn: (input: ConnectInput) =>
       putFetcher("/sync/remote")(JSON.stringify(input)).then((data) =>
+        SyncStatusSchema.parse(data),
+      ),
+    onSuccess(data, _vars, _result, context) {
+      context.client.setQueryData(SYNC_STATUS_KEY, data);
+    },
+    onSettled(_data, _error, _vars, _result, context) {
+      void context.client.invalidateQueries({ queryKey: ["sync"] });
+    },
+  });
+}
+
+export function useConnectFolder() {
+  return useMutation({
+    mutationKey: ["connect-folder"],
+    mutationFn: (folder: string) =>
+      putFetcher("/sync/vault")(JSON.stringify({ folder })).then((data) =>
         SyncStatusSchema.parse(data),
       ),
     onSuccess(data, _vars, _result, context) {

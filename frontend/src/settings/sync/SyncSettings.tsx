@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { noteTitleText } from "@/notes/NoteTitle";
 import {
+  useConnectFolder,
   useConnectSync,
   useDisconnectSync,
   useIsDesktop,
@@ -26,6 +27,7 @@ import {
   type SyncStatus,
 } from "@/sync/syncApi";
 import { CloudSlashIcon, WarningIcon } from "@phosphor-icons/react";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns";
 import { type FormEvent, useId, useState } from "react";
@@ -76,6 +78,75 @@ function Field({ label, children, id }: { label: string; children: React.ReactNo
       </label>
       {children}
     </div>
+  );
+}
+
+function FolderForm() {
+  const id = useId();
+  const [folder, setFolder] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const { mutateAsync, isPending } = useConnectFolder();
+
+  const choose = async () => {
+    try {
+      const picked = await invoke<string | null>("plugin:dialog|open", {
+        options: { directory: true, multiple: false, title: "Choose the sync folder" },
+      });
+      if (picked) setFolder(picked);
+    } catch {
+      setError("Couldn't open the folder chooser. Type the folder path instead.");
+    }
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    try {
+      await mutateAsync(folder.trim());
+      toast.add({ type: "success", description: "Connected. Your first sync is running." });
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Couldn't use that folder.");
+    }
+  };
+
+  return (
+    <form className="flex flex-col gap-3 border-t pt-4" onSubmit={submit}>
+      <div>
+        <h3 className="text-sm font-medium">Or sync through a folder</h3>
+        <Description>
+          Pick a folder that your cloud drive already syncs (iCloud Drive, OneDrive, Dropbox or
+          Google Drive) and use the same folder on your other computers. No server needed. Notes
+          Again keeps its own files in a notes-again-vault folder inside it.
+        </Description>
+      </div>
+      <Field label="Folder" id={`${id}-folder`}>
+        <div className="flex gap-2">
+          <Input
+            id={`${id}-folder`}
+            value={folder}
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="/Users/you/Library/Mobile Documents/com~apple~CloudDocs/Notes"
+            onChange={(event) => setFolder(event.target.value)}
+          />
+          {isTauri() ? (
+            <Button type="button" variant="outline" onClick={() => void choose()}>
+              Choose…
+            </Button>
+          ) : null}
+        </div>
+      </Field>
+      {error ? (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
+      <div>
+        <Button type="submit" variant="outline" disabled={isPending || !folder.trim()}>
+          {isPending ? "Connecting…" : "Use this folder"}
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -211,8 +282,8 @@ function DisconnectButton({ url }: { url: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Stop syncing with {url}?</AlertDialogTitle>
           <AlertDialogDescription>
-            Both this computer and the server keep every note they have now. Changes stop moving
-            between them until you connect again.
+            Both this computer and the synced copy keep every note they have now. Changes stop
+            moving between them until you connect again.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -263,7 +334,8 @@ function ConflictList() {
 
 function ConnectedStatus({ status }: { status: SyncStatus }) {
   const { mutateAsync, isPending } = useRunSync();
-  const url = status.url ?? "your server";
+  const isFolder = status.kind === "folder";
+  const url = isFolder ? (status.folder ?? "your folder") : (status.url ?? "your server");
   const lastSynced = status.last_synced_at ? syncedAgo(status.last_synced_at) : null;
 
   const syncNow = async () => {
@@ -284,10 +356,15 @@ function ConnectedStatus({ status }: { status: SyncStatus }) {
     <>
       <div className="flex flex-col gap-1">
         <p className="text-sm">
-          Syncing with <span className="font-medium break-all">{url}</span>
+          {isFolder ? "Syncing through the folder " : "Syncing with "}
+          <span className="font-medium break-all">{url}</span>
         </p>
         <Description>
-          {status.username ? `Signed in as ${status.username}. ` : "Using an app token. "}
+          {isFolder
+            ? "Other computers use the same folder. "
+            : status.username
+              ? `Signed in as ${status.username}. `
+              : "Using an app token. "}
           {status.syncing || isPending
             ? "Syncing now…"
             : lastSynced
@@ -345,9 +422,10 @@ export function SyncSettings() {
           >
             How to host a server
           </a>
-          . Syncing through your own cloud storage instead is planned.
+          . Or sync through a folder your cloud drive already syncs, with no server.
         </Description>
         <ConnectForm />
+        <FolderForm />
       </>
     );
   }

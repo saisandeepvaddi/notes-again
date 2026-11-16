@@ -88,11 +88,11 @@ impl Remote {
     }
 }
 
-struct Pending {
-    kind: Kind,
-    uid: String,
-    version: i64,
-    deleted: bool,
+pub(super) struct Pending {
+    pub kind: Kind,
+    pub uid: String,
+    pub version: i64,
+    pub deleted: bool,
 }
 
 async fn echoes(conn: &mut Conn) -> Result<HashMap<(String, String), i64>, sqlx::Error> {
@@ -132,7 +132,7 @@ async fn settle_pushed_version(conn: &mut Conn, pushed: i64) -> Result<(), sqlx:
     Ok(())
 }
 
-async fn pending_changes(
+pub(super) async fn pending_changes(
     conn: &mut Conn,
     since: i64,
     until: i64,
@@ -200,7 +200,7 @@ async fn pending_changes(
     Ok(pending)
 }
 
-fn batches(pending: Vec<Pending>) -> Vec<Vec<Pending>> {
+pub(super) fn batches(pending: Vec<Pending>) -> Vec<Vec<Pending>> {
     let (meta, notes): (Vec<Pending>, Vec<Pending>) =
         pending.into_iter().partition(|p| p.kind != Kind::Note);
     let mut notes = notes.into_iter();
@@ -221,7 +221,11 @@ fn unchanged_since(row: &Option<RowRef>, item: &Pending) -> bool {
     row.as_ref().is_some_and(|r| r.sync_version == item.version)
 }
 
-async fn record_conflict(conn: &mut Conn, uid: &str, theirs: &Payload) -> Result<(), sqlx::Error> {
+pub(super) async fn record_conflict(
+    conn: &mut Conn,
+    uid: &str,
+    theirs: &Payload,
+) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO sync_conflicts (note_uid, their_name, their_content, detected_at) VALUES (?, ?, ?, ?) \
          ON CONFLICT(note_uid) DO UPDATE SET their_name = excluded.their_name, their_content = excluded.their_content, \
@@ -236,7 +240,7 @@ async fn record_conflict(conn: &mut Conn, uid: &str, theirs: &Payload) -> Result
     Ok(())
 }
 
-async fn clear_conflict(conn: &mut Conn, uid: &str) -> Result<(), sqlx::Error> {
+pub(super) async fn clear_conflict(conn: &mut Conn, uid: &str) -> Result<(), sqlx::Error> {
     sqlx::query("DELETE FROM sync_conflicts WHERE note_uid = ?")
         .bind(uid)
         .execute(conn)

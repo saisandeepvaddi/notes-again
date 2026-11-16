@@ -18,7 +18,7 @@ use crate::state::AppState;
 
 const MAX_PULL: i64 = 500;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Change {
     pub kind: Kind,
     pub uid: String,
@@ -251,28 +251,35 @@ async fn push_attachment(conn: &mut Conn, change: &Change) -> Result<ChangeResul
     result(conn, change, Status::Ok, Some(&change.uid), None).await
 }
 
-async fn push(
-    State(state): State<AppState>,
-    Body(body): Body<PushBody>,
-) -> ApiResult<Json<PushResponse>> {
-    let mut changes = body.changes;
+pub(super) async fn apply_changes(
+    conn: &mut Conn,
+    mut changes: Vec<Change>,
+) -> Result<Vec<ChangeResult>, sqlx::Error> {
     changes.sort_by_key(|c| c.kind.index());
     let mut aliases = HashMap::new();
     let mut results = vec![];
-    let mut tx = state.db.begin_with(BEGIN_WRITE).await?;
     for change in &changes {
         let outcome = if change.data.is_none() {
-            push_deletion(&mut tx, change).await?
+            push_deletion(conn, change).await?
         } else {
             match change.kind {
-                Kind::Settings => push_settings(&mut tx, change).await?,
-                Kind::Note => push_note(&mut tx, change, &aliases).await?,
-                Kind::Attachment => push_attachment(&mut tx, change).await?,
-                _ => push_named(&mut tx, change, &mut aliases).await?,
+                Kind::Settings => push_settings(conn, change).await?,
+                Kind::Note => push_note(conn, change, &aliases).await?,
+                Kind::Attachment => push_attachment(conn, change).await?,
+                _ => push_named(conn, change, &mut aliases).await?,
             }
         };
         results.push(outcome);
     }
+    Ok(results)
+}
+
+async fn push(
+    State(state): State<AppState>,
+    Body(body): Body<PushBody>,
+) -> ApiResult<Json<PushResponse>> {
+    let mut tx = state.db.begin_with(BEGIN_WRITE).await?;
+    let results = apply_changes(&mut tx, body.changes).await?;
     tx.commit().await?;
     Ok(Json(PushResponse { results }))
 }

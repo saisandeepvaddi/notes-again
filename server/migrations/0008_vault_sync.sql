@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS vault_sync (
+	id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+	path VARCHAR NOT NULL,
+	vault_id VARCHAR NOT NULL,
+	device_id VARCHAR NOT NULL,
+	pushed_version INTEGER NOT NULL DEFAULT 0,
+	next_seq INTEGER NOT NULL DEFAULT 1,
+	last_synced_at DATETIME,
+	last_changed_at DATETIME,
+	last_error VARCHAR
+);
+CREATE TABLE IF NOT EXISTS vault_cursors (
+	device VARCHAR NOT NULL PRIMARY KEY,
+	seq INTEGER NOT NULL
+);

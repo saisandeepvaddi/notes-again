@@ -35,6 +35,8 @@ struct SyncStatus {
     last_synced_at: Option<Ts>,
     last_changed_at: Option<Ts>,
     last_error: Option<String>,
+    kind: Option<&'static str>,
+    folder: Option<String>,
 }
 
 async fn remote(state: &AppState) -> Result<Option<SyncRemoteRow>, sqlx::Error> {
@@ -44,6 +46,25 @@ async fn remote(state: &AppState) -> Result<Option<SyncRemoteRow>, sqlx::Error> 
 }
 
 async fn status(state: &AppState) -> Result<SyncStatus, sqlx::Error> {
+    if let Some(vault) = super::vault::vault_row(state).await? {
+        let mut conn = state.db.acquire().await?;
+        let version = current_version(&mut conn).await?;
+        let conflicts: i64 = sqlx::query_scalar("SELECT count(*) FROM sync_conflicts")
+            .fetch_one(&mut *conn)
+            .await?;
+        return Ok(SyncStatus {
+            connected: true,
+            syncing: state.syncing(),
+            pending: version > vault.pushed_version,
+            conflicts,
+            last_synced_at: vault.last_synced_at,
+            last_changed_at: vault.last_changed_at,
+            last_error: vault.last_error,
+            kind: Some("folder"),
+            folder: Some(vault.path),
+            ..SyncStatus::default()
+        });
+    }
     let Some(row) = remote(state).await? else {
         return Ok(SyncStatus::default());
     };
@@ -62,10 +83,30 @@ async fn status(state: &AppState) -> Result<SyncStatus, sqlx::Error> {
         last_synced_at: row.last_synced_at,
         last_changed_at: row.last_changed_at,
         last_error: row.last_error,
+        kind: Some("server"),
+        folder: None,
     })
 }
 
+async fn run_any(state: &AppState) {
+    if matches!(super::vault::vault_row(state).await, Ok(Some(_))) {
+        super::vault::run(state).await;
+    } else {
+        run_sync(state).await;
+    }
+}
+
 async fn sync_due(state: &AppState) -> Result<bool, sqlx::Error> {
+    if let Some(vault) = super::vault::vault_row(state).await? {
+        let mut conn = state.db.acquire().await?;
+        if current_version(&mut conn).await? > vault.pushed_version {
+            return Ok(true);
+        }
+        return Ok(match vault.last_synced_at {
+            None => true,
+            Some(last) => Ts::now().since(last) >= ChronoDuration::seconds(PULL_EVERY_SECONDS),
+        });
+    }
     let Some(row) = remote(state).await? else {
         return Ok(false);
     };
@@ -83,7 +124,7 @@ pub async fn run_schedule(state: AppState) {
     loop {
         if !state.syncing() {
             match sync_due(&state).await {
-                Ok(true) => run_sync(&state).await,
+                Ok(true) => run_any(&state).await,
                 Ok(false) => {}
                 Err(error) => tracing::error!("Background sync failed: {error}"),
             }
@@ -94,7 +135,7 @@ pub async fn run_schedule(state: AppState) {
 
 fn sync_in_background(state: &AppState) {
     let state = state.clone();
-    tokio::spawn(async move { run_sync(&state).await });
+    tokio::spawn(async move { run_any(&state).await });
 }
 
 async fn sync_status(State(state): State<AppState>) -> ApiResult<Json<SyncStatus>> {
@@ -221,9 +262,9 @@ async fn connect(
     check_opt_len("password", body.password.as_deref(), 500)?;
     check_opt_len("token", body.token.as_deref(), 500)?;
     check_opt_len("fingerprint", body.fingerprint.as_deref(), 200)?;
-    if remote(&state).await?.is_some() {
+    if remote(&state).await?.is_some() || super::vault::vault_row(&state).await?.is_some() {
         return Err(ApiError::conflict(
-            "Disconnect from the current server first.",
+            "Disconnect from the current sync first.",
         ));
     }
     let url = normalize_url(&body.url);
@@ -271,7 +312,51 @@ async fn connect(
     Ok(Json(status(&state).await?))
 }
 
+#[derive(Deserialize)]
+struct VaultBody {
+    folder: String,
+}
+
+async fn connect_vault(
+    State(state): State<AppState>,
+    Body(body): Body<VaultBody>,
+) -> ApiResult<Json<SyncStatus>> {
+    check_len("folder", &body.folder, 1024)?;
+    if super::vault::vault_row(&state).await?.is_some() {
+        return Err(ApiError::conflict(
+            "This computer already syncs through a folder. Disconnect it first.",
+        ));
+    }
+    super::vault::connect(&state, std::path::Path::new(body.folder.trim()))
+        .await
+        .map_err(|error| {
+            ApiError::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                super::vault::describe_error(&error),
+            )
+        })?;
+    sync_in_background(&state);
+    Ok(Json(status(&state).await?))
+}
+
 async fn disconnect(State(state): State<AppState>) -> ApiResult<StatusCode> {
+    if super::vault::vault_row(&state).await?.is_some() {
+        let mut tx = state.db.begin_with(BEGIN_WRITE).await?;
+        sqlx::query("DELETE FROM vault_sync")
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("DELETE FROM vault_cursors")
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("DELETE FROM sync_bases")
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("DELETE FROM sync_conflicts")
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        return Ok(StatusCode::NO_CONTENT);
+    }
     let Some(row) = remote(&state).await? else {
         return Ok(StatusCode::NO_CONTENT);
     };
@@ -303,7 +388,7 @@ async fn disconnect(State(state): State<AppState>) -> ApiResult<StatusCode> {
 }
 
 async fn run_now(State(state): State<AppState>) -> ApiResult<Json<SyncStatus>> {
-    run_sync(&state).await;
+    run_any(&state).await;
     Ok(Json(status(&state).await?))
 }
 
@@ -384,6 +469,7 @@ pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/sync/status", get(sync_status))
         .route("/sync/remote", put(connect).delete(disconnect))
+        .route("/sync/vault", put(connect_vault))
         .route("/sync/run", post(run_now))
         .route("/sync/conflicts", get(list_conflicts))
         .route("/sync/conflicts/{note_id}/resolve", post(resolve))

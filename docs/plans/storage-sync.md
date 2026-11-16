@@ -1,6 +1,6 @@
 # Plan: sync through your own storage (no server)
 
-Status: proposed, not started. Replaces "host a sync server" as the default way to use more than one device. The existing server sync (`/api/sync/*`) stays for self-hosters and the web app.
+Status: phase 1 (folder backend, desktop) implemented on 2026-11-17; S3-compatible, encryption and phone support are not started. Replaces "host a sync server" as the default way to use more than one device. The existing server sync (`/api/sync/*`) stays for self-hosters and the web app.
 
 ## Why
 
@@ -54,3 +54,10 @@ iCloud has no public server API, so it is reachable only as a folder on macOS/iO
 - Whether a device may use both a server and a storage vault at once. Recommendation: no, one sync target per device, switching asks for confirmation.
 - Whether the web app (served by a server) is expected to sync with storage vaults. Recommendation: no; it keeps using its server.
 - Snapshot cadence and retention (proposal: snapshot after 200 batches, keep two).
+
+## Implementation notes (phase 1)
+
+- `server/src/sync/vault.rs`: `Store::Folder` (create-only writes through a temp file and rename), batch files `devices/<device-id>/<seq>.json` (10-digit sequence), `vault.json`, content-addressed `blobs/<sha256>`. Pull reads each peer's batches in strict sequence (a gap or an unreadable file stops that peer until the next pass), applies each batch in one transaction through `sync::server::apply_changes` (the same merge code as the server push endpoint), then records the peer's payload as the new base. Push publishes `pending_changes` with each row's base. Rows whose merged result differs from the peer's data lose their echo so they publish on the next push; text conflicts become `sync_conflicts` rows on the device that received the competing edit and are resolved with the existing conflict UI.
+- Tables `vault_sync` and `vault_cursors` (migration 0008). One sync target per device: connecting a folder is refused while a server is connected and the other way round.
+- Desktop API: `PUT /api/sync/vault {folder}` (status, run and disconnect are shared with server sync; status carries `kind` and `folder`); the background schedule syncs the vault like a server. Settings → Sync has a "Or sync through a folder" form with a native folder chooser (`tauri-plugin-dialog`).
+- Not yet: snapshots and compaction (batches accumulate), encryption, other backends, phone. A conflict is detected by the device that receives the competing edit, so concurrent edits of one note ask for resolution on that device; convergence is designed for one person's two or three devices.

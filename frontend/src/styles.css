@@ -298,6 +298,118 @@
   }
 }
 
+.markdown-content {
+  & .katex {
+    font-size: 1.08em;
+  }
+
+  & .katex-display {
+    @apply my-3 overflow-x-auto overflow-y-hidden py-1;
+  }
+
+  & li:has(> input[type="checkbox"]),
+  & li:has(> p > input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.25rem;
+  }
+
+  & input[type="checkbox"] {
+    @apply mr-2 size-3.5 translate-y-[2px] accent-[var(--primary)];
+  }
+
+  & mark {
+    @apply rounded bg-yellow-200/70 px-0.5 text-foreground dark:bg-yellow-400/30;
+  }
+
+  & details {
+    @apply my-2 rounded-md border border-border px-3 py-1.5;
+
+    & > summary {
+      @apply cursor-pointer font-medium;
+    }
+  }
+
+  & video,
+  & .embed {
+    @apply my-2 w-full max-w-full rounded-md bg-muted;
+  }
+
+  & video {
+    @apply max-h-[28rem];
+  }
+
+  & audio {
+    @apply my-2 w-full;
+  }
+
+  & .embed {
+    @apply relative aspect-video overflow-hidden;
+
+    & iframe {
+      @apply absolute inset-0 size-full border-0;
+    }
+  }
+
+  & .markdown-alert {
+    @apply my-3 rounded-md border-l-4 border-primary bg-muted/60 px-4 py-2 not-italic;
+
+    & > p {
+      @apply mb-1;
+    }
+
+    & .markdown-alert-title {
+      @apply flex items-center gap-1.5 text-xs font-semibold tracking-wide text-primary uppercase;
+    }
+  }
+
+  & .markdown-alert-warning,
+  & .markdown-alert-caution {
+    @apply border-destructive;
+
+    & .markdown-alert-title {
+      @apply text-destructive;
+    }
+  }
+
+  & .mermaid-block {
+    @apply my-3 flex justify-center overflow-x-auto rounded-md border border-border p-3;
+
+    & svg {
+      @apply h-auto max-w-full;
+    }
+
+    &:not([data-rendered]) pre {
+      @apply m-0 bg-transparent p-0 text-xs text-muted-foreground;
+    }
+
+    &.mermaid-error {
+      @apply border-destructive/50;
+    }
+  }
+
+  & pre.shiki {
+    @apply relative;
+
+    & .copy-code {
+      @apply absolute top-1.5 right-1.5 rounded border border-border bg-background px-1.5 py-0.5 font-sans text-[11px] text-muted-foreground opacity-0 transition-opacity;
+    }
+
+    &:hover .copy-code,
+    & .copy-code:focus-visible {
+      @apply opacity-100;
+    }
+  }
+
+  & .footnotes {
+    @apply mt-6 border-t border-border pt-2 text-xs text-muted-foreground;
+  }
+
+  & .footnote-ref,
+  & .footnote-backref {
+    @apply no-underline;
+  }
+}
+
 .markdown-content.markdown-paper {
   font-size: 1rem;
   line-height: 1.7;
@@ -680,4 +792,52 @@ html:has(.note-page) {
 
 .loading-reveal {
   animation: loading-reveal 240ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+}
+
+.raw-md-view {
+  @apply cursor-pointer rounded border-0 bg-transparent p-0 text-left font-[inherit] text-inherit;
+
+  &.raw-md-view-inline {
+    @apply inline px-0.5;
+  }
+
+  &:hover {
+    @apply bg-muted/60;
+  }
+
+  &.raw-md-math:not(.raw-md-view-inline) {
+    @apply my-2 block w-full overflow-x-auto py-1 text-center;
+  }
+
+  &.raw-md-footnote code {
+    @apply bg-transparent p-0 font-mono text-xs text-muted-foreground;
+  }
+
+  &.raw-md-footnote:not(.raw-md-view-inline) {
+    @apply block w-full;
+  }
+}
+
+.raw-md-editor {
+  @apply w-full resize-y rounded border border-ring/50 bg-muted/40 p-2 font-mono text-sm outline-none;
+
+  &.raw-md-editor-inline {
+    @apply inline-block w-auto min-w-32 p-0.5;
+  }
+}
+
+.mermaid-editor {
+  @apply my-2 flex flex-col gap-2;
+
+  & .mermaid-block {
+    @apply my-0 min-h-12;
+  }
+
+  & .mermaid-source {
+    @apply w-full resize-y rounded border border-border bg-muted/40 p-2 font-mono text-xs outline-none;
+  }
+
+  & .mermaid-error-note {
+    @apply text-xs text-destructive;
+  }
 }

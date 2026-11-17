@@ -17,10 +17,13 @@ import {
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { attachmentObjectUrl, uploadAttachment } from "@/attachments/api";
 import { attachmentUid } from "@/attachments/uri";
 import { codeMirrorTheme } from "./codeMirrorTheme";
+import { NoteContent } from "./NoteContent";
+import { mermaidDescriptor } from "./editor/MermaidEditor";
+import { rawMarkdownPlugin } from "./editor/rawPlugin";
 import { LinkPopover } from "./LinkPopover";
 
 interface MarkdownEditorProps {
@@ -40,6 +43,7 @@ export function MarkdownEditor({
   contentClassName,
   noteId,
 }: MarkdownEditorProps) {
+  const [parseFailed, setParseFailed] = useState<string | null>(null);
   const images = useMemo(
     () =>
       imagePlugin({
@@ -61,40 +65,63 @@ export function MarkdownEditor({
         className,
       )}
     >
-      <MDXEditor
-        contentEditableClassName={cn("prose markdown-content max-w-full", contentClassName)}
-        className="h-full overflow-y-auto"
-        markdown={markdown}
-        plugins={[
-          listsPlugin(),
-          quotePlugin(),
-          headingsPlugin(),
-          images,
-          linkPlugin(),
-          linkDialogPlugin({ LinkDialog: LinkPopover }),
-          tablePlugin(),
-          thematicBreakPlugin(),
-          frontmatterPlugin(),
-          codeBlockPlugin({ defaultCodeBlockLanguage: "txt" }),
-          codeMirrorPlugin({
-            codeBlockLanguages: {
-              js: "JavaScript",
-              css: "CSS",
-              txt: "Plain text",
-              tsx: "TypeScript",
-              py: "Python",
-              rs: "Rust",
-            },
-            codeMirrorExtensions: [codeMirrorTheme],
-          }),
-          directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
-          markdownShortcutPlugin(),
-        ]}
-        placeholder={placeholder}
-        onChange={(value, initialMarkdownNormalize) => {
-          if (!initialMarkdownNormalize) onChange(value);
-        }}
-      />
+      {parseFailed !== null ? (
+        <div className="flex flex-col gap-2 py-1.5">
+          <p className="text-xs text-muted-foreground" title={parseFailed}>
+            This note uses Markdown the visual editor cannot open, so it is shown as source. Nothing
+            was changed.
+          </p>
+          <textarea
+            className="min-h-64 w-full resize-y rounded-md bg-transparent font-mono text-sm outline-none"
+            aria-label="Note source"
+            spellCheck={false}
+            value={markdown}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          <p className="text-xs font-medium text-muted-foreground">Preview</p>
+          <NoteContent markdown={markdown} />
+        </div>
+      ) : (
+        <MDXEditor
+          onError={({ error }) => setParseFailed(error)}
+          contentEditableClassName={cn("prose markdown-content max-w-full", contentClassName)}
+          className="h-full overflow-y-auto"
+          markdown={markdown}
+          plugins={[
+            listsPlugin(),
+            quotePlugin(),
+            headingsPlugin(),
+            images,
+            linkPlugin(),
+            linkDialogPlugin({ LinkDialog: LinkPopover }),
+            tablePlugin(),
+            thematicBreakPlugin(),
+            frontmatterPlugin(),
+            codeBlockPlugin({
+              defaultCodeBlockLanguage: "txt",
+              codeBlockEditorDescriptors: [mermaidDescriptor],
+            }),
+            codeMirrorPlugin({
+              codeBlockLanguages: {
+                js: "JavaScript",
+                css: "CSS",
+                txt: "Plain text",
+                tsx: "TypeScript",
+                py: "Python",
+                rs: "Rust",
+              },
+              codeMirrorExtensions: [codeMirrorTheme],
+            }),
+            directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
+            rawMarkdownPlugin(),
+            markdownShortcutPlugin(),
+          ]}
+          placeholder={placeholder}
+          onChange={(value, initialMarkdownNormalize) => {
+            if (!initialMarkdownNormalize) onChange(value);
+          }}
+        />
+      )}
     </div>
   );
 }

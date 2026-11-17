@@ -1,50 +1,15 @@
 import { cn } from "@/lib/utils";
-import Shiki from "@shikijs/markdown-exit";
-import { createMarkdownExit } from "markdown-exit";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import "katex/dist/katex.min.css";
 import { attachmentObjectUrl } from "@/attachments/api";
-import { attachmentUid } from "@/attachments/uri";
 import { fetchLinkTargets } from "@/links/api";
-import { noteLinkUid } from "@/links/uri";
+import { hydrate } from "@/markdown/hydrate";
+import { createMarkdown } from "@/markdown/render";
+import { sanitizeHtml } from "@/markdown/sanitize";
 import { saveBlob } from "@/lib/saveFile";
 
-const md = createMarkdownExit();
-
-md.use(
-  Shiki({
-    themes: {
-      light: "vitesse-light",
-      dark: "vitesse-dark",
-    },
-  }),
-);
-
-md.renderer.rules.image = (tokens, index) => {
-  const token = tokens[index];
-  const uid = attachmentUid(token.attrGet("src") ?? "");
-  const alt = md.utils.escapeHtml(token.content);
-  return uid
-    ? `<img data-attachment="${uid}" alt="${alt}" loading="lazy">`
-    : `<img src="${md.utils.escapeHtml(token.attrGet("src") ?? "")}" alt="${alt}" loading="lazy">`;
-};
-const defaultLinkOpen =
-  md.renderer.rules.link_open ??
-  ((tokens, index, options, _env, renderer) => renderer.renderToken(tokens, index, options));
-md.renderer.rules.link_open = (tokens, index, options, env, renderer) => {
-  const href = tokens[index].attrGet("href") ?? "";
-  const uid = attachmentUid(href);
-  if (uid) {
-    tokens[index].attrSet("href", "#");
-    tokens[index].attrSet("data-attachment-link", uid);
-  }
-  const noteUid = noteLinkUid(href);
-  if (noteUid) {
-    tokens[index].attrSet("href", "#");
-    tokens[index].attrSet("data-note-link", noteUid);
-  }
-  return defaultLinkOpen(tokens, index, options, env, renderer);
-};
+const md = createMarkdown();
 
 const HTML_CACHE_LIMIT = 300;
 const htmlCache = new Map<string, string>();
@@ -77,7 +42,7 @@ export function NoteContent({ markdown, className }: NoteContentProps) {
     let cancelled = false;
     (async () => {
       try {
-        const html = await md.renderAsync(markdown);
+        const html = sanitizeHtml(await md.renderAsync(markdown));
         cacheHtml(markdown, html);
         if (!cancelled) setContent(html);
       } catch (e) {
@@ -123,6 +88,8 @@ export function NoteContent({ markdown, className }: NoteContentProps) {
         () => undefined,
       );
     }
+    const dark = document.documentElement.classList.contains("dark");
+    hydrate(root, { dark }, () => active);
     return () => {
       active = false;
     };

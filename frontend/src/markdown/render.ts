@@ -15,6 +15,8 @@ export type LinkMode = "data" | "raw";
 
 export interface RenderOptions {
   links?: LinkMode;
+  html?: boolean;
+  highlight?: boolean;
 }
 
 export function embedUrl(src: string): string | null {
@@ -45,10 +47,10 @@ export function embedUrl(src: string): string | null {
   return null;
 }
 
-export function createMarkdown({ links = "data" }: RenderOptions = {}) {
-  const md = createMarkdownExit({ html: true, linkify: true });
+export function createMarkdown({ links = "data", html = true, highlight = true }: RenderOptions = {}) {
+  const md = createMarkdownExit({ html, linkify: true });
 
-  md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));
+  if (highlight) md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));
   md.use(katex, { throwOnError: false, output: "htmlAndMathml", mathFence: true });
   md.use(tasklist, { disabled: true });
   md.use(footnote);

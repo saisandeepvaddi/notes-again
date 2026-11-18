@@ -74,9 +74,9 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - [x] Typing a fence with a language starts a code block in that language and focuses it (patch of `@mdxeditor/editor`); every CodeMirror language is offered.
 - [x] Undo groups typing into phrases; undoing a quote first drops the quote.
 - [x] Difficulty is optional (server, web, mobile); note-only notes skip it by default.
-- [ ] Mobile uses the shared renderer (math, Mermaid, callouts) and the raw-block editor plugin.
+- [x] Mobile uses the shared renderer (math, Mermaid, callouts) and the raw-block editor plugin; it bundles for iOS, but has not been checked on a simulator or device. A note the mobile editor cannot parse opens read-only.
 - [x] Edit / Source / Read switch on the note page (remembered per device), so notes with raw HTML can be read and edited as source.
-- [ ] Math and diagrams in library-chat answers; "copy as Markdown" keeps them.
+- [x] Math in chat and Discuss answers (diagrams stay as code there); "copy as Markdown" is verbatim, so formulas survive.
 - [ ] Paste handling: HTML to Markdown, images from the clipboard as attachments on mobile.
 - [ ] Table editing keyboard flow (Tab to next cell, add row at the end).
 - [ ] Heading outline and in-note find (Cmd+F) for long notes.

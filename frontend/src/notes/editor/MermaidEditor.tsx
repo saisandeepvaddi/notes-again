@@ -1,6 +1,6 @@
 import { useCodeBlockEditorContext, type CodeBlockEditorDescriptor } from "@mdxeditor/editor";
 import { useEffect, useRef, useState } from "react";
-import { renderDiagrams } from "@/markdown/hydrate";
+import { renderDiagrams } from "../../markdown/hydrate";
 
 function MermaidEditor({ code }: { code: string; language: string; meta: string }) {
   const { setCode } = useCodeBlockEditorContext();

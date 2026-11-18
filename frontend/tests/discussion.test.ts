@@ -181,6 +181,12 @@ describe("answerAsNote", () => {
 });
 
 describe("answerHtml", () => {
+  it("renders formulas and keeps tables and lists", () => {
+    const html = answerHtml("Energy is $E=mc^2$.\n\n$$\\sum_i x_i$$\n\n- one\n- two");
+    expect(html).toContain("katex");
+    expect(html).toContain("<li>one</li>");
+  });
+
   it("does not pass raw HTML through", () => {
     const html = answerHtml("<script>alert(1)</script><img src=x onerror=alert(1)> **ok**");
     expect(html).not.toContain("<script");

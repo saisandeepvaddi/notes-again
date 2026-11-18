@@ -1,6 +1,11 @@
 "use dom";
 
 import "@mdxeditor/editor/style.css";
+import { codeFocusPlugin } from "@web/notes/editor/codeFocusPlugin";
+import { historyGroupingPlugin } from "@web/notes/editor/historyPlugin";
+import { codeBlockLanguages } from "@web/notes/editor/languages";
+import { mermaidDescriptor } from "@web/notes/editor/MermaidEditor";
+import { rawMarkdownPlugin } from "@web/notes/editor/rawPlugin";
 import { $createLinkNode, $isLinkNode, $toggleLink } from "@lexical/link";
 import {
   AdmonitionDirectiveDescriptor,
@@ -326,6 +331,7 @@ export default function RichEditor({
   const [pill, setPill] = useState<{ top: number; left: number } | null>(null);
   const [hub] = useState(() => new Hub());
   const [initial] = useState(markdown);
+  const [parseFailed, setParseFailed] = useState(false);
   const [plugins] = useState(() => [
     listsPlugin(),
     quotePlugin(),
@@ -341,18 +347,15 @@ export default function RichEditor({
     tablePlugin(),
     thematicBreakPlugin(),
     frontmatterPlugin(),
-    codeBlockPlugin({ defaultCodeBlockLanguage: "txt" }),
-    codeMirrorPlugin({
-      codeBlockLanguages: {
-        js: "JavaScript",
-        css: "CSS",
-        txt: "Plain text",
-        tsx: "TypeScript",
-        py: "Python",
-        rs: "Rust",
-      },
+    codeBlockPlugin({
+      defaultCodeBlockLanguage: "txt",
+      codeBlockEditorDescriptors: [mermaidDescriptor],
     }),
+    codeMirrorPlugin({ codeBlockLanguages }),
     directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
+    rawMarkdownPlugin(),
+    historyGroupingPlugin(),
+    codeFocusPlugin(),
     markdownShortcutPlugin(),
     realmPlugin({
       init: (realm) => realm.pub(addComposerChild$, () => <Bridge hub={hub} />),
@@ -498,6 +501,8 @@ export default function RichEditor({
           markdown={initial}
           placeholder={placeholder}
           plugins={plugins}
+          readOnly={parseFailed}
+          onError={() => setParseFailed(true)}
           onChange={(next, initialNormalize) => {
             if (!initialNormalize) void onChange(next);
           }}

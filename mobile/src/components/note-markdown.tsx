@@ -1,23 +1,13 @@
 "use dom";
 
-import Shiki from "@shikijs/markdown-exit";
-import { createMarkdownExit } from "markdown-exit";
+import "katex/dist/katex.min.css";
+import { hydrate } from "@web/markdown/hydrate";
+import { createMarkdown } from "@web/markdown/render";
+import { sanitizeHtml } from "@web/markdown/sanitize";
 import { useEffect, useState, type MouseEvent } from "react";
 import { markdownCss, type MarkdownFont, type MarkdownPalette } from "@/components/markdown-css";
 
-const ATTACHMENT = /^attachment:([a-f0-9]{32})$/;
-
-const md = createMarkdownExit({ linkify: true });
-md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));
-md.renderer.rules.image = (tokens, index) => {
-  const token = tokens[index];
-  const src = token.attrGet("src") ?? "";
-  const uid = ATTACHMENT.exec(src.trim())?.[1];
-  const alt = md.utils.escapeHtml(token.content);
-  return uid
-    ? `<img data-attachment="${uid}" alt="${alt}">`
-    : `<img src="${md.utils.escapeHtml(src)}" alt="${alt}">`;
-};
+const md = createMarkdown({ links: "raw" });
 
 interface NoteMarkdownProps {
   markdown: string;
@@ -49,6 +39,7 @@ export default function NoteMarkdown({
     let cancelled = false;
     md.renderAsync(markdown)
       .catch(() => md.render(markdown))
+      .then((output) => sanitizeHtml(output))
       .then((output) => {
         cache.set(markdown, output);
         if (!cancelled) setRendered({ markdown, html: output });
@@ -60,6 +51,7 @@ export default function NoteMarkdown({
 
   const resolve = (node: HTMLDivElement | null) => {
     if (!node) return;
+    hydrate(node, { dark: scheme === "dark" }, () => true);
     node.querySelectorAll<HTMLImageElement>("img[data-attachment]").forEach((image) => {
       if (image.getAttribute("src")) return;
       loadAttachment(image.dataset.attachment ?? "").then(
@@ -90,6 +82,10 @@ export default function NoteMarkdown({
     const href = anchor?.getAttribute("href");
     if (!href) return;
     event.preventDefault();
+    if (href.startsWith("#")) {
+      document.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView({ block: "center" });
+      return;
+    }
     void onOpenLink(href);
   };
 

@@ -2,3 +2,5 @@
 # adopts an ancestor's workspace (e.g. one in $HOME), installing into it.
 packages:
   - "."
+patchedDependencies:
+  '@mdxeditor/editor': patches/@mdxeditor__editor.patch

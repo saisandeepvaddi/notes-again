@@ -60,4 +60,24 @@ ${scheme === "dark" ? `.markdown-content .shiki, .markdown-content .shiki span {
 .markdown-content th, .markdown-content td { border: 1px solid ${p.border}; padding: 6px 10px; text-align: left; }
 .markdown-content thead { background: ${p.secondary}; font-weight: 600; }
 .markdown-content img { max-width: 100%; border-radius: 10px; margin: 0.5em 0; }
+.markdown-content .katex { font-size: 1.05em; }
+.markdown-content .katex-display { margin: 0.75em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.markdown-content li:has(> input[type="checkbox"]), .markdown-content li:has(> p > input[type="checkbox"]) { list-style: none; margin-left: -1.2em; }
+.markdown-content input[type="checkbox"] { margin-right: 8px; width: 15px; height: 15px; accent-color: ${p.primary}; }
+.markdown-content mark { background: ${scheme === "dark" ? "rgba(250, 204, 21, 0.3)" : "rgba(253, 224, 71, 0.6)"}; color: inherit; border-radius: 3px; padding: 0 2px; }
+.markdown-content details { margin: 0.75em 0; padding: 4px 12px; border: 1px solid ${p.border}; border-radius: 10px; }
+.markdown-content summary { cursor: pointer; font-weight: 600; }
+.markdown-content video, .markdown-content audio { display: block; width: 100%; max-width: 100%; margin: 0.5em 0; border-radius: 10px; }
+.markdown-content .embed { position: relative; aspect-ratio: 16 / 9; margin: 0.5em 0; overflow: hidden; border-radius: 10px; background: ${p.secondary}; }
+.markdown-content .embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.markdown-content .markdown-alert { margin: 0.75em 0; padding: 8px 14px; border-left: 4px solid ${p.primary}; border-radius: 8px; background: ${p.secondary}; font-style: normal; }
+.markdown-content .markdown-alert > p { margin: 0 0 4px; }
+.markdown-content .markdown-alert .markdown-alert-title { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: ${p.primary}; }
+.markdown-content .mermaid-block { display: flex; justify-content: center; margin: 0.75em 0; padding: 10px; overflow-x: auto; border: 1px solid ${p.border}; border-radius: 10px; }
+.markdown-content .mermaid-block svg { max-width: 100%; height: auto; }
+.markdown-content .mermaid-block:not([data-rendered]) pre { margin: 0; padding: 0; background: transparent; font-size: 12px; color: ${p.mutedForeground}; }
+.markdown-content pre.shiki { position: relative; }
+.markdown-content .copy-code { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border: 1px solid ${p.border}; border-radius: 6px; background: ${p.secondary}; color: ${p.mutedForeground}; font-family: inherit; font-size: 12px; }
+.markdown-content .footnotes { margin-top: 1.25em; padding-top: 6px; border-top: 1px solid ${p.border}; font-size: 14px; color: ${p.mutedForeground}; }
+.markdown-content .footnote-ref, .markdown-content .footnote-backref { text-decoration: none; }
 `;

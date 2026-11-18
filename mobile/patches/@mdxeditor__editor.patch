@@ -1,3 +1,61 @@
+diff --git a/dist/plugins/codemirror/CodeMirrorEditor.js b/dist/plugins/codemirror/CodeMirrorEditor.js
+index 4e4dfb1fd4f8c2c99367a3ba5f92ed4fe21b26b0..091a0476326971db65e3c21d5118a2c24d96e56a 100644
+--- a/dist/plugins/codemirror/CodeMirrorEditor.js
++++ b/dist/plugins/codemirror/CodeMirrorEditor.js
+@@ -14,6 +14,7 @@ import { codeMirrorExtensions$, codeMirrorAutoLoadLanguageSupport$, codeBlockLan
+ import { useCodeMirrorRef } from "./useCodeMirrorRef.js";
+ import { Select } from "../toolbar/primitives/select.js";
+ const COMMON_STATE_CONFIG_EXTENSIONS = [];
++const MemoSelect = React__default.memo(Select);
+ const CodeMirrorEditor = ({ language, nodeKey, code, focusEmitter }) => {
+   const t = useTranslation();
+   const { parentEditor, lexicalNode } = useCodeBlockEditorContext();
+@@ -94,24 +95,32 @@ const CodeMirrorEditor = ({ language, nodeKey, code, focusEmitter }) => {
+       el.removeEventListener("keydown", stopPropagationHandler);
+     };
+   }, [readOnly, language, ...codeMirrorExtensions]);
+-  return /* @__PURE__ */ React__default.createElement("div", { className: styles.codeMirrorWrapper }, /* @__PURE__ */ React__default.createElement("div", { className: styles.codeMirrorToolbar }, /* @__PURE__ */ React__default.createElement(
+-    Select,
++  const onLanguageChangeRef = React__default.useRef(null);
++  const onLanguageChange = React__default.useCallback((language2) => onLanguageChangeRef.current(language2), []);
++  onLanguageChangeRef.current = (language2) => {
++    parentEditor.update(() => {
++      lexicalNode.setLanguage(language2 === EMPTY_VALUE ? "" : language2);
++      setTimeout(() => {
++        parentEditor.update(() => {
++          lexicalNode.getLatest().select();
++        });
++      });
++    });
++  };
++  const [languagePickerReady, setLanguagePickerReady] = React__default.useState(false);
++  const visibleItems = React__default.useMemo(
++    () => languagePickerReady ? selectItems : selectItems.filter((item) => item !== "separator" && item.value === selectValue),
++    [languagePickerReady, selectItems, selectValue]
++  );
++  return /* @__PURE__ */ React__default.createElement("div", { className: styles.codeMirrorWrapper }, /* @__PURE__ */ React__default.createElement("div", { className: styles.codeMirrorToolbar, onPointerEnter: () => setLanguagePickerReady(true), onFocusCapture: () => setLanguagePickerReady(true), onPointerDownCapture: () => setLanguagePickerReady(true) }, /* @__PURE__ */ React__default.createElement(
++    MemoSelect,
+     {
+       disabled: readOnly,
+       value: selectValue,
+-      onChange: (language2) => {
+-        parentEditor.update(() => {
+-          lexicalNode.setLanguage(language2 === EMPTY_VALUE ? "" : language2);
+-          setTimeout(() => {
+-            parentEditor.update(() => {
+-              lexicalNode.getLatest().select();
+-            });
+-          });
+-        });
+-      },
++      onChange: onLanguageChange,
+       triggerTitle: t("codeBlock.selectLanguage", "Select code block language"),
+       placeholder: t("codeBlock.inlineLanguage", "Language"),
+-      items: selectItems
++      items: visibleItems
+     }
+   ), /* @__PURE__ */ React__default.createElement(
+     "button",
 diff --git a/dist/plugins/markdown-shortcut/index.js b/dist/plugins/markdown-shortcut/index.js
 index ded63248712ced0e8bbf322201fe573f2580e2c4..233fd3f9f2bf1bb30f1803c5e9da3d3a9f315ee7 100644
 --- a/dist/plugins/markdown-shortcut/index.js

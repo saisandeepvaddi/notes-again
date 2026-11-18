@@ -24,6 +24,8 @@ import { codeMirrorTheme } from "./codeMirrorTheme";
 import { NoteContent } from "./NoteContent";
 import { SourceEditor } from "./SourceEditor";
 import { codeFocusPlugin } from "./editor/codeFocusPlugin";
+import { findPlugins } from "./editor/FindBar";
+import { pastePlugin } from "./editor/pastePlugin";
 import { historyGroupingPlugin } from "./editor/historyPlugin";
 import { codeBlockLanguages } from "./editor/languages";
 import { mermaidDescriptor } from "./editor/MermaidEditor";
@@ -107,6 +109,8 @@ export function MarkdownEditor({
             rawMarkdownPlugin(),
             historyGroupingPlugin(),
             codeFocusPlugin(),
+            pastePlugin(),
+            ...findPlugins(),
             markdownShortcutPlugin(),
           ]}
           placeholder={placeholder}

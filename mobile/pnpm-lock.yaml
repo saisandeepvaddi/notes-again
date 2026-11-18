@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@mdxeditor/editor': f4567f5db9ba412395ab94368363519c3366e6ab24e094bc6483bd18d1dd3d9d
+  '@mdxeditor/editor': bcfa605871cf5d5a36c3aaf2528dcdbc7d16c7c0768194d9e6a2f6050e68e15a
 
 importers:
 
@@ -49,7 +49,7 @@ importers:
         version: 1.3.0
       '@mdxeditor/editor':
         specifier: 4.2.3
-        version: 4.2.3(patch_hash=f4567f5db9ba412395ab94368363519c3366e6ab24e094bc6483bd18d1dd3d9d)(@codemirror/language@6.12.4)(@lezer/highlight@1.2.5)(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)(yjs@13.6.33)
+        version: 4.2.3(patch_hash=bcfa605871cf5d5a36c3aaf2528dcdbc7d16c7c0768194d9e6a2f6050e68e15a)(@codemirror/language@6.12.4)(@lezer/highlight@1.2.5)(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)(yjs@13.6.33)
       '@shikijs/markdown-exit':
         specifier: ^4.4.3
         version: 4.4.3
@@ -6524,7 +6524,7 @@ snapshots:
     dependencies:
       '@mdit/helper': 1.2.1
 
-  '@mdxeditor/editor@4.2.3(patch_hash=f4567f5db9ba412395ab94368363519c3366e6ab24e094bc6483bd18d1dd3d9d)(@codemirror/language@6.12.4)(@lezer/highlight@1.2.5)(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)(yjs@13.6.33)':
+  '@mdxeditor/editor@4.2.3(patch_hash=bcfa605871cf5d5a36c3aaf2528dcdbc7d16c7c0768194d9e6a2f6050e68e15a)(@codemirror/language@6.12.4)(@lezer/highlight@1.2.5)(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)(yjs@13.6.33)':
     dependencies:
       '@codemirror/commands': 6.11.1
       '@codemirror/lang-markdown': 6.5.2

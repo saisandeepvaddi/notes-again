@@ -46,6 +46,7 @@ import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { NoteContent } from "../NoteContent";
 import { SourceEditor } from "../SourceEditor";
+import { OutlineButton } from "./OutlineButton";
 import {
   readViewMode,
   rememberViewMode,
@@ -260,6 +261,10 @@ export function NoteDetail({ note }: NoteDetailProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteId]);
 
+  const latestDraft = useRef({ name, content });
+  latestDraft.current = { name, content };
+  const failedSaves = useRef(0);
+  const [failures, setFailures] = useState(0);
   const persist = async (version: number, draft: { name: string; content: string }) => {
     try {
       await saveInFlight.current?.catch(() => undefined);
@@ -272,11 +277,20 @@ export function NoteDetail({ note }: NoteDetailProps) {
       } finally {
         if (saveInFlight.current === request) saveInFlight.current = null;
       }
+      failedSaves.current = 0;
+      setFailures(0);
       if (version === editVersion.current) setSaveState("saved");
     } catch (error) {
       if (version === editVersion.current) setSaveState("error");
       console.error("error:", error);
-      toast.add({ type: "error", priority: "high", description: "Failed to save note" });
+      setFailures((count) => count + 1);
+      if (failedSaves.current++ === 0) {
+        toast.add({
+          type: "error",
+          priority: "high",
+          description: "Failed to save note. Retrying automatically.",
+        });
+      }
       throw error;
     }
   };
@@ -297,6 +311,21 @@ export function NoteDetail({ note }: NoteDetailProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, content]);
+
+  const retrySave = () => {
+    void persist(editVersion.current, latestDraft.current).catch(() => undefined);
+  };
+  useEffect(() => {
+    if (saveState !== "error") return;
+    const delay = Math.min(60_000, 3_000 * 2 ** Math.max(0, failedSaves.current - 1));
+    const timer = setTimeout(retrySave, delay);
+    window.addEventListener("online", retrySave);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("online", retrySave);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveState, failures]);
 
   useBlocker({
     shouldBlockFn: async () => {
@@ -512,6 +541,11 @@ export function NoteDetail({ note }: NoteDetailProps) {
           >
             <SaveStateIcon state={saveState} />
             <span className="sr-only sm:not-sr-only">{SAVE_STATE_LABELS[saveState]}</span>
+            {saveState === "error" ? (
+              <button type="button" onClick={retrySave} className="underline underline-offset-2">
+                Retry
+              </button>
+            ) : null}
           </span>
           <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
             <PopoverTrigger
@@ -692,7 +726,10 @@ export function NoteDetail({ note }: NoteDetailProps) {
 
       <div className="flex-1 px-4 pt-6 pb-20 md:px-8">
         <div className="note-column note-sheet">
-          <div className="mb-3 flex justify-end">
+          <div className="mb-3 flex items-center justify-end gap-2">
+            {viewMode === "source" ? null : (
+              <OutlineButton markdown={content} scope=".note-sheet" />
+            )}
             <ViewModeSwitch value={viewMode} onChange={changeViewMode} />
           </div>
           {viewMode === "edit" ? (

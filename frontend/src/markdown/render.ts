@@ -47,7 +47,11 @@ export function embedUrl(src: string): string | null {
   return null;
 }
 
-export function createMarkdown({ links = "data", html = true, highlight = true }: RenderOptions = {}) {
+export function createMarkdown({
+  links = "data",
+  html = true,
+  highlight = true,
+}: RenderOptions = {}) {
   const md = createMarkdownExit({ html, linkify: true });
 
   if (highlight) md.use(Shiki({ themes: { light: "vitesse-light", dark: "vitesse-dark" } }));

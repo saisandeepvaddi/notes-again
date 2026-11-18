@@ -77,11 +77,11 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - [x] Mobile uses the shared renderer (math, Mermaid, callouts) and the raw-block editor plugin; it bundles for iOS, but has not been checked on a simulator or device. A note the mobile editor cannot parse opens read-only.
 - [x] Edit / Source / Read switch on the note page (remembered per device), so notes with raw HTML can be read and edited as source.
 - [x] Math in chat and Discuss answers (diagrams stay as code there); "copy as Markdown" is verbatim, so formulas survive.
-- [ ] Paste handling: HTML to Markdown, images from the clipboard as attachments on mobile.
-- [ ] Table editing keyboard flow (Tab to next cell, add row at the end).
-- [ ] Heading outline and in-note find (Cmd+F) for long notes.
-- [ ] Autosave status that survives a failed save (retry, offline queue) on the note page.
-- [ ] Large-note performance check (10k-word note with many code blocks and formulas).
+- [x] Paste handling on web and desktop: copied web pages become Markdown, pasted Markdown source keeps its structure (`frontend/src/markdown/htmlToMarkdown.ts`). Not yet on mobile, and clipboard images on mobile are not attached.
+- [ ] Table editing keyboard flow: Tab already moves between cells, but Tab in the last cell leaves the table instead of adding a row.
+- [x] Contents popover (headings) and in-note find (Cmd/Ctrl+F) on the note page.
+- [x] A failed save retries on its own (backoff, and when the network returns) and the status has a Retry button; edits stay in the editor. There is no offline queue across reloads.
+- [x] Large-note check (13k words, 60 code blocks, 120 formulas): production build opens in under a second and typing is smooth. The 100-language dropdown made typing 10x slower until the editor patch rendered its items only when opened.
 
 ## Guardrails and verification
 

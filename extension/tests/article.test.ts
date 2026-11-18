@@ -151,4 +151,25 @@ describe("readable article extraction", () => {
     });
     expect(extractArticle(doc, "not a URL")).toMatchObject({ ok: false });
   });
+
+  it("drops the link around a linked image instead of leaving stray brackets", () => {
+    const result = markdown(
+      page(
+        '<p>Before</p><a class="image-link" href="https://cdn.example.com/full.png"><div><picture><img alt="A diagram" src="https://cdn.example.com/small.png" width="800" height="400"></picture></div></a><p>After</p>',
+      ),
+    );
+    expect(result).toMatch(/!\[A diagram\]\(attachment:[a-f0-9]{32}\)/);
+    expect(result).not.toMatch(/^\[$/m);
+    expect(result).not.toContain("](https://cdn.example.com/full.png)");
+  });
+
+  it("turns Substack-style footnotes into Markdown footnotes", () => {
+    const result = markdown(
+      page(
+        '<p>Claim<span class="footnote-hovercard-target"><a class="footnote-anchor" href="#footnote-1">1</a></span> stands.</p><div class="footnote"><a class="footnote-number" href="#footnote-anchor-1">1</a><div class="footnote-content"><p>The <em>evidence</em> is substantial and has been checked repeatedly by several independent teams over the years.</p></div></div>',
+      ),
+    );
+    expect(result).toContain("Claim[^1] stands.");
+    expect(result).toMatch(/^\[\^1\]: The _evidence_ is substantial/m);
+  });
 });

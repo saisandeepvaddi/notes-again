@@ -104,6 +104,67 @@ function prepareMedia(live: Document, copy: Document, sourceUrl: string, svgImag
   });
 }
 
+const FOOTNOTE_REF = /#(?:footnote|fn)[-_:]?(\d+)$/i;
+const FOOTNOTE_NUMBER = /#(?:footnote-anchor|fnref)[-_:]?(\d+)$/i;
+const REF_MARK = "§§fnref:";
+const DEF_MARK = "§§fndef:";
+
+function unwrapImageLinks(root: ParentNode) {
+  root.querySelectorAll("a").forEach((link) => {
+    if (!link.querySelector("img")) return;
+    link.replaceWith(...Array.from(link.childNodes));
+  });
+}
+
+const SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const superscript = (digits: string) => Array.from(digits, (digit) => SUPERSCRIPT[Number(digit)]).join("");
+
+function convertFootnotes(root: ParentNode) {
+  const defined = new Set<string>();
+  root.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((link) => {
+    const number = FOOTNOTE_NUMBER.exec(link.getAttribute("href") ?? "")?.[1];
+    if (!number || defined.has(number)) return;
+    const holder = link.closest(".footnote, li") ?? link.parentElement;
+    if (!holder) return;
+    const sibling = link.nextElementSibling;
+    const body =
+      holder.querySelector(".footnote-content") ??
+      (sibling?.matches(".footnote-content") ? sibling : holder);
+    const paragraph = holder.ownerDocument.createElement("p");
+    paragraph.append(`${DEF_MARK}${number}§§ `);
+    const blocks = Array.from(body.children).filter((child) => child.tagName === "P");
+    if (blocks.length > 0) {
+      blocks.forEach((block, index) => {
+        if (index > 0) paragraph.append(" ");
+        for (const node of Array.from(block.childNodes)) paragraph.append(node.cloneNode(true));
+      });
+    } else {
+      for (const node of Array.from(body.childNodes)) paragraph.append(node.cloneNode(true));
+    }
+    paragraph.querySelectorAll("a[href]").forEach((inner) => {
+      if (FOOTNOTE_NUMBER.test(inner.getAttribute("href") ?? "")) inner.remove();
+    });
+    if (body !== holder && !holder.contains(body)) body.remove();
+    holder.replaceWith(paragraph);
+    defined.add(number);
+  });
+  root.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((link) => {
+    const number = FOOTNOTE_REF.exec(link.getAttribute("href") ?? "")?.[1];
+    if (!number) return;
+    const wrapper = link.parentElement?.matches("sup, span.footnote-hovercard-target")
+      ? link.parentElement
+      : link;
+    const text = defined.has(number) ? `${REF_MARK}${number}§§` : superscript(number);
+    wrapper.replaceWith(link.ownerDocument.createTextNode(text));
+  });
+}
+
+function finishFootnotes(markdown: string) {
+  return markdown
+    .replace(/§§fnref:(\d+)§§/g, "[^$1]")
+    .replace(/^§§fndef:(\d+)§§ ?/gm, "[^$1]: ");
+}
+
 export function extractArticle(
   doc: Document,
   sourceUrl: string,
@@ -163,6 +224,8 @@ export function extractArticle(
         link.removeAttribute("href");
       }
     }
+    unwrapImageLinks(clean);
+    convertFootnotes(clean);
     const converter = new TurndownService({
       headingStyle: "atx",
       codeBlockStyle: "fenced",
@@ -199,7 +262,7 @@ export function extractArticle(
         const alt = (element.getAttribute("alt") ?? "").replace(/\s+/g, " ").trim();
         const src = element.getAttribute("src") ?? "";
         if (!src || media.length >= MAX_MEDIA) return converter.escape(alt);
-        const item = { uid: newMediaUid(), alt: alt.replace(/[[\]\\]/g, " "), src };
+        const item = { uid: newMediaUid(), alt: alt.replace(/[[\]\\]/g, " ").slice(0, 200), src };
         media.push(item);
         return `![${item.alt}](attachment:${item.uid})`;
       },
@@ -216,7 +279,7 @@ export function extractArticle(
         return `\n\n${fence}${language}\n${value.replace(/\n$/, "")}\n${fence}\n\n`;
       },
     });
-    const markdown = converter.turndown(clean).trim();
+    const markdown = finishFootnotes(converter.turndown(clean)).trim();
     if (!markdown)
       return unavailable("The article was empty after cleanup. Use Link only or Selection.");
     const published = parsed.publishedTime;

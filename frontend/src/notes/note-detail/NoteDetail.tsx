@@ -44,6 +44,14 @@ import { useSetNoteStatus } from "../hooks/usePausing";
 import { useSetProject } from "../hooks/useSetProject";
 import { useUpdateNote } from "../hooks/useUpdateNote";
 import { MarkdownEditor } from "../MarkdownEditor";
+import { NoteContent } from "../NoteContent";
+import { SourceEditor } from "../SourceEditor";
+import {
+  readViewMode,
+  rememberViewMode,
+  ViewModeSwitch,
+  type NoteViewMode,
+} from "./ViewModeSwitch";
 import { lastNotesSearch } from "../notes-list/notesSearch";
 import { NoteTitle, noteTitleText } from "../NoteTitle";
 import { copyNoteMarkdown, downloadNoteMarkdown } from "./noteMarkdown";
@@ -145,6 +153,12 @@ export function NoteDetail({ note }: NoteDetailProps) {
   };
 
   const [editorKey, setEditorKey] = useState(0);
+  const [viewMode, setViewMode] = useState<NoteViewMode>(readViewMode);
+  const changeViewMode = (mode: NoteViewMode) => {
+    if (mode === "edit") setEditorKey((key) => key + 1);
+    rememberViewMode(mode);
+    setViewMode(mode);
+  };
   const replaceText = useCallback((text: { name: string; content: string }) => {
     editVersion.current += 1;
     setName(text.name);
@@ -678,14 +692,23 @@ export function NoteDetail({ note }: NoteDetailProps) {
 
       <div className="flex-1 px-4 pt-6 pb-20 md:px-8">
         <div className="note-column note-sheet">
-          <MarkdownEditor
-            key={editorKey}
-            markdown={content}
-            noteId={noteId}
-            onChange={changeContent}
-            className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"
-            contentClassName="markdown-paper"
-          />
+          <div className="mb-3 flex justify-end">
+            <ViewModeSwitch value={viewMode} onChange={changeViewMode} />
+          </div>
+          {viewMode === "edit" ? (
+            <MarkdownEditor
+              key={editorKey}
+              markdown={content}
+              noteId={noteId}
+              onChange={changeContent}
+              className="rounded-none border-0 bg-transparent px-0 py-0 dark:bg-transparent"
+              contentClassName="markdown-paper"
+            />
+          ) : viewMode === "source" ? (
+            <SourceEditor value={content} onChange={changeContent} />
+          ) : (
+            <NoteContent markdown={content} className="markdown-paper" />
+          )}
         </div>
         <Backlinks noteId={noteId} />
       </div>

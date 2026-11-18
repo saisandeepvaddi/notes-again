@@ -75,7 +75,7 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - [x] Undo groups typing into phrases; undoing a quote first drops the quote.
 - [x] Difficulty is optional (server, web, mobile); note-only notes skip it by default.
 - [ ] Mobile uses the shared renderer (math, Mermaid, callouts) and the raw-block editor plugin.
-- [ ] Edit / Source / Read toggle per note, so notes with raw HTML do not drop into the fallback view.
+- [x] Edit / Source / Read switch on the note page (remembered per device), so notes with raw HTML can be read and edited as source.
 - [ ] Math and diagrams in library-chat answers; "copy as Markdown" keeps them.
 - [ ] Paste handling: HTML to Markdown, images from the clipboard as attachments on mobile.
 - [ ] Table editing keyboard flow (Tab to next cell, add row at the end).

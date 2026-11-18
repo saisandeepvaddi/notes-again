@@ -22,6 +22,7 @@ import { attachmentObjectUrl, uploadAttachment } from "@/attachments/api";
 import { attachmentUid } from "@/attachments/uri";
 import { codeMirrorTheme } from "./codeMirrorTheme";
 import { NoteContent } from "./NoteContent";
+import { SourceEditor } from "./SourceEditor";
 import { codeFocusPlugin } from "./editor/codeFocusPlugin";
 import { historyGroupingPlugin } from "./editor/historyPlugin";
 import { codeBlockLanguages } from "./editor/languages";
@@ -74,13 +75,7 @@ export function MarkdownEditor({
             This note uses Markdown the visual editor cannot open, so it is shown as source. Nothing
             was changed.
           </p>
-          <textarea
-            className="min-h-64 w-full resize-y rounded-md bg-transparent font-mono text-sm outline-none"
-            aria-label="Note source"
-            spellCheck={false}
-            value={markdown}
-            onChange={(event) => onChange(event.target.value)}
-          />
+          <SourceEditor value={markdown} onChange={onChange} />
           <p className="text-xs font-medium text-muted-foreground">Preview</p>
           <NoteContent markdown={markdown} />
         </div>

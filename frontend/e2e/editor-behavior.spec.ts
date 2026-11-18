@@ -54,4 +54,27 @@ test.describe("editor behaviour", () => {
     await page.keyboard.press("ControlOrMeta+Shift+z");
     await expect(editor.locator("blockquote")).toContainText("quoted text here");
   });
+
+  test("Source and Read views edit and show notes the visual editor cannot open", async ({
+    page,
+    request,
+  }) => {
+    const note = await createNote(request, {
+      name: uniqueName("Html"),
+      content: "<details><summary>More</summary>\n\nHidden text\n\n</details>\n",
+    });
+    await page.goto(`/notes/${note.id}`);
+    const view = page.getByRole("radiogroup", { name: "Note view" });
+    await view.getByRole("radio", { name: "Read" }).click();
+    await expect(page.locator(".markdown-content details")).toBeVisible();
+    await view.getByRole("radio", { name: "Source" }).click();
+    const source = page.getByRole("textbox", { name: "Note source" });
+    await source.click();
+    await page.keyboard.press("ControlOrMeta+End");
+    await page.keyboard.type("\nAdded in source");
+    await expect.poll(() => savedContent(request, note.id)).toContain("Added in source");
+    expect(await savedContent(request, note.id)).toContain("<details>");
+    await view.getByRole("radio", { name: "Edit" }).click();
+    await expect(page.getByRole("radio", { name: "Edit" })).toBeChecked();
+  });
 });

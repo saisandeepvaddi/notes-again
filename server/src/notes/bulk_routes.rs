@@ -285,7 +285,8 @@ async fn bulk_edit_tags(
 #[derive(Deserialize)]
 struct BulkDifficultyBody {
     note_ids: Vec<i64>,
-    difficulty: Difficulty,
+    #[serde(default)]
+    difficulty: Option<Difficulty>,
 }
 
 async fn bulk_set_difficulty(
@@ -293,7 +294,10 @@ async fn bulk_set_difficulty(
     Body(body): Body<BulkDifficultyBody>,
 ) -> ApiResult<Json<BulkResult>> {
     let mut tx = state.db.begin_with(BEGIN_WRITE).await?;
-    let tag = difficulty_tag(&mut tx, body.difficulty).await?;
+    let tag = match body.difficulty {
+        Some(difficulty) => Some(difficulty_tag(&mut tx, difficulty).await?),
+        None => None,
+    };
     let ids = ids(&body.note_ids)?;
     let mut affected = 0;
     for chunk in ids.chunks(CHUNK) {
@@ -308,6 +312,7 @@ async fn bulk_set_difficulty(
         )))
         .execute(&mut *tx)
         .await?;
+        let Some(tag) = &tag else { continue };
         sqlx::query(AssertSqlSafe(format!(
             "INSERT OR IGNORE INTO note_tags (note_id, tag_id) SELECT id, ? FROM notes WHERE id IN ({list})"
         )))

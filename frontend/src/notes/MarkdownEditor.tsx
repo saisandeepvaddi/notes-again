@@ -22,6 +22,9 @@ import { attachmentObjectUrl, uploadAttachment } from "@/attachments/api";
 import { attachmentUid } from "@/attachments/uri";
 import { codeMirrorTheme } from "./codeMirrorTheme";
 import { NoteContent } from "./NoteContent";
+import { codeFocusPlugin } from "./editor/codeFocusPlugin";
+import { historyGroupingPlugin } from "./editor/historyPlugin";
+import { codeBlockLanguages } from "./editor/languages";
 import { mermaidDescriptor } from "./editor/MermaidEditor";
 import { rawMarkdownPlugin } from "./editor/rawPlugin";
 import { LinkPopover } from "./LinkPopover";
@@ -102,18 +105,13 @@ export function MarkdownEditor({
               codeBlockEditorDescriptors: [mermaidDescriptor],
             }),
             codeMirrorPlugin({
-              codeBlockLanguages: {
-                js: "JavaScript",
-                css: "CSS",
-                txt: "Plain text",
-                tsx: "TypeScript",
-                py: "Python",
-                rs: "Rust",
-              },
+              codeBlockLanguages,
               codeMirrorExtensions: [codeMirrorTheme],
             }),
             directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
             rawMarkdownPlugin(),
+            historyGroupingPlugin(),
+            codeFocusPlugin(),
             markdownShortcutPlugin(),
           ]}
           placeholder={placeholder}

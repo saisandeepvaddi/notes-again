@@ -75,7 +75,12 @@ describe("new-note drafts", () => {
 });
 
 describe("new note defaults", () => {
-  const defaults = { enabled: true, status: "note-only", difficulty: "hard" } as const;
+  const defaults = {
+    enabled: true,
+    status: "note-only",
+    difficulty: "hard",
+    skipDifficultyForNoteOnly: true,
+  } as const;
 
   it("starts a blank draft from enabled defaults and does not count them as writing", () => {
     const draft = emptyNewNoteDraft(defaults);
@@ -86,5 +91,6 @@ describe("new note defaults", () => {
 
   it("ignores defaults that are switched off", () => {
     expect(emptyNewNoteDraft({ ...defaults, enabled: false })).toEqual(emptyNewNoteDraft());
+    expect(emptyNewNoteDraft({ ...defaults, difficulty: null }).difficulty).toBeNull();
   });
 });

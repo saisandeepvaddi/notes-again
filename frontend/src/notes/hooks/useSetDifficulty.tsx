@@ -9,7 +9,7 @@ interface useSetDifficultyProps {
 export function useSetDifficulty({ noteId }: useSetDifficultyProps) {
   return useMutation({
     mutationKey: ["set-difficulty", noteId],
-    mutationFn: async (difficulty: Difficulty) => {
+    mutationFn: async (difficulty: Difficulty | null) => {
       const fetcher = patchFetcher(`/notes/${noteId}/difficulty`);
       return await fetcher(JSON.stringify({ difficulty }));
     },

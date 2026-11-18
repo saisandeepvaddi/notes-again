@@ -3,3 +3,5 @@ packages:
 allowBuilds:
   '@firebase/util': false
   protobufjs: false
+patchedDependencies:
+  '@mdxeditor/editor': patches/@mdxeditor__editor.patch

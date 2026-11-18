@@ -50,6 +50,7 @@ function NewNoteForm() {
   const request = useRef<Promise<unknown> | null>(null);
   const hasDraft = hasNewNoteDraft(recovery.draft, recovery.defaults);
   const status = statusChoice ?? (project?.paused ? "paused" : "active");
+  const withoutDifficulty = status === "note-only" && recovery.defaults.skipDifficultyForNoteOnly;
   const toggleTag = (tag: Tag) => {
     recovery.update({
       tags: selectedTags.some((selected) => selected.id === tag.id)
@@ -71,7 +72,7 @@ function NewNoteForm() {
           content: value.content,
           first_reminder_at: new Date(),
           tag_ids: selectedTags.map((tag) => tag.id),
-          difficulty,
+          difficulty: withoutDifficulty ? null : difficulty,
           project_id: project?.id ?? null,
           ...newNoteReviewFields(status),
         });
@@ -182,27 +183,41 @@ function NewNoteForm() {
               }}
             />
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-              <div role="group" aria-label="Difficulty" className="flex items-center gap-1">
-                {DIFFICULTY_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    aria-pressed={difficulty === option.value}
-                    onClick={() => recovery.update({ difficulty: option.value })}
-                    className={cn(
-                      difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
-                    )}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-              <Separator
-                orientation="vertical"
-                className="mx-0.5 h-3.5 data-vertical:self-center"
-              />
+              {withoutDifficulty ? null : (
+                <>
+                  <div role="group" aria-label="Difficulty" className="flex items-center gap-1">
+                    {DIFFICULTY_OPTIONS.map((option) => (
+                      <Button
+                        key={option.value}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        aria-pressed={difficulty === option.value}
+                        onClick={() => recovery.update({ difficulty: option.value })}
+                        className={cn(
+                          difficulty === option.value && DIFFICULTY_BADGE_CLASSES[option.value],
+                        )}
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-pressed={difficulty === null}
+                      onClick={() => recovery.update({ difficulty: null })}
+                      className={cn(difficulty === null && "bg-muted text-foreground")}
+                    >
+                      None
+                    </Button>
+                  </div>
+                  <Separator
+                    orientation="vertical"
+                    className="mx-0.5 h-3.5 data-vertical:self-center"
+                  />
+                </>
+              )}
               <ProjectPicker
                 value={project}
                 onChange={(next) => {

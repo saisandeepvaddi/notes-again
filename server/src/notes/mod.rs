@@ -287,7 +287,7 @@ pub struct NewNote<'a> {
     pub name: &'a str,
     pub content: &'a str,
     pub algorithm: Algorithm,
-    pub difficulty_tag: &'a TagRow,
+    pub difficulty_tag: Option<&'a TagRow>,
     pub tag_ids: Vec<i64>,
     pub project_id: Option<i64>,
     pub first_reminder_at: Ts,
@@ -323,7 +323,7 @@ pub async fn insert_note(
         algorithm: new.algorithm.as_str().to_string(),
         ease_factor: new
             .difficulty_tag
-            .default_ease_factor
+            .and_then(|tag| tag.default_ease_factor)
             .filter(|e| *e != 0.0)
             .unwrap_or(2.5),
         interval_days: 0,
@@ -363,7 +363,7 @@ pub async fn insert_note(
     .await?
     .last_insert_rowid();
     let mut tag_ids = new.tag_ids.clone();
-    tag_ids.push(new.difficulty_tag.id);
+    tag_ids.extend(new.difficulty_tag.map(|tag| tag.id));
     for tag_id in crate::params::dedupe(&tag_ids) {
         sqlx::query("INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)")
             .bind(note_id)

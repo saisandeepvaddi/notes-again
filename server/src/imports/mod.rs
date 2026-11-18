@@ -85,7 +85,7 @@ struct Row {
     content: String,
     deck: Option<String>,
     tags: Vec<String>,
-    difficulty: Difficulty,
+    difficulty: Option<Difficulty>,
     review: Option<ReviewState>,
     created_at: Option<Ts>,
     updated_at: Option<Ts>,
@@ -233,7 +233,8 @@ fn normalize(payload: &Value) -> Result<(Vec<Row>, Vec<ImportIssue>, FileOptions
             continue;
         };
         let difficulty = match item.get("difficulty") {
-            None | Some(Value::Null) => Some(Difficulty::Medium),
+            None => Some(Some(Difficulty::Medium)),
+            Some(Value::Null) => Some(None),
             Some(raw) => {
                 let rendered = match raw {
                     Value::String(s) => s.clone(),
@@ -246,7 +247,7 @@ fn normalize(payload: &Value) -> Result<(Vec<Row>, Vec<ImportIssue>, FileOptions
                     )));
                     continue;
                 }
-                parsed
+                Some(parsed)
             }
         };
         let parsed = (|| -> Result<RowExtras, String> {
@@ -651,7 +652,7 @@ async fn execute_plan(conn: &mut Conn, plan: Plan) -> ApiResult<()> {
                 name: &row.name,
                 content: &row.content,
                 algorithm,
-                difficulty_tag: &difficulty_tags[&row.difficulty],
+                difficulty_tag: row.difficulty.map(|key| &difficulty_tags[&key]),
                 tag_ids: planned.tag_keys.iter().map(|k| tags[k].id).collect(),
                 project_id: planned.deck_key.as_ref().map(|k| decks[k]),
                 first_reminder_at: planned.remind_at,
@@ -789,8 +790,7 @@ async fn export_notes(
             .tags
             .iter()
             .filter(|t| t.is_difficulty)
-            .find_map(|t| key_for_tag_name_ci(&t.name))
-            .unwrap_or("medium");
+            .find_map(|t| key_for_tag_name_ci(&t.name));
         let mut tags: Vec<&str> = full
             .tags
             .iter()

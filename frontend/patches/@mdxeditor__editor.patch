@@ -1,0 +1,13 @@
+diff --git a/dist/plugins/markdown-shortcut/index.js b/dist/plugins/markdown-shortcut/index.js
+index ded63248712ced0e8bbf322201fe573f2580e2c4..233fd3f9f2bf1bb30f1803c5e9da3d3a9f315ee7 100644
+--- a/dist/plugins/markdown-shortcut/index.js
++++ b/dist/plugins/markdown-shortcut/index.js
+@@ -97,7 +97,7 @@ function pickTransformersForActivePlugins(pluginIds, allowedHeadingLevels) {
+       ...CODE,
+       dependencies: [CodeBlockNode],
+       replace: (parentNode, _children, match) => {
+-        const codeBlockNode = $createCodeBlockNode({ code: "", language: match[1] ?? "", meta: "" });
++        const codeBlockNode = $createCodeBlockNode({ code: "", language: match[2] ?? "", meta: "" });
+         parentNode.selectPrevious();
+         parentNode.replace(codeBlockNode);
+         setTimeout(() => {

@@ -5,8 +5,8 @@ import { useTheme } from "@/hooks/use-theme";
 import { difficultyTint, fonts, radius } from "@/theme";
 
 interface DifficultyPickerProps {
-  value: Difficulty;
-  onChange: (difficulty: Difficulty) => void;
+  value: Difficulty | null;
+  onChange: (difficulty: Difficulty | null) => void;
   disabled?: boolean;
 }
 
@@ -24,12 +24,12 @@ export function DifficultyPicker({ value, onChange, disabled }: DifficultyPicker
         backgroundColor: colors.secondary,
       }}
     >
-      {DIFFICULTY_OPTIONS.map((option) => {
+      {[...DIFFICULTY_OPTIONS, { value: null, label: "None" }].map((option) => {
         const selected = option.value === value;
-        const tint = difficultyTint(option.value, scheme);
+        const tint = option.value ? difficultyTint(option.value, scheme) : null;
         return (
           <Pressable
-            key={option.value}
+            key={option.value ?? "none"}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected, disabled }}
             disabled={disabled}
@@ -49,7 +49,7 @@ export function DifficultyPicker({ value, onChange, disabled }: DifficultyPicker
               style={{
                 fontFamily: selected ? fonts.sansSemibold : fonts.sansMedium,
                 fontSize: 14,
-                color: selected ? tint.foreground : colors.mutedForeground,
+                color: selected && tint ? tint.foreground : selected ? colors.foreground : colors.mutedForeground,
               }}
             >
               {option.label}

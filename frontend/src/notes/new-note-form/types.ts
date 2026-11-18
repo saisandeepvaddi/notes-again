@@ -87,7 +87,7 @@ export type NoteBase = z.infer<typeof NoteBaseSchema>;
 export const NewNoteBodySchema = NoteBaseSchema.extend({
   first_reminder_at: z.date(),
   tag_ids: z.array(z.number()).default([]),
-  difficulty: DifficultySchema.default("medium"),
+  difficulty: DifficultySchema.nullable().default("medium"),
   project_id: z.number().nullable().optional(),
   paused: z.boolean().optional(),
   in_review: z.boolean().optional(),

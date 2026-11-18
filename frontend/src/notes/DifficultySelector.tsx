@@ -9,14 +9,14 @@ import type { Difficulty } from "./new-note-form/types";
 
 interface DifficultySelectorProps {
   noteId: number;
-  difficulty: Difficulty;
+  difficulty: Difficulty | null;
 }
 
 export function DifficultySelector({ noteId, difficulty }: DifficultySelectorProps) {
   const { mutateAsync, isPending } = useSetDifficulty({ noteId });
   const [open, setOpen] = useState(false);
 
-  const setDifficulty = async (value: Difficulty) => {
+  const setDifficulty = async (value: Difficulty | null) => {
     setOpen(false);
     if (value === difficulty) return;
     try {
@@ -37,14 +37,14 @@ export function DifficultySelector({ noteId, difficulty }: DifficultySelectorPro
             title="Change difficulty"
             className={cn(
               "cursor-pointer capitalize outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-              DIFFICULTY_BADGE_CLASSES[difficulty],
+              difficulty ? DIFFICULTY_BADGE_CLASSES[difficulty] : "text-muted-foreground",
             )}
           >
-            {difficulty}
+            {difficulty ?? "No difficulty"}
           </Badge>
         }
       />
-      <PopoverContent className="w-28 p-1">
+      <PopoverContent className="w-36 p-1">
         <div className="flex flex-col gap-0.5">
           {DIFFICULTY_OPTIONS.map((option) => (
             <button
@@ -60,6 +60,17 @@ export function DifficultySelector({ noteId, difficulty }: DifficultySelectorPro
               {option.label}
             </button>
           ))}
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => setDifficulty(null)}
+            className={cn(
+              "rounded-md px-2 py-1 text-left text-xs/relaxed text-muted-foreground hover:bg-muted",
+              difficulty === null && "font-semibold",
+            )}
+          >
+            No difficulty
+          </button>
         </div>
       </PopoverContent>
     </Popover>

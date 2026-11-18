@@ -331,7 +331,7 @@ struct NewNoteBody {
     #[serde(default)]
     tag_ids: Vec<i64>,
     #[serde(default = "default_difficulty")]
-    difficulty: Difficulty,
+    difficulty: Option<Difficulty>,
     #[serde(default)]
     project_id: Option<i64>,
     #[serde(default)]
@@ -340,8 +340,8 @@ struct NewNoteBody {
     in_review: bool,
 }
 
-fn default_difficulty() -> Difficulty {
-    Difficulty::Medium
+fn default_difficulty() -> Option<Difficulty> {
+    Some(Difficulty::Medium)
 }
 
 fn yes() -> bool {
@@ -375,14 +375,17 @@ async fn create_note(
         .paused
         .unwrap_or_else(|| project.as_ref().is_some_and(|p| p.paused));
     let algorithm = default_algorithm(&mut tx).await?;
-    let tag = difficulty_tag(&mut tx, body.difficulty).await?;
+    let tag = match body.difficulty {
+        Some(difficulty) => Some(difficulty_tag(&mut tx, difficulty).await?),
+        None => None,
+    };
     let note_id = insert_note(
         &mut tx,
         NewNote {
             name: &body.name,
             content: &body.content,
             algorithm,
-            difficulty_tag: &tag,
+            difficulty_tag: tag.as_ref(),
             tag_ids,
             project_id: project.map(|p| p.id),
             first_reminder_at: body.first_reminder_at.unwrap_or_else(Ts::now),
@@ -542,8 +545,17 @@ async fn detach_tag(
 pub async fn apply_difficulty(
     conn: &mut Conn,
     note_id: i64,
-    difficulty: Difficulty,
+    difficulty: Option<Difficulty>,
 ) -> ApiResult<()> {
+    let Some(difficulty) = difficulty else {
+        sqlx::query(
+            "DELETE FROM note_tags WHERE note_id = ? AND tag_id IN (SELECT id FROM tags WHERE is_difficulty = 1)",
+        )
+        .bind(note_id)
+        .execute(&mut *conn)
+        .await?;
+        return Ok(());
+    };
     let tag = difficulty_tag(conn, difficulty).await?;
     sqlx::query(
         "DELETE FROM note_tags WHERE note_id = ? AND tag_id IN (SELECT id FROM tags WHERE is_difficulty = 1) AND tag_id != ?",
@@ -569,7 +581,8 @@ pub async fn apply_difficulty(
 
 #[derive(Deserialize)]
 struct SetDifficultyBody {
-    difficulty: Difficulty,
+    #[serde(default)]
+    difficulty: Option<Difficulty>,
 }
 
 async fn set_note_difficulty(

@@ -53,6 +53,7 @@ export function NewNoteScreen() {
   const { data: tags = [] } = useTags();
   const project = projects.find((p) => p.id === projectId) ?? recovery.draft.project;
   const status = statusChoice ?? (project?.paused ? "paused" : "active");
+  const withoutDifficulty = status === "note-only";
   const [error, setError] = useState<string | null>(null);
   usePreventRemove(
     !completed && (createNote.isPending || (recovery.hasDraft && !recovery.saved)),
@@ -98,7 +99,7 @@ export function NewNoteScreen() {
       await createNote.mutateAsync({
         name: name.trim(),
         content,
-        difficulty,
+        difficulty: withoutDifficulty ? null : difficulty,
         projectId,
         tagIds,
         status,
@@ -198,15 +199,17 @@ export function NewNoteScreen() {
               />
             </View>
             <View style={{ gap: 14 }}>
-              <View style={{ gap: 8 }}>
-                <AppText variant="label" tone="muted">
-                  Difficulty
-                </AppText>
-                <DifficultyPicker
-                  value={difficulty}
-                  onChange={(value) => recovery.update({ difficulty: value })}
-                />
-              </View>
+              {withoutDifficulty ? null : (
+                <View style={{ gap: 8 }}>
+                  <AppText variant="label" tone="muted">
+                    Difficulty
+                  </AppText>
+                  <DifficultyPicker
+                    value={difficulty}
+                    onChange={(value) => recovery.update({ difficulty: value })}
+                  />
+                </View>
+              )}
               <SettingRow label="Project">
                 <ProjectPicker
                   value={projectId}

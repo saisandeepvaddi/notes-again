@@ -66,9 +66,33 @@ export function NotesSettings() {
                 {option.label}
               </Button>
             ))}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-pressed={defaults.difficulty === null}
+              onClick={() => change({ difficulty: null })}
+              className={cn(defaults.difficulty === null && "bg-muted text-foreground")}
+            >
+              None
+            </Button>
           </div>
         </div>
       </fieldset>
+      <label className="flex items-center justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium">No difficulty for note-only notes</span>
+          <span className="block text-xs text-muted-foreground">
+            Note-only notes are never scheduled, so the New note page skips the difficulty choice
+            for them. You can still set one on a note later.
+          </span>
+        </span>
+        <Switch
+          checked={defaults.skipDifficultyForNoteOnly}
+          onCheckedChange={(skipDifficultyForNoteOnly) => change({ skipDifficultyForNoteOnly })}
+          aria-label="No difficulty for note-only notes"
+        />
+      </label>
       {unsaved ? (
         <p role="alert" className="text-xs text-destructive">
           This browser couldn’t save the choices, so they apply only until you reload.

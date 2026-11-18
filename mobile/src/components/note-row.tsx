@@ -58,7 +58,7 @@ export const NoteRow = memo(function NoteRow({ note, selected, onToggle }: NoteR
         </AppText>
       ) : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-        {difficultyLabel ? (
+        {difficultyLabel && difficulty ? (
           <Badge label={difficultyLabel} tint={difficultyTint(difficulty, scheme)} />
         ) : null}
         {note.project ? <Badge label={note.project.name} /> : null}

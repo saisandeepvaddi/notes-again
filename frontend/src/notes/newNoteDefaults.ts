@@ -6,7 +6,8 @@ export const NEW_NOTE_DEFAULTS_KEY = "notes-again.new-note-defaults.v1";
 const DefaultsSchema = z.object({
   enabled: z.boolean(),
   status: z.enum(["active", "paused", "note-only"]),
-  difficulty: DifficultySchema,
+  difficulty: DifficultySchema.nullable(),
+  skipDifficultyForNoteOnly: z.boolean().default(true),
 });
 
 export type NewNoteDefaults = z.infer<typeof DefaultsSchema>;
@@ -20,6 +21,7 @@ export const DEFAULT_NEW_NOTE_DEFAULTS: NewNoteDefaults = {
   enabled: false,
   status: "active",
   difficulty: "medium",
+  skipDifficultyForNoteOnly: true,
 };
 
 export function readNewNoteDefaults(storage: DefaultsStorage): NewNoteDefaults {

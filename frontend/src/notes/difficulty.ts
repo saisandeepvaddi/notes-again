@@ -13,8 +13,8 @@ export const DIFFICULTY_BADGE_CLASSES: Record<Difficulty, string> = {
   hard: "bg-red-500/15 text-red-800 dark:text-red-400",
 };
 
-export function getDifficulty(tags: Tag[]): Difficulty {
+export function getDifficulty(tags: Tag[]): Difficulty | null {
   const tag = tags.find((t) => t.is_difficulty);
   const value = tag?.name.toLowerCase();
-  return value === "easy" || value === "medium" || value === "hard" ? value : "medium";
+  return value === "easy" || value === "medium" || value === "hard" ? value : null;
 }

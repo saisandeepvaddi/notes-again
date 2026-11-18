@@ -67,6 +67,22 @@ Offline article text comes first. Durable offline images depend on Stage 4 attac
 - [ ] Evaluate passage highlights/annotations, iOS share-in and Markdown-folder/ZIP import/export.
 - [ ] Consider a two-note split view only after the core workflow is solid.
 
+### 7. Editor and rendering robustness
+
+- [x] Reader renders math, Mermaid, callouts, task lists, footnotes, highlights, raw HTML (sanitized), video/audio and YouTube/Vimeo embeds (`frontend/src/markdown/`).
+- [x] Visual editor keeps math, footnotes and Mermaid source intact; notes it cannot parse open as source with a preview instead of blank.
+- [x] Typing a fence with a language starts a code block in that language and focuses it (patch of `@mdxeditor/editor`); every CodeMirror language is offered.
+- [x] Undo groups typing into phrases; undoing a quote first drops the quote.
+- [x] Difficulty is optional (server, web, mobile); note-only notes skip it by default.
+- [ ] Mobile uses the shared renderer (math, Mermaid, callouts) and the raw-block editor plugin.
+- [ ] Edit / Source / Read toggle per note, so notes with raw HTML do not drop into the fallback view.
+- [ ] Math and diagrams in library-chat answers; "copy as Markdown" keeps them.
+- [ ] Paste handling: HTML to Markdown, images from the clipboard as attachments on mobile.
+- [ ] Table editing keyboard flow (Tab to next cell, add row at the end).
+- [ ] Heading outline and in-note find (Cmd+F) for long notes.
+- [ ] Autosave status that survives a failed save (retry, offline queue) on the note page.
+- [ ] Large-note performance check (10k-word note with many code blocks and formulas).
+
 ## Guardrails and verification
 
 - Work on a branch for each coherent change; run local checks, squash-merge into local main and delete the branch. No push, GitHub calls, releases or Actions without the owner's request.

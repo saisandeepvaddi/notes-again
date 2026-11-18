@@ -11,7 +11,7 @@ export function NoteMeta({ note }: { note: NoteItem }) {
   const label = DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)?.label ?? "";
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-      <Badge label={label} tint={difficultyTint(difficulty, scheme)} />
+      {difficulty ? <Badge label={label} tint={difficultyTint(difficulty, scheme)} /> : null}
       {note.project ? <Badge label={note.project.name} /> : null}
       {note.tags
         .filter((tag) => !tag.is_difficulty)

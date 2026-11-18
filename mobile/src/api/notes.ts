@@ -174,7 +174,7 @@ export function refreshReviews(queryClient: QueryClient) {
 export interface NewNote {
   name: string;
   content: string;
-  difficulty: Difficulty;
+  difficulty: Difficulty | null;
   projectId: number | null;
   tagIds: number[];
   status: ReviewStatus;
@@ -204,7 +204,7 @@ export function useUpdateNote(id: number) {
 }
 
 export function useSetDifficulty(id: number) {
-  return useNoteMutation((difficulty: Difficulty) =>
+  return useNoteMutation((difficulty: Difficulty | null) =>
     api(NoteItemSchema, `/notes/${id}/difficulty`, { method: "PATCH", body: { difficulty } }),
   );
 }

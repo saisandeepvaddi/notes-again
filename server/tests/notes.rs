@@ -330,6 +330,44 @@ async fn set_difficulty_swaps_the_tag_and_syncs_ease_factor() {
 }
 
 #[tokio::test]
+async fn difficulty_is_optional_when_creating_and_can_be_cleared() {
+    let app = TestApp::new().await;
+    let none = app.note(json!({ "difficulty": null })).await;
+    assert!(names(&none["tags"]).is_empty());
+    assert_eq!(none["ease_factor"], 2.5);
+
+    let note = app.note(json!({ "difficulty": "hard" })).await;
+    let cleared = app
+        .patch(&format!("/api/notes/{}/difficulty", id(&note)))
+        .json(json!({ "difficulty": null }))
+        .send()
+        .await
+        .ok();
+    assert!(names(&cleared["tags"]).is_empty());
+
+    let again = app
+        .patch(&format!("/api/notes/{}/difficulty", id(&note)))
+        .json(json!({ "difficulty": "easy" }))
+        .send()
+        .await
+        .ok();
+    assert_eq!(names(&again["tags"]), ["Easy"]);
+
+    let other = app.note(json!({ "difficulty": "easy" })).await;
+    app.post("/api/notes/bulk/difficulty")
+        .json(json!({ "note_ids": [id(&note), id(&other)], "difficulty": null }))
+        .send()
+        .await
+        .ok();
+    let fetched = app
+        .get(&format!("/api/notes/{}", id(&other)))
+        .send()
+        .await
+        .ok();
+    assert!(names(&fetched["tags"]).is_empty());
+}
+
+#[tokio::test]
 async fn set_project_then_clear_it() {
     let app = TestApp::new().await;
     let note = app.named("n").await;

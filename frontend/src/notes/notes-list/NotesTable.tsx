@@ -281,11 +281,12 @@ export function NotesTable({
         );
       },
     }),
-    columnHelper.accessor((note) => getDifficulty(note.tags), {
+    columnHelper.accessor((note) => getDifficulty(note.tags) ?? "", {
       id: "difficulty",
       header: "Difficulty",
       cell: (info) => {
         const difficulty = getDifficulty(info.row.original.tags);
+        if (!difficulty) return <span className="text-muted-foreground">—</span>;
         return (
           <Badge
             variant="outline"

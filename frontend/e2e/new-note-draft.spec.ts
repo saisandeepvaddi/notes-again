@@ -13,13 +13,13 @@ test.describe("new-note writing safety", () => {
     await page.getByLabel("Name", { exact: true }).fill(name);
     await page.getByRole("textbox", { name: "editable markdown" }).fill("A draft worth keeping.");
     await page.getByRole("button", { name: "Hard", exact: true }).click();
-    await page.getByRole("radio", { name: "Note only", exact: true }).click();
+    await page.getByRole("radio", { name: "Paused", exact: true }).click();
     await page.getByRole("button", { name: "Project", exact: true }).click();
     await page.getByRole("option", { name: project.name, exact: true }).click();
     await page.getByRole("button", { name: "Tag", exact: true }).click();
     await page.getByRole("option", { name: tag.name, exact: true }).click();
     await page.keyboard.press("Escape");
-    await page.getByRole("radio", { name: "Note only", exact: true }).click();
+    await page.getByRole("radio", { name: "Paused", exact: true }).click();
     await page.getByRole("link", { name: "All Notes", exact: true }).click();
     await page.goto("/notes/new");
     await expect(page.getByText("Draft restored. Saved in this browser only.")).toBeVisible();
@@ -33,7 +33,7 @@ test.describe("new-note writing safety", () => {
     );
     await expect(page.locator("main").getByText(project.name, { exact: true })).toBeVisible();
     await expect(page.locator("main").getByText(tag.name, { exact: true })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "Note only", exact: true })).toBeChecked();
+    await expect(page.getByRole("radio", { name: "Paused", exact: true })).toBeChecked();
     await page.reload();
     await expect(page.getByLabel("Name", { exact: true })).toHaveValue(name);
     await page.getByRole("button", { name: "Create", exact: true }).click();
